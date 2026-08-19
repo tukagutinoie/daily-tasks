@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>今日の積み上げ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#6d5dfa">
 <style>
   :root{
     --bg:#f7f6fb;
@@ -262,7 +266,7 @@
     font-family:inherit;
     color:var(--text);
     background:#fbfbfd;
-    width:78px;
+    width:98px;
   }
   .ritual-times input[type="time"]:focus{outline:none; border-color:var(--purple);}
 
@@ -275,15 +279,40 @@
     filter:drop-shadow(0 0 5px rgba(109,93,250,0.5));
   }
 
-  /* ---------- 大きな仕事カード ---------- */
+  /* ---------- ブロック全体（大きな仕事カード＋メモ、並べ替えできる） ---------- */
+  .blocks{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    margin-top:5px;
+  }
+  .block-wrap{
+    position:relative;
+    transition:opacity .15s ease;
+  }
+  .block-wrap.dragging{
+    opacity:.5;
+  }
+  .drag-handle{
+    flex:none;
+    cursor:grab;
+    touch-action:none;
+    color:#c9c5d6;
+    font-size:16px;
+    padding:6px 4px;
+    line-height:1;
+    user-select:none;
+  }
+  .drag-handle:active{cursor:grabbing;}
+
+  /* ---------- 大きな仕事カード（複数・開閉できる） ---------- */
   .big-card{
     background:var(--card);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:25px 22px 16px;
-    margin-bottom:20px;
-    margin-top:5px;
+    padding:0 22px;
     position:relative;
+    overflow:hidden;
     transition:box-shadow .25s ease;
   }
   .big-card::before{
@@ -298,8 +327,9 @@
   .big-head{
     display:flex;
     align-items:center;
-    gap:16px;
-    margin-bottom:18px;
+    gap:14px;
+    padding:25px 0 16px;
+    cursor:pointer;
   }
   .big-head .ring-wrap{flex:none; position:relative;}
   .big-title-wrap{flex:1; min-width:0;}
@@ -322,11 +352,54 @@
     font-weight:600;
     margin-top:2px;
   }
+  .big-toggle-arrow{
+    flex:none;
+    font-size:13px;
+    color:var(--sub);
+    transition:transform .25s ease;
+    padding:6px;
+  }
+  .big-card.open .big-toggle-arrow{transform:rotate(90deg);}
+  .big-body{
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    transition:max-height .35s ease, opacity .3s ease, padding-bottom .35s ease;
+  }
+  .big-card.open .big-body{
+    max-height:3000px;
+    opacity:1;
+    padding-bottom:16px;
+  }
 
   .mediums{
     display:flex;
     flex-direction:column;
     gap:14px;
+  }
+
+  .add-big-row{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin-bottom:14px;
+  }
+  .add-big-row input{
+    flex:1;
+    border:1.5px dashed #d9b8ff;
+    border-radius:13px;
+    padding:11px 14px;
+    font-size:14px;
+    font-family:inherit;
+    background:#fbfaff;
+    transition:border-color .15s ease;
+  }
+  .add-big-row input:focus{outline:none;border-color:var(--purple);}
+  .plus-btn.big-accent{background:var(--grad);}
+  .big-full-msg{
+    font-size:12px;
+    color:var(--sub);
+    margin-bottom:14px;
   }
 
   /* ---------- 中カテゴリー ---------- */
@@ -496,6 +569,204 @@
     100%{ transform:translateY(70px) rotate(340deg); opacity:0; }
   }
 
+  /* ---------- メモ欄（アコーディオン） ---------- */
+  .memo-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:6px 22px;
+    overflow:hidden;
+    transition:box-shadow .25s ease;
+  }
+  .memo-card:hover{box-shadow:var(--shadow-hover);}
+  .memo-toggle{
+    width:100%;
+    border:none;
+    background:none;
+    padding:16px 0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:15px;
+    font-weight:800;
+    color:var(--text);
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .memo-toggle .label{flex:1; text-align:left;}
+  .memo-toggle .arrow{
+    display:inline-block;
+    transition:transform .25s ease;
+    color:var(--sub);
+    font-size:13px;
+  }
+  .memo-card.open .memo-toggle .arrow{transform:rotate(90deg);}
+  .memo-body{
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    transition:max-height .3s ease, opacity .25s ease, padding-bottom .3s ease;
+  }
+  .memo-card.open .memo-body{
+    max-height:600px;
+    opacity:1;
+    padding-bottom:18px;
+  }
+  .memo-body textarea{
+    width:100%;
+    min-height:180px;
+    resize:vertical;
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:12px 14px;
+    font-size:14px;
+    line-height:1.7;
+    font-family:inherit;
+    color:var(--text);
+    background:#fbfbfd;
+  }
+  .memo-body textarea:focus{outline:none; border-color:var(--purple);}
+
+  /* ---------- 夜のふりかえり（残りをどうするか） ---------- */
+  .evening-banner{
+    background:var(--card);
+    border:1.5px solid #ffe0b2;
+    border-radius:16px;
+    padding:14px 18px;
+    margin-bottom:18px;
+  }
+  .evening-banner .ev-title{
+    font-size:13.5px;
+    font-weight:800;
+    color:var(--text);
+    margin-bottom:10px;
+  }
+  .ev-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 0;
+    border-top:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .ev-item:first-of-type{border-top:none;}
+  .ev-item .ev-text{
+    flex:1;
+    min-width:120px;
+    font-size:13.5px;
+    color:var(--text);
+    font-weight:600;
+  }
+  .ev-btn{
+    border:none;
+    border-radius:999px;
+    padding:6px 12px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .ev-btn.carry{background:var(--mid-bg); color:var(--mid);}
+  .ev-btn.stop{background:#f2f1f7; color:var(--sub);}
+  .ev-btn:active{transform:scale(.95);}
+
+  /* ---------- 週次ふりかえりモーダル ---------- */
+  .review-btn{
+    width:100%;
+    padding:13px;
+    border-radius:15px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--text);
+    font-size:13.5px;
+    font-weight:800;
+    cursor:pointer;
+    margin-bottom:10px;
+    font-family:inherit;
+  }
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(20,14,30,0.45);
+    display:none;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 16px;
+    overflow-y:auto;
+    z-index:30;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:#fff;
+    border-radius:20px;
+    max-width:520px;
+    width:100%;
+    padding:24px 22px;
+    box-shadow:0 24px 60px rgba(20,14,30,0.35);
+  }
+  .modal-box h2{
+    font-size:17px;
+    margin:0 0 4px;
+    font-weight:800;
+  }
+  .modal-box .modal-sub{
+    font-size:12.5px;
+    color:var(--sub);
+    margin-bottom:16px;
+  }
+  .week-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 0;
+    border-top:1px solid var(--line);
+  }
+  .week-row:first-of-type{border-top:none;}
+  .week-row .wr-date{
+    flex:none;
+    width:64px;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--sub);
+  }
+  .week-row .wr-title{
+    flex:1;
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .week-row .wr-stat{
+    flex:none;
+    font-size:12px;
+    font-weight:700;
+    color:var(--mid);
+  }
+  .week-row.achieved .wr-stat{color:var(--purple);}
+  .week-summary{
+    background:var(--mid-bg);
+    border-radius:13px;
+    padding:12px 14px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+    margin-bottom:6px;
+  }
+  .modal-close{
+    width:100%;
+    margin-top:16px;
+    padding:12px;
+    border-radius:13px;
+    border:none;
+    background:#f2f1f7;
+    color:var(--text);
+    font-size:13.5px;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
   footer{margin-top:24px;}
   .cal-btn{
     width:100%;
@@ -608,31 +879,37 @@
     </div>
   </div>
 
-  <div class="big-card">
-    <div class="big-head">
-      <div class="ring-wrap" id="big-ring"></div>
-      <div class="big-title-wrap">
-        <input class="big-title-input" id="big-title" placeholder="今日の大きな仕事を1つ書く">
-        <div class="big-sub" id="big-label">0/0 完了</div>
-      </div>
-    </div>
+  <div class="evening-banner" id="evening-banner" style="display:none;">
+    <div class="ev-title">今日の残り、どうする？（タップで選べます）</div>
+    <div id="evening-list"></div>
+  </div>
 
-    <div class="mediums" id="mediums"></div>
+  <div class="blocks" id="blocks"></div>
 
-    <div class="add-medium-row" id="add-medium-row">
-      <input type="text" id="medium-input" placeholder="中くらいの仕事を追加（例：骨子を作る）">
-      <button class="plus-btn mid-accent" id="medium-add-btn">＋</button>
-    </div>
-    <div class="medium-full-msg" id="medium-full-msg" style="display:none;">
-      中くらいの仕事は3つまでです。増やすには先に1つ終わらせるか削除してください。
-    </div>
+  <div class="add-big-row" id="add-big-row">
+    <input type="text" id="big-input" placeholder="大きな仕事を追加（例：資料を仕上げる）">
+    <button class="plus-btn big-accent" id="big-add-btn">＋</button>
+  </div>
+  <div class="big-full-msg" id="big-full-msg" style="display:none;">
+    大きな仕事は4つまでです。増やすには先に1つ終わらせるか削除してください。
   </div>
 
   <footer>
+    <button class="review-btn" id="week-review-btn">📅 今週のふりかえりを見る</button>
     <button class="cal-btn" id="cal-sync">Googleカレンダーに同期（この試作品ではまだ未接続）</button>
     <div class="note" id="save-note"></div>
   </footer>
 
+</div>
+
+<div class="modal-overlay" id="week-modal">
+  <div class="modal-box">
+    <h2>今週のふりかえり</h2>
+    <div class="modal-sub">直近7日間の記録です。できなかった日があっても大丈夫、また積み上げていけば大丈夫。</div>
+    <div id="week-summary-area"></div>
+    <div id="week-list"></div>
+    <button class="modal-close" id="week-modal-close">閉じる</button>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -643,6 +920,7 @@
 
 <script>
 (function(){
+  const MAX_BIG = 4;
   const MAX_MEDIUM = 3;
   const MAX_SMALL_PER_MEDIUM = 5;
 
@@ -670,17 +948,18 @@
   }
 
   const state = {
-    bigTitle: "資料を仕上げる",
-    bigWasAchieved: false,
+    memo: "",
     morningTime: "07:00",
     eveningTime: "20:00",
-    mediums: [
-      { name:"骨子を作る", wasAchieved:false, items:[
-        {text:"見出し構成を決める", done:true},
-        {text:"データを集める", done:false}
-      ]},
-      { name:"デザインを整える", wasAchieved:false, items:[
-        {text:"配色を決める", done:false}
+    bigs: [
+      { id:0, title:"資料を仕上げる", wasAchieved:false, collapsed:false, mediums:[
+        { name:"骨子を作る", wasAchieved:false, items:[
+          {text:"見出し構成を決める", done:true, eveningReviewed:false},
+          {text:"データを集める", done:false, eveningReviewed:false}
+        ]},
+        { name:"デザインを整える", wasAchieved:false, items:[
+          {text:"配色を決める", done:false, eveningReviewed:false}
+        ]}
       ]}
     ]
   };
@@ -702,8 +981,8 @@
   const eveningInput = document.getElementById('evening-time');
   morningInput.value = state.morningTime;
   eveningInput.value = state.eveningTime;
-  morningInput.addEventListener('input', ()=>{ state.morningTime = morningInput.value; updateHint(); scheduleSave(); });
-  eveningInput.addEventListener('input', ()=>{ state.eveningTime = eveningInput.value; updateHint(); scheduleSave(); });
+  morningInput.addEventListener('input', ()=>{ state.morningTime = morningInput.value; render(); });
+  eveningInput.addEventListener('input', ()=>{ state.eveningTime = eveningInput.value; render(); });
 
   // ---- スライムのヒント(吹き出し) ----
   const TIP_POOL = [
@@ -733,17 +1012,20 @@
 
   function pickTip(){
     // 1. 今の状況を読み取って、優先度の高いヒントを出す
-    if(!state.bigTitle || !state.bigTitle.trim()){
+    if(state.bigs.length === 0 || !state.bigs.some(b=>b.title && b.title.trim())){
       return "今日の大きな仕事、1コだけ書いてみよ！";
     }
-    if(state.mediums.length === 0){
-      return "大きな仕事、中くらいの仕事に分けてみよっか。";
+    const emptyBig = state.bigs.find(b => b.title && b.title.trim() && b.mediums.length === 0);
+    if(emptyBig){
+      return "「"+emptyBig.title+"」、中くらいの仕事に分けてみよっか。";
     }
-    const emptyMedium = state.mediums.find(m => m.items.length === 0);
-    if(emptyMedium){
-      return "「"+emptyMedium.name+"」に小さい仕事、まだないよ。1個足してみて！";
+    for(const b of state.bigs){
+      const emptyMedium = b.mediums.find(m => m.items.length === 0);
+      if(emptyMedium){
+        return "「"+emptyMedium.name+"」に小さい仕事、まだないよ。1個足してみて！";
+      }
     }
-    if(state.bigWasAchieved){
+    if(state.dayWasAchieved){
       return "今日はもう達成ずみ！おつかれさま、よく頑張った！";
     }
     const inMorning = nowMinutes >= toMinutes(state.morningTime) && nowMinutes < toMinutes(state.morningTime)+RITUAL_WINDOW;
@@ -766,10 +1048,6 @@
   }
   document.getElementById('mascot-inline').addEventListener('click', updateHint);
   setInterval(updateHint, 25000);
-
-  const bigTitleInput = document.getElementById('big-title');
-  bigTitleInput.value = state.bigTitle;
-  bigTitleInput.addEventListener('input', ()=>{ state.bigTitle = bigTitleInput.value; updateHint(); scheduleSave(); });
 
   function showToast(msg){
     const t = document.getElementById('toast');
@@ -814,13 +1092,170 @@
     return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
   }
 
-  function render(){
-    const mediumsEl = document.getElementById('mediums');
-    mediumsEl.innerHTML = '';
+  let nextBigId = 1;
+  let memoOpen = false;
+
+  // ---- ブロックの並び順（大きな仕事＋メモ）を管理 ----
+  function syncBlockOrder(){
+    if(!Array.isArray(state.blockOrder)) state.blockOrder = [];
+    const validKeys = new Set(state.bigs.map(b=>'big:'+b.id));
+    validKeys.add('memo');
+    state.blockOrder = state.blockOrder.filter(k=> validKeys.has(k));
+    state.bigs.forEach(b=>{
+      const key = 'big:'+b.id;
+      if(!state.blockOrder.includes(key)) state.blockOrder.push(key);
+    });
+    if(!state.blockOrder.includes('memo')) state.blockOrder.push('memo');
+  }
+
+  function insertBlockKeyBeforeMemo(key){
+    const idx = state.blockOrder.indexOf('memo');
+    if(idx === -1) state.blockOrder.push(key);
+    else state.blockOrder.splice(idx, 0, key);
+  }
+
+  // ---- ドラッグ＆ドロップで並べ替え（マウスもスマホのタッチも対応） ----
+  function enableDragReorder(container, onReorder){
+    const children = Array.from(container.querySelectorAll(':scope > .block-wrap'));
+    children.forEach(child=>{
+      const handle = child.querySelector('.drag-handle');
+      if(!handle) return;
+      handle.addEventListener('click', e=> e.stopPropagation());
+      handle.addEventListener('pointerdown', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        const dragEl = child;
+        dragEl.classList.add('dragging');
+        const pointerId = e.pointerId;
+        try{ handle.setPointerCapture(pointerId); }catch(err){}
+
+        function onMove(ev){
+          const y = ev.clientY;
+          const siblings = Array.from(container.querySelectorAll(':scope > .block-wrap')).filter(el=>el!==dragEl);
+          for(const sib of siblings){
+            const rect = sib.getBoundingClientRect();
+            const mid = rect.top + rect.height/2;
+            const dragIsAfter = !!(sib.compareDocumentPosition(dragEl) & Node.DOCUMENT_POSITION_FOLLOWING);
+            if(y < mid && dragIsAfter){
+              container.insertBefore(dragEl, sib);
+              break;
+            } else if(y >= mid && !dragIsAfter){
+              container.insertBefore(dragEl, sib.nextSibling);
+              break;
+            }
+          }
+        }
+        function onUp(){
+          dragEl.classList.remove('dragging');
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          try{ handle.releasePointerCapture(pointerId); }catch(err){}
+          const newOrder = Array.from(container.querySelectorAll(':scope > .block-wrap')).map(el=>el.dataset.blockKey);
+          onReorder(newOrder);
+        }
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+    });
+  }
+
+  function onBlocksReordered(newOrder){
+    state.blockOrder = newOrder;
+    scheduleSave();
+  }
+
+  // ---- メモ欄（アコーディオン） ----
+  function renderMemoBlock(){
+    const wrap = document.createElement('div');
+    wrap.className = 'block-wrap';
+    wrap.dataset.blockKey = 'memo';
+
+    const card = document.createElement('div');
+    card.className = 'memo-card' + (memoOpen ? ' open' : '');
+    card.innerHTML = `
+      <button class="memo-toggle" type="button">
+        <span class="drag-handle" title="ドラッグして並べ替え">⠿</span>
+        <span class="label">📝 メモ（タップで開く）</span>
+        <span class="arrow">▶</span>
+      </button>
+      <div class="memo-body">
+        <textarea placeholder="思ったこと、考え中のこと、なんでも自由に書けます"></textarea>
+      </div>
+    `;
+    const handle = card.querySelector('.drag-handle');
+    handle.addEventListener('pointerdown', e=> e.stopPropagation());
+
+    card.querySelector('.memo-toggle').addEventListener('click', (e)=>{
+      if(e.target === handle) return;
+      memoOpen = !memoOpen;
+      card.classList.toggle('open', memoOpen);
+    });
+
+    const textarea = card.querySelector('textarea');
+    textarea.value = state.memo || '';
+    textarea.addEventListener('input', ()=>{
+      state.memo = textarea.value;
+      scheduleSave();
+    });
+
+    wrap.appendChild(card);
+    return wrap;
+  }
+
+  // ---- 大きな仕事カード（開閉できる・複数） ----
+  function renderBigBlock(big){
+    const wrap = document.createElement('div');
+    wrap.className = 'block-wrap';
+    wrap.dataset.blockKey = 'big:'+big.id;
+
+    const card = document.createElement('div');
+    card.className = 'big-card' + (big.collapsed ? '' : ' open');
+
+    const head = document.createElement('div');
+    head.className = 'big-head';
+    head.innerHTML = `
+      <span class="drag-handle" title="ドラッグして並べ替え">⠿</span>
+      <div class="ring-wrap"></div>
+      <div class="big-title-wrap">
+        <input class="big-title-input" placeholder="大きな仕事の名前" value="${escapeAttr(big.title)}">
+        <div class="big-sub"></div>
+      </div>
+      <span class="big-toggle-arrow">▶</span>
+    `;
+    const dragHandle = head.querySelector('.drag-handle');
+    dragHandle.addEventListener('pointerdown', e=> e.stopPropagation());
+    const titleInput = head.querySelector('.big-title-input');
+    titleInput.addEventListener('click', e=> e.stopPropagation());
+    titleInput.addEventListener('input', (e)=>{
+      big.title = e.target.value;
+      updateHint();
+      scheduleSave();
+    });
+    head.addEventListener('click', ()=>{
+      big.collapsed = !big.collapsed;
+      render();
+    });
+    card.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'big-body';
+    const mediumsEl = document.createElement('div');
+    mediumsEl.className = 'mediums';
+    const addMediumRow = document.createElement('div');
+    addMediumRow.className = 'add-medium-row';
+    const mediumFullMsg = document.createElement('div');
+    mediumFullMsg.className = 'medium-full-msg';
+    mediumFullMsg.style.display = 'none';
+    mediumFullMsg.textContent = '中くらいの仕事は3つまでです。増やすには先に1つ終わらせるか削除してください。';
+    body.appendChild(mediumsEl);
+    body.appendChild(addMediumRow);
+    body.appendChild(mediumFullMsg);
+    card.appendChild(body);
+    wrap.appendChild(card);
 
     let totalDone = 0, totalPlanned = 0;
 
-    state.mediums.forEach((medium)=>{
+    big.mediums.forEach((medium)=>{
       const done = medium.items.filter(i=>i.done).length;
       const total = medium.items.length;
       totalDone += done;
@@ -828,11 +1263,11 @@
       const percent = total > 0 ? (done/total*100) : 0;
       const achieved = total > 0 && done === total;
 
-      const card = document.createElement('div');
-      card.className = 'mid-card' + (achieved ? ' achieved' : '');
-      card.style.position = 'relative';
+      const mCard = document.createElement('div');
+      mCard.className = 'mid-card' + (achieved ? ' achieved' : '');
+      mCard.style.position = 'relative';
 
-      card.innerHTML = `
+      mCard.innerHTML = `
         <div class="mid-head">
           <div class="ring-wrap">${ringSVG(percent, 40, 5, '#4c7cff', achieved)}</div>
           <div class="mid-title-wrap">
@@ -845,12 +1280,12 @@
         <div class="full-msg" style="display:none;">小さい仕事は5つまでです。先に1つ終わらせるか削除してください。</div>
       `;
 
-      card.querySelector('.mid-title-input').addEventListener('input', (e)=>{
+      mCard.querySelector('.mid-title-input').addEventListener('input', (e)=>{
         medium.name = e.target.value;
         scheduleSave();
       });
 
-      const ul = card.querySelector('.small-tasks');
+      const ul = mCard.querySelector('.small-tasks');
       medium.items.forEach((item, iIdx)=>{
         const li = document.createElement('li');
         if(item.done) li.classList.add('done');
@@ -865,6 +1300,7 @@
         const checkEl = li.querySelector('.check');
         checkEl.addEventListener('click', ()=>{
           item.done = !item.done;
+          if(item.done) item.eveningReviewed = false;
           checkEl.classList.add('pop');
           setTimeout(()=> checkEl.classList.remove('pop'), 180);
           render();
@@ -876,8 +1312,8 @@
         ul.appendChild(li);
       });
 
-      const addRow = card.querySelector('.add-row');
-      const fullMsg = card.querySelector('.full-msg');
+      const addRow = mCard.querySelector('.add-row');
+      const fullMsg = mCard.querySelector('.full-msg');
       if(medium.items.length >= MAX_SMALL_PER_MEDIUM){
         addRow.style.display = 'none';
         fullMsg.style.display = 'block';
@@ -895,68 +1331,290 @@
             showToast('小さい仕事は5つまでです。');
             return;
           }
-          medium.items.push({text:val, done:false});
+          medium.items.push({text:val, done:false, eveningReviewed:false});
           render();
         }
         btn.addEventListener('click', addSmall);
         input.addEventListener('keydown', e=>{ if(e.key==='Enter') addSmall(); });
       }
 
-      mediumsEl.appendChild(card);
+      mediumsEl.appendChild(mCard);
 
       if(achieved && !medium.wasAchieved){
-        burstConfetti(card, 14, ['#6d5dfa','#ff5ca8','#4c7cff']);
+        burstConfetti(mCard, 14, ['#6d5dfa','#ff5ca8','#4c7cff']);
       }
       medium.wasAchieved = achieved;
     });
 
-    const percent = totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0;
-    const bigAchieved = totalPlanned > 0 && totalDone === totalPlanned;
-
-    document.getElementById('big-ring').innerHTML = ringSVG(percent, 62, 7, 'url(#bigGrad)', bigAchieved);
-    document.getElementById('big-label').textContent = totalDone + '/' + totalPlanned + ' 完了';
-
-    const banner = document.getElementById('achieve-banner');
-    if(bigAchieved && !state.bigWasAchieved){
-      banner.classList.add('show');
-      burstConfetti(document.getElementById('app'), 36, ['#6d5dfa','#ff5ca8','#4c7cff']);
-    }
-    if(bigAchieved){
-      banner.classList.add('show');
-    } else {
-      banner.classList.remove('show');
-    }
-    state.bigWasAchieved = bigAchieved;
-
-    const addMediumRow = document.getElementById('add-medium-row');
-    const mediumFullMsg = document.getElementById('medium-full-msg');
-    if(state.mediums.length >= MAX_MEDIUM){
+    if(big.mediums.length >= MAX_MEDIUM){
       addMediumRow.style.display = 'none';
       mediumFullMsg.style.display = 'block';
     } else {
       addMediumRow.style.display = 'flex';
       mediumFullMsg.style.display = 'none';
+      addMediumRow.innerHTML = `
+        <input type="text" placeholder="中くらいの仕事を追加（例：骨子を作る）">
+        <button class="plus-btn mid-accent">＋</button>
+      `;
+      const input = addMediumRow.querySelector('input');
+      const btn = addMediumRow.querySelector('button');
+      function addMediumHere(){
+        const val = input.value.trim();
+        if(!val) return;
+        if(big.mediums.length >= MAX_MEDIUM){
+          showToast('中くらいの仕事は3つまでです。');
+          return;
+        }
+        big.mediums.push({name:val, wasAchieved:false, items:[]});
+        render();
+      }
+      btn.addEventListener('click', addMediumHere);
+      input.addEventListener('keydown', e=>{ if(e.key==='Enter') addMediumHere(); });
     }
 
+    const percent = totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0;
+    const achieved = totalPlanned > 0 && totalDone === totalPlanned;
+
+    head.querySelector('.ring-wrap').innerHTML = ringSVG(percent, 52, 6, 'url(#bigGrad)', achieved);
+    head.querySelector('.big-sub').textContent = totalDone + '/' + totalPlanned + ' 完了' + (achieved ? '　達成' : '');
+
+    if(achieved && !big.wasAchieved){
+      burstConfetti(card, 20, ['#6d5dfa','#ff5ca8','#4c7cff']);
+    }
+    big.wasAchieved = achieved;
+
+    return { el: wrap, achieved, hasItems: totalPlanned > 0 };
+  }
+
+  function render(){
+    syncBlockOrder();
+    const blocksEl = document.getElementById('blocks');
+    blocksEl.innerHTML = '';
+
+    let anyBigWithItems = false;
+    let allAchieved = true;
+
+    state.blockOrder.forEach(key=>{
+      if(key === 'memo'){
+        blocksEl.appendChild(renderMemoBlock());
+        return;
+      }
+      const id = Number(key.split(':')[1]);
+      const big = state.bigs.find(b=>b.id===id);
+      if(!big) return;
+      const result = renderBigBlock(big);
+      blocksEl.appendChild(result.el);
+      if(result.hasItems){
+        anyBigWithItems = true;
+        if(!result.achieved) allAchieved = false;
+      }
+    });
+
+    enableDragReorder(blocksEl, onBlocksReordered);
+
+    const dayAchieved = anyBigWithItems && allAchieved;
+    const banner = document.getElementById('achieve-banner');
+    if(dayAchieved && !state.dayWasAchieved){
+      banner.classList.add('show');
+      burstConfetti(document.getElementById('app'), 36, ['#6d5dfa','#ff5ca8','#4c7cff']);
+    }
+    if(dayAchieved){
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+    }
+    state.dayWasAchieved = dayAchieved;
+
+    const addBigRow = document.getElementById('add-big-row');
+    const bigFullMsg = document.getElementById('big-full-msg');
+    if(state.bigs.length >= MAX_BIG){
+      addBigRow.style.display = 'none';
+      bigFullMsg.style.display = 'block';
+    } else {
+      addBigRow.style.display = 'flex';
+      bigFullMsg.style.display = 'none';
+    }
+
+    renderEveningBanner();
     updateHint();
     scheduleSave();
   }
 
-  document.getElementById('medium-add-btn').addEventListener('click', addMedium);
-  document.getElementById('medium-input').addEventListener('keydown', e=>{
-    if(e.key==='Enter') addMedium();
+  document.getElementById('big-add-btn').addEventListener('click', addBig);
+  document.getElementById('big-input').addEventListener('keydown', e=>{
+    if(e.key==='Enter') addBig();
   });
-  function addMedium(){
-    const input = document.getElementById('medium-input');
+  function addBig(){
+    const input = document.getElementById('big-input');
     const val = input.value.trim();
     if(!val) return;
-    if(state.mediums.length >= MAX_MEDIUM){
-      showToast('中くらいの仕事は3つまでです。');
+    if(state.bigs.length >= MAX_BIG){
+      showToast('大きな仕事は4つまでです。');
       return;
     }
-    state.mediums.push({name:val, wasAchieved:false, items:[]});
+    const id = nextBigId++;
+    state.bigs.push({id, title:val, wasAchieved:false, collapsed:false, mediums:[]});
+    insertBlockKeyBeforeMemo('big:'+id);
     input.value = '';
     render();
+  }
+
+  // ---- 夜：残っているタスクをどうするか、1タップで選ぶ ----
+  function renderEveningBanner(){
+    const bannerEl = document.getElementById('evening-banner');
+    const listEl = document.getElementById('evening-list');
+    const inEvening = nowMinutes >= toMinutes(state.eveningTime) && nowMinutes < toMinutes(state.eveningTime)+RITUAL_WINDOW;
+
+    const remaining = [];
+    state.bigs.forEach(big=> big.mediums.forEach(medium=> medium.items.forEach(item=>{
+      if(!item.done && !item.eveningReviewed) remaining.push(item);
+    })));
+
+    if(!inEvening || remaining.length === 0){
+      bannerEl.style.display = 'none';
+      return;
+    }
+    bannerEl.style.display = 'block';
+    listEl.innerHTML = '';
+    remaining.forEach(item=>{
+      const row = document.createElement('div');
+      row.className = 'ev-item';
+      row.innerHTML = `
+        <div class="ev-text"></div>
+        <button class="ev-btn carry">→明日に残す</button>
+        <button class="ev-btn stop">✕今日で終わり</button>
+      `;
+      row.querySelector('.ev-text').textContent = item.text;
+      row.querySelector('.carry').addEventListener('click', ()=>{
+        item.eveningReviewed = true;
+        carryItemToTomorrow(item.text);
+        render();
+      });
+      row.querySelector('.stop').addEventListener('click', ()=>{
+        item.eveningReviewed = true;
+        render();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function tomorrowKey(){
+    const d = new Date();
+    d.setDate(d.getDate()+1);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function carryItemToTomorrow(text){
+    if(!FIREBASE_READY || !currentUser){
+      showToast('明日に残すには、ログインが必要です。');
+      return;
+    }
+    fbDb.collection('users').doc(currentUser.uid).collection('days').doc(tomorrowKey())
+      .set({ carriedOverTasks: firebase.firestore.FieldValue.arrayUnion(text) }, {merge:true})
+      .catch(()=>{});
+  }
+
+  function mergeCarriedOverTasks(list){
+    if(!list || !list.length) return;
+    let targetBig = state.bigs.find(b=> b.title === '持ち越しタスク');
+    if(!targetBig){
+      if(state.bigs.length >= MAX_BIG){
+        targetBig = state.bigs[0];
+      } else {
+        const id = nextBigId++;
+        targetBig = {id, title:'持ち越しタスク', wasAchieved:false, collapsed:false, mediums:[]};
+        state.bigs.push(targetBig);
+        insertBlockKeyBeforeMemo('big:'+id);
+      }
+    }
+    let targetMedium = targetBig.mediums.find(m=> m.name === '前の日から');
+    if(!targetMedium){
+      if(targetBig.mediums.length >= MAX_MEDIUM){
+        targetMedium = targetBig.mediums[0];
+      } else {
+        targetMedium = {name:'前の日から', wasAchieved:false, items:[]};
+        targetBig.mediums.push(targetMedium);
+      }
+    }
+    list.forEach(text=>{
+      if(targetMedium.items.length >= MAX_SMALL_PER_MEDIUM) return;
+      targetMedium.items.push({text, done:false, eveningReviewed:false});
+    });
+  }
+
+  // ---- 週に一度のふりかえり画面 ----
+  document.getElementById('week-review-btn').addEventListener('click', openWeekModal);
+  document.getElementById('week-modal-close').addEventListener('click', closeWeekModal);
+  document.getElementById('week-modal').addEventListener('click', (e)=>{
+    if(e.target.id === 'week-modal') closeWeekModal();
+  });
+  function closeWeekModal(){
+    document.getElementById('week-modal').classList.remove('show');
+  }
+  function dateKeyOffset(offsetDays){
+    const d = new Date();
+    d.setDate(d.getDate() - offsetDays);
+    return {
+      key: d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),
+      label: (d.getMonth()+1)+'/'+d.getDate()
+    };
+  }
+  function openWeekModal(){
+    const modal = document.getElementById('week-modal');
+    const listEl = document.getElementById('week-list');
+    const summaryEl = document.getElementById('week-summary-area');
+    if(!FIREBASE_READY || !currentUser){
+      listEl.innerHTML = '';
+      summaryEl.innerHTML = '<div class="week-summary">ログインすると、1週間分のふりかえりが見られるようになります。</div>';
+      modal.classList.add('show');
+      return;
+    }
+    listEl.innerHTML = '';
+    summaryEl.innerHTML = '<div class="week-summary">読み込み中…</div>';
+    modal.classList.add('show');
+
+    const days = [];
+    for(let i=0;i<7;i++) days.push(dateKeyOffset(i));
+
+    Promise.all(days.map(d=>
+      fbDb.collection('users').doc(currentUser.uid).collection('days').doc(d.key).get()
+        .then(snap=> Object.assign({}, d, { data: snap.exists ? snap.data() : null }))
+    )).then(results=>{
+      listEl.innerHTML = '';
+      let achievedCount = 0, recordedCount = 0;
+      results.forEach(r=>{
+        const row = document.createElement('div');
+        if(!r.data){
+          row.className = 'week-row';
+          row.innerHTML = `<div class="wr-date"></div><div class="wr-title" style="color:#c9c5d6;">記録なし</div><div class="wr-stat"></div>`;
+          row.querySelector('.wr-date').textContent = r.label;
+          listEl.appendChild(row);
+          return;
+        }
+        recordedCount++;
+        const bigs = Array.isArray(r.data.bigs) ? r.data.bigs : [];
+        let done = 0, planned = 0;
+        bigs.forEach(b=> (b.mediums||[]).forEach(m=> (m.items||[]).forEach(it=>{
+          planned++; if(it.done) done++;
+        })));
+        const achieved = planned > 0 && done === planned;
+        if(achieved) achievedCount++;
+        const titles = bigs.map(b=>b.title).filter(Boolean).join('・') || '（未入力）';
+        row.className = 'week-row' + (achieved ? ' achieved' : '');
+        row.innerHTML = `<div class="wr-date"></div><div class="wr-title"></div><div class="wr-stat"></div>`;
+        row.querySelector('.wr-date').textContent = r.label;
+        row.querySelector('.wr-title').textContent = titles;
+        row.querySelector('.wr-stat').textContent = planned > 0 ? (done+'/'+planned+(achieved?' 達成':'')) : '-';
+        listEl.appendChild(row);
+      });
+      const msg = recordedCount === 0
+        ? '記録はまだありません。今日から積み上げていこう。'
+        : '7日中、記録がある日は'+recordedCount+'日。達成できた日は'+achievedCount+'日。できなかった日があっても大丈夫、続けることが一番大事。';
+      summaryEl.innerHTML = `<div class="week-summary">${msg}</div>`;
+    }).catch(()=>{
+      listEl.innerHTML = '';
+      summaryEl.innerHTML = '<div class="week-summary">読み込みに失敗しました。もう一度お試しください。</div>';
+    });
   }
 
   document.getElementById('cal-sync').addEventListener('click', ()=>{
@@ -984,11 +1642,12 @@
 
   function serializeState(){
     return {
-      bigTitle: state.bigTitle,
-      bigWasAchieved: state.bigWasAchieved,
+      memo: state.memo,
       morningTime: state.morningTime,
       eveningTime: state.eveningTime,
-      mediums: state.mediums
+      dayWasAchieved: state.dayWasAchieved,
+      blockOrder: state.blockOrder,
+      bigs: state.bigs
     };
   }
 
@@ -1036,14 +1695,39 @@
         docRefForUser(user.uid).get().then(snap=>{
           if(snap.exists){
             const data = snap.data();
-            if(typeof data.bigTitle === 'string') state.bigTitle = data.bigTitle;
-            if(typeof data.bigWasAchieved === 'boolean') state.bigWasAchieved = data.bigWasAchieved;
+            if(typeof data.memo === 'string') state.memo = data.memo;
             if(typeof data.morningTime === 'string') state.morningTime = data.morningTime;
             if(typeof data.eveningTime === 'string') state.eveningTime = data.eveningTime;
-            if(Array.isArray(data.mediums)) state.mediums = data.mediums;
-            bigTitleInput.value = state.bigTitle;
+            if(typeof data.dayWasAchieved === 'boolean') state.dayWasAchieved = data.dayWasAchieved;
+            if(Array.isArray(data.bigs)){
+              state.bigs = data.bigs.map(b=>({
+                id: typeof b.id === 'number' ? b.id : 0,
+                title: b.title || '',
+                wasAchieved: !!b.wasAchieved,
+                collapsed: !!b.collapsed,
+                mediums: Array.isArray(b.mediums) ? b.mediums.map(m=>({
+                  name: m.name || '',
+                  wasAchieved: !!m.wasAchieved,
+                  items: Array.isArray(m.items) ? m.items.map(it=>({
+                    text: it.text || '', done: !!it.done, eveningReviewed: !!it.eveningReviewed
+                  })) : []
+                })) : []
+              }));
+              const usedIds = new Set();
+              state.bigs.forEach(b=>{
+                while(usedIds.has(b.id)){ b.id++; }
+                usedIds.add(b.id);
+              });
+              nextBigId = state.bigs.length ? Math.max(...state.bigs.map(b=>b.id)) + 1 : 1;
+            }
+            state.blockOrder = Array.isArray(data.blockOrder) ? data.blockOrder : [];
             morningInput.value = state.morningTime;
             eveningInput.value = state.eveningTime;
+
+            if(Array.isArray(data.carriedOverTasks) && data.carriedOverTasks.length){
+              mergeCarriedOverTasks(data.carriedOverTasks);
+              docRefForUser(user.uid).set({carriedOverTasks: []}, {merge:true}).catch(()=>{});
+            }
             setSyncStatus('保存ずみ ✓');
           } else {
             setSyncStatus('新しい今日のボードです');
@@ -1061,6 +1745,13 @@
   }
 
   render();
+
+  // ---- アプリとしてインストールできるようにする ----
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    });
+  }
 })();
 </script>
 
