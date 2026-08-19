@@ -56,6 +56,12 @@
   header.top{
     margin-bottom:16px;
   }
+  .year-progress{margin-top:10px; max-width:210px;}
+  .year-progress svg{display:block;}
+  .yp-text{
+    font-size:10.5px; color:var(--sub); font-weight:700;
+    margin-top:5px; letter-spacing:.03em;
+  }
   .header-row{
     display:flex;
     align-items:flex-start;
@@ -214,25 +220,49 @@
   .mascot-inline{
     flex:none;
     cursor:pointer;
-    animation:mascot-bounce 2.6s ease-in-out infinite;
+    width:50px; height:46px;
   }
-  @keyframes mascot-bounce{
-    0%,100%{ transform:translateY(0); }
-    50%{ transform:translateY(-4px); }
+  .mascot-body{ display:block; overflow:visible; }
+  /* ぷるんと潰れて伸びる動き。影も連動させると生きてる感じが出る */
+  .mascot-squash{
+    transform-origin:32px 52px;
+    animation:mascot-squash 2.9s cubic-bezier(.45,0,.35,1) infinite;
   }
-  .mascot-body{ display:block; }
+  .mascot-shadow{
+    transform-origin:32px 56px;
+    animation:mascot-shadow 2.9s cubic-bezier(.45,0,.35,1) infinite;
+  }
+  @keyframes mascot-squash{
+    0%,100%{ transform:translateY(0) scale(1,1); }
+    26%   { transform:translateY(-5px) scale(0.95,1.06); }
+    50%   { transform:translateY(0) scale(1.06,0.94); }
+    68%   { transform:translateY(-2px) scale(0.99,1.02); }
+    84%   { transform:translateY(0) scale(1.01,0.99); }
+  }
+  @keyframes mascot-shadow{
+    0%,100%{ transform:scale(1); opacity:.16; }
+    26%   { transform:scale(0.82); opacity:.09; }
+    50%   { transform:scale(1.08); opacity:.22; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .mascot-squash, .mascot-shadow{ animation:none; }
+  }
   .hint-bubble{
     position:relative;
     flex:1;
-    min-width:150px;
+    min-width:0;
     background:var(--mid-bg);
     border-radius:12px;
-    padding:8px 13px;
+    padding:9px 13px;
     font-size:13px;
     font-weight:600;
     line-height:1.5;
     color:var(--text);
     transition:opacity .2s ease;
+    /* かならず1行。文が長くても高さが変わらず、画面が上下に動かない */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .hint-bubble::before{
     content:'';
@@ -402,6 +432,19 @@
     font-weight:700;
   }
 
+  .move-btns{
+    flex:none; display:flex; flex-direction:column; gap:2px;
+  }
+  .move-btn{
+    width:26px; height:19px; padding:0;
+    border:1px solid var(--line); background:#fff;
+    color:var(--sub); font-size:9px; line-height:1;
+    border-radius:6px; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, color .15s ease;
+  }
+  .move-btn:active{background:var(--mid-bg); color:var(--mid);}
+
   .repeat-btn{
     flex:none;
     border:none;
@@ -465,6 +508,16 @@
     border-top:1px solid var(--line);
   }
   ul.small-tasks li:first-child{border-top:none;}
+  li.done-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; padding:9px 2px; cursor:pointer;
+    border-top:1px solid var(--line);
+  }
+  .done-bar-txt{font-size:12px; color:var(--sub); font-weight:700;}
+  .done-bar-act{
+    font-size:11px; font-weight:800; color:var(--mid);
+    background:var(--mid-bg); border-radius:99px; padding:3px 10px;
+  }
   .check{
     width:20px;height:20px;
     border-radius:6px;
@@ -713,10 +766,33 @@
   .modal-box{
     background:#fff;
     border-radius:20px;
-    max-width:520px;
+    max-width:560px;
     width:100%;
     padding:24px 22px;
     box-shadow:0 24px 60px rgba(20,14,30,0.35);
+    /* 中身が多くても途中で切れないよう、枠の中でスクロールさせる */
+    max-height:86vh;
+    overflow-y:auto;
+  }
+  .heat-scroll{overflow-x:auto; padding:4px 0 2px; margin:14px 0 6px;}
+  .heat-scroll svg{display:block;}
+  .heat-legend{
+    display:flex; align-items:center; gap:6px;
+    font-size:10.5px; color:var(--sub); font-weight:700; margin-bottom:14px;
+  }
+  .heat-legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+  .yr-stats{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr));
+    gap:8px; margin-bottom:16px;
+  }
+  .yr-stat{
+    background:var(--bg); border-radius:12px; padding:10px 12px;
+  }
+  .yr-stat span{display:block; font-size:10.5px; color:var(--sub); font-weight:700;}
+  .yr-stat b{font-size:17px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .rv-sub{
+    font-size:12.5px; font-weight:800; color:var(--sub);
+    margin:6px 0 8px; letter-spacing:.03em;
   }
   .modal-box h2{
     font-size:17px;
@@ -854,54 +930,57 @@
     transition:box-shadow .2s ease, transform .15s ease;
   }
   .cal-btn:hover{box-shadow:0 16px 32px rgba(109,93,250,0.36); transform:translateY(-1px);}
-  .castle-strip{
-    display:flex;
-    align-items:center;
-    gap:12px;
+  /* ---------- つみあげの城（レベルつき・開閉できる） ---------- */
+  .castle-card{
     background:var(--card);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:11px 16px;
     margin-bottom:18px;
-    cursor:pointer;
-    user-select:none;
-    transition:box-shadow .2s ease, transform .2s ease;
+    overflow:hidden;
   }
-  .castle-strip:active{transform:scale(.995);}
-  .castle-mini{
-    flex:none;
-    width:44px;
-    height:52px;
-    display:flex;
-    align-items:flex-end;
+  .castle-head{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 16px; cursor:pointer; user-select:none;
   }
-  .castle-strip-text{flex:1; min-width:0;}
-  .castle-strip-title{font-size:13.5px; font-weight:800; color:var(--text);}
-  .castle-strip-sub{
-    font-size:11.5px; color:var(--sub); font-weight:700; margin-top:1px;
+  .lv-badge{
+    flex:none; width:46px; height:46px; border-radius:14px;
+    background:linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%);
+    color:#fff; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; line-height:1;
+    box-shadow:0 6px 16px rgba(109,93,250,.34);
+  }
+  .lv-lab{font-size:8.5px; font-weight:800; letter-spacing:.12em; opacity:.9;}
+  .lv-num{font-size:19px; font-weight:800; margin-top:1px; font-variant-numeric:tabular-nums;}
+  .lv-text{flex:1; min-width:0;}
+  .lv-rank{font-size:14px; font-weight:800; color:var(--text); line-height:1.3;}
+  .xp-bar{
+    height:5px; border-radius:99px; background:var(--ring-track);
+    margin:5px 0 4px; overflow:hidden;
+  }
+  .xp-fill{
+    height:100%; width:0%; border-radius:99px;
+    background:linear-gradient(90deg, var(--purple) 0%, var(--pink) 100%);
+    transition:width .45s cubic-bezier(.4,0,.2,1);
+  }
+  .lv-stage{
+    font-size:11px; color:var(--sub); font-weight:700;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .castle-strip-count{
-    flex:none; font-size:13px; font-weight:800;
-    background:linear-gradient(120deg, var(--purple) 0%, var(--pink) 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
+  .lv-pts{
+    flex:none; font-size:13px; font-weight:800; color:var(--text);
+    font-variant-numeric:tabular-nums;
   }
-  .castle-art{
-    margin:14px 0 4px;
-    padding:12px;
-    background:var(--bg);
-    border-radius:14px;
-    height:280px;
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
+  .castle-body{
+    display:none; height:0;
+    transition:height .3s ease;
   }
-  .castle-stat{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:9px 2px; border-top:1px solid var(--line);
-    font-size:13px; color:var(--sub); font-weight:700;
+  .castle-card.open .castle-body{
+    display:block; height:auto;
+    padding:0 12px 12px;
   }
-  .castle-stat b{color:var(--text); font-size:14px;}
+  .castle-card.open .castle-body svg{
+    display:block; width:100%; height:auto; border-radius:14px;
+  }
 
   .cal-card{
     background:var(--card);
@@ -944,6 +1023,13 @@
     text-overflow:ellipsis;
   }
   .cal-arrow{flex:none; color:rgba(255,255,255,0.95); transition:transform .25s ease;}
+  .acc-arrow{
+    flex:none; color:var(--sub);
+    background:var(--bg); border-radius:50%;
+    padding:5px; width:26px; height:26px; box-sizing:content-box;
+    transition:transform .28s cubic-bezier(.4,0,.2,1), background .2s ease;
+  }
+  .castle-card.open .acc-arrow{transform:rotate(90deg);}
   .cal-card.open .cal-arrow{transform:rotate(90deg);}
   .cal-body{display:none; padding:12px 18px 14px;}
   .cal-card.open .cal-body{display:block;}
@@ -1041,6 +1127,7 @@
 
     /* 指で押せる大きさに */
     .check{ width:28px; height:28px; border-radius:9px; }
+    .move-btn{ width:30px; height:23px; font-size:10px; }
     .big-check{ width:30px; height:30px; border-radius:10px; }
     .big-check svg{ width:19px; height:19px; }
     .mid-check{ width:28px; height:28px; border-radius:9px; }
@@ -1050,9 +1137,9 @@
     .plus-btn{ width:44px; height:44px; }
     .repeat-btn{ font-size:17px; padding:6px; }
     .review-btn, .cal-btn{ padding:16px; font-size:15px; }
-    .castle-strip{ padding:10px 13px; gap:10px; }
-    .castle-mini{ width:40px; height:48px; }
-    .castle-art{ height:230px; }
+    .castle-head{ padding:12px 13px; gap:10px; }
+    .lv-badge{ width:44px; height:44px; }
+    .castle-card.open .castle-body{ padding:0 9px 9px; }
     .cal-head{ padding:13px 13px; gap:7px; }
     .cal-title{ font-size:13.5px; }
     .cal-status{ font-size:10px; max-width:42%; }
@@ -1093,6 +1180,7 @@
     <div class="header-row">
       <div>
         <div class="date-pill" id="today-date"></div>
+        <div class="year-progress" id="year-progress"></div>
       </div>
       <div class="account-box" id="account-box">
         <button class="login-btn" id="login-btn" style="display:none;">Googleでログイン</button>
@@ -1132,13 +1220,18 @@
     </div>
   </div>
 
-  <div class="castle-strip" id="castle-strip" title="押すと大きく見られます">
-    <div class="castle-mini" id="castle-mini"></div>
-    <div class="castle-strip-text">
-      <div class="castle-strip-title">つみあげの城</div>
-      <div class="castle-strip-sub" id="castle-strip-sub"></div>
+  <div class="castle-card" id="castle-card">
+    <div class="castle-head" id="castle-head">
+      <div class="lv-badge"><span class="lv-lab">LV</span><span class="lv-num" id="lv-num">1</span></div>
+      <div class="lv-text">
+        <div class="lv-rank" id="lv-rank">見習い大工</div>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+        <div class="lv-stage" id="lv-stage">建てはじめ</div>
+      </div>
+      <div class="lv-pts" id="lv-pts">0 / 100</div>
+      <svg class="acc-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <div class="castle-strip-count" id="castle-strip-count"></div>
+    <div class="castle-body" id="castle-body"></div>
   </div>
 
   <div class="blocks" id="blocks"></div>
@@ -1150,8 +1243,8 @@
   <div class="big-full-msg" id="big-full-msg" style="display:none;"></div>
 
   <footer>
+    <button class="review-btn" id="week-review-btn">📅 ふりかえりを見る</button>
     <button class="review-btn" id="bulk-add-btn">📋 まとめて追加</button>
-    <button class="review-btn" id="week-review-btn">📅 今週のふりかえりを見る</button>
     <div class="note" id="save-note"></div>
   </footer>
 
@@ -1159,8 +1252,11 @@
 
 <div class="modal-overlay" id="week-modal">
   <div class="modal-box">
-    <h2>今週のふりかえり</h2>
-    <div class="modal-sub">直近7日間の記録です。できなかった日があっても大丈夫、また積み上げていけば大丈夫。</div>
+    <h2>ふりかえり</h2>
+    <div class="modal-sub">チェックを入れた日に色がつきます。1年でどれだけ積み上げたかが一目で分かります。</div>
+    <div id="year-heat"></div>
+    <div id="year-stats"></div>
+    <div class="rv-sub">直近14日</div>
     <div id="week-summary-area"></div>
     <div id="week-list"></div>
     <button class="modal-close" id="week-modal-close">閉じる</button>
@@ -1187,15 +1283,7 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="castle-modal">
-  <div class="modal-box">
-    <h2>つみあげの城</h2>
-    <div class="modal-sub" id="castle-sub"></div>
-    <div class="castle-art" id="castle-art"></div>
-    <div id="castle-stats"></div>
-    <button class="modal-close" id="castle-modal-close">閉じる</button>
-  </div>
-</div>
+
 
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -1330,57 +1418,95 @@
   };
   function mascotSVG(mood){
     const face = (FACES[mood] || FACES.happy)();
-    return '<svg class="mascot-body" width="42" height="38" viewBox="0 0 64 56">'
+    return '<svg class="mascot-body" width="50" height="46" viewBox="0 0 64 62">'
+      + '<ellipse class="mascot-shadow" cx="32" cy="56" rx="17" ry="3.6" fill="#1f7fce" opacity="0.16"/>'
+      + '<g class="mascot-squash">'
       + '<path d="'+SLIME_BODY+'" fill="url(#slimeGrad)" stroke="#1f7fce" stroke-width="1.5"/>'
-      + SLIME_HIGHLIGHT + face + '</svg>';
+      // 内側の照り返しと、上のつやで立体感を出す
+      + '<path d="M32 5 C49 5 57 22 57 34 C57 40 53 45 47 47 C51 42 52 36 52 31 C52 21 45 8 32 7 Z" fill="#ffffff" opacity="0.20"/>'
+      + SLIME_HIGHLIGHT
+      + '<ellipse cx="25" cy="11" rx="3.2" ry="2.1" fill="#ffffff" opacity="0.8"/>'
+      + '<ellipse cx="44" cy="45" rx="6" ry="2.4" fill="#0d6bb5" opacity="0.13"/>'
+      + face + '</g></svg>';
   }
   function setMascotFace(mood){
     document.getElementById('mascot-inline').innerHTML = mascotSVG(mood);
   }
 
   // ---- スライムのヒント(吹き出し) ----
+  // 1年のうちどこまで来たかを、12個の月で表す（過ぎた月は満ちる）
+  function renderYearProgress(){
+    const el = document.getElementById('year-progress');
+    if(!el) return;
+    const now = new Date(), y = now.getFullYear();
+    const start = new Date(y,0,1), end = new Date(y+1,0,1);
+    const total = Math.round((end - start) / 86400000);
+    const passed = Math.floor((now - start) / 86400000);
+    const pct = Math.round(passed / total * 100);
+    const m = now.getMonth();
+    const dim = new Date(y, m+1, 0).getDate();
+    const mFrac = now.getDate() / dim;
+    const R = 5.2, GAP = 14.6, PAD = 1, CY = R + 1;
+    const W = PAD*2 + R*2 + 11*GAP;
+    const clipY = CY + R - (2*R*mFrac);
+    let s = '';
+    for(let i=0;i<12;i++){
+      const cx = PAD + R + i*GAP;
+      if(i < m){
+        s += '<circle cx="'+cx+'" cy="'+CY+'" r="'+R+'" fill="url(#ypG)"/>';
+      } else if(i === m){
+        s += '<circle cx="'+cx+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="#d5cfe8" stroke-width="1.3"/>'
+           + '<circle cx="'+cx+'" cy="'+CY+'" r="'+R+'" fill="url(#ypG)" clip-path="url(#ypClip)"/>';
+      } else {
+        s += '<circle cx="'+cx+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="#e5e1f1" stroke-width="1.3"/>';
+      }
+    }
+    el.innerHTML = '<svg viewBox="0 0 '+W+' '+(R*2+2)+'" width="100%" height="13" preserveAspectRatio="xMinYMid meet">'
+      + '<defs><linearGradient id="ypG" x1="0" y1="0" x2="1" y2="0">'
+      + '<stop offset="0%" stop-color="#6d5dfa"/><stop offset="100%" stop-color="#ff5ca8"/></linearGradient>'
+      + '<clipPath id="ypClip"><rect x="0" y="'+clipY+'" width="'+W+'" height="'+(2*R)+'"/></clipPath></defs>'
+      + s + '</svg>'
+      + '<div class="yp-text">' + y + '年を ' + pct + '% ・ 残り ' + (total - passed) + '日</div>';
+  }
+  renderYearProgress();
+
   const TIP_POOL = [
-    // ふつうのヒント（ポップ・友達口調）
-    { text:"小さい仕事を1つ終えたら、それだけでもう勝ちだよ！", mood:"happy" },
-    { text:"迷ったら、いちばん簡単なやつからでOK。", mood:"happy" },
-    { text:"9個ぜんぶ埋まらなくても、今日はここまでで上出来！", mood:"happy" },
-    { text:"終わったタスクは消さずに残しておくと、あとで見て嬉しくなるよ。", mood:"happy" },
-    { text:"詰め込みすぎたら、1個だけ明日にまわそう。それでいい。", mood:"calm" },
-    { text:"やる気が出ない日は、いちばん小さいことだけやってみて。", mood:"gentle" },
-    { text:"毎日同じ時間に開くクセをつけると、グッと続けやすくなるよ。", mood:"happy" },
-    { text:"全部終わらなくても、進んだ分はちゃんと前進だから。", mood:"gentle" },
-    { text:"大きい仕事は3つくらいに分けると、一気にラクになるよ。", mood:"think" },
-    { text:"今の気分でできそうなものから選んでOK、それでいい。", mood:"happy" },
-    { text:"ちょっと休憩してから、また1個いこう。", mood:"calm" },
-    // 挫折しやすい人・落ち込みやすい人向け（自己肯定感を守るヒント）
-    { text:"できなかった日があっても、それは『失敗』じゃなくて『そういう日』ってだけ。", mood:"gentle" },
-    { text:"自分に厳しくしすぎなくて大丈夫。親友に言うみたいに、自分にも優しくしてあげて。", mood:"gentle" },
-    { text:"『いつもできない』はウソ。今日できなかっただけ。それだけの話。", mood:"gentle" },
-    { text:"習慣は1回サボったくらいじゃ崩れないよ。すぐ戻ればちゃんと続く。", mood:"gentle" },
-    { text:"落ち込んでる時こそ、超簡単なこと1個だけやってみて。それで十分リセットできる。", mood:"gentle" },
-    { text:"完璧に戻そうとしなくていい。ちょっとだけ動けたら、それでもう合格。", mood:"gentle" },
-    { text:"できなかった自分を責めるより、次の1個に目を向けよう。そのほうがずっと続くよ。", mood:"gentle" },
-    { text:"誰だって波はある。今日が低い日でも、また積み上がっていくから大丈夫。", mood:"gentle" }
+    { text:"小さいの1つでも、もう前進。", mood:"happy" },
+    { text:"迷ったら簡単なやつからでOK。", mood:"happy" },
+    { text:"今日はここまでで上出来。", mood:"happy" },
+    { text:"1個だけ明日にまわしてもいい。", mood:"calm" },
+    { text:"やる気ゼロの日は最小の1個だけ。", mood:"gentle" },
+    { text:"毎日開くクセがいちばん効く。", mood:"happy" },
+    { text:"進んだ分は、ちゃんと前進。", mood:"gentle" },
+    { text:"大きい仕事は3つに割ると軽い。", mood:"think" },
+    { text:"休んでから、また1個いこう。", mood:"calm" },
+    { text:"できない日は「そういう日」。", mood:"gentle" },
+    { text:"自分にも優しくしていい。", mood:"gentle" },
+    { text:"1回サボっても習慣は崩れない。", mood:"gentle" },
+    { text:"完璧に戻さなくて大丈夫。", mood:"gentle" },
+    { text:"責めるより、次の1個へ。", mood:"gentle" },
+    { text:"波はある。また積み上がる。", mood:"gentle" }
   ];
+
   let lastTipIndex = -1;
 
   function pickTip(){
     // 1. 今の状況を読み取って、優先度の高いヒントを出す
     if(state.bigs.length === 0 || !state.bigs.some(b=>b.title && b.title.trim())){
-      return { text:"今日の大きな仕事、1コだけ書いてみよ！", mood:"think" };
+      return { text:"大きな仕事を1つ書いてみよ！", mood:"think" };
     }
     const emptyBig = state.bigs.find(b => b.title && b.title.trim() && b.mediums.length === 0);
     if(emptyBig){
-      return { text:"「"+emptyBig.title+"」、中くらいの仕事に分けてみよっか。", mood:"think" };
+      return { text:"「"+emptyBig.title+"」を分けてみよっか。", mood:"think" };
     }
     for(const b of state.bigs){
       const emptyMedium = b.mediums.find(m => m.items.length === 0);
       if(emptyMedium){
-        return { text:"「"+emptyMedium.name+"」に小さい仕事、まだないよ。1個足してみて！", mood:"think" };
+        return { text:"「"+emptyMedium.name+"」に1個足してみて！", mood:"think" };
       }
     }
     if(state.dayWasAchieved){
-      return { text:"今日はもう達成ずみ！おつかれさま、よく頑張った！", mood:"proud" };
+      return { text:"今日はもう達成ずみ！おつかれさま！", mood:"proud" };
     }
     // 2. 読み取れる状況が無ければ、ヒントの中からランダムに1つ
     let idx;
@@ -1441,6 +1567,7 @@
   }
 
   let nextBigId = 1;
+  const doneOpen = {};   // 「終わったもの」を開いている中カテゴリの記録
   let memoOpen = false;
 
   // ---- ブロックの並び順（大きな仕事＋メモ）を管理 ----
@@ -1575,6 +1702,10 @@
         <textarea class="big-title-input" rows="1" placeholder="大きな仕事の名前"></textarea>
         <div class="big-sub"></div>
       </div>
+      <div class="move-btns">
+        <button class="move-btn" data-dir="-1" title="上に動かす">▲</button>
+        <button class="move-btn" data-dir="1" title="下に動かす">▼</button>
+      </div>
       <button class="repeat-btn${big.repeatDaily ? ' on' : ''}" title="毎日くりかえす">🔁</button>
       ${TOGGLE_ARROW_SVG}
     `;
@@ -1599,6 +1730,30 @@
       updateHint();
       scheduleSave();
     });
+    // ▲▼で並べ替え。ドラッグが分かりにくい端末でも確実に動かせる。
+    function moveBig(dir){
+      const keys = state.blockOrder;
+      const me = 'big:' + big.id;
+      const idx = keys.indexOf(me);
+      if(idx === -1) return;
+      let target = -1;
+      if(dir < 0){
+        for(let i=idx-1;i>=0;i--){ if(String(keys[i]).indexOf('big:') === 0){ target = i; break; } }
+      } else {
+        for(let i=idx+1;i<keys.length;i++){ if(String(keys[i]).indexOf('big:') === 0){ target = i; break; } }
+      }
+      if(target === -1){ showToast(dir < 0 ? 'いちばん上です。' : 'いちばん下です。'); return; }
+      keys[idx] = keys[target];
+      keys[target] = me;
+      render();
+    }
+    head.querySelectorAll('.move-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        moveBig(Number(btn.dataset.dir));
+      });
+    });
+
     const bigCheckEl = head.querySelector('.big-check');
     bigCheckEl.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -1642,7 +1797,7 @@
 
     let totalDone = 0, totalPlanned = 0;
 
-    big.mediums.forEach((medium)=>{
+    big.mediums.forEach((medium, mIdx)=>{
       const doneItems = medium.items.filter(i=>i.done).length;
       const total = medium.items.length;
       // 中くらいの仕事は、チェックを直接つけて完了にできる（小さい仕事が無くてもよい）
@@ -1689,7 +1844,8 @@
       });
 
       const ul = mCard.querySelector('.small-tasks');
-      medium.items.forEach((item, iIdx)=>{
+
+      function makeTaskLi(item, iIdx){
         const li = document.createElement('li');
         if(item.done) li.classList.add('done');
         li.innerHTML = `
@@ -1712,8 +1868,29 @@
           medium.items.splice(iIdx,1);
           render();
         });
-        ul.appendChild(li);
-      });
+        return li;
+      }
+
+      // 終わったものは下にまとめてたたむ。残りだけが目に入るようにする。
+      const rows = medium.items.map((item, ix)=>({ item, ix }));
+      const notYet = rows.filter(r=> !r.item.done);
+      const finished = rows.filter(r=> r.item.done);
+      const dKey = big.id + ':' + mIdx;
+
+      notYet.forEach(r=> ul.appendChild(makeTaskLi(r.item, r.ix)));
+
+      if(finished.length){
+        const bar = document.createElement('li');
+        bar.className = 'done-bar';
+        bar.innerHTML = '<span class="done-bar-txt">✓ 終わったもの ' + finished.length + '件</span>'
+          + '<span class="done-bar-act">' + (doneOpen[dKey] ? 'たたむ' : 'ひらく') + '</span>';
+        bar.addEventListener('click', ()=>{
+          doneOpen[dKey] = !doneOpen[dKey];
+          render();
+        });
+        ul.appendChild(bar);
+        if(doneOpen[dKey]) finished.forEach(r=> ul.appendChild(makeTaskLi(r.item, r.ix)));
+      }
 
       const addRow = mCard.querySelector('.add-row');
       const fullMsg = mCard.querySelector('.full-msg');
@@ -2054,22 +2231,68 @@
       label: (d.getMonth()+1)+'/'+d.getDate()
     };
   }
+  // 1年ぶんの積み上げを、日ごとのマスで見せる
+  function renderYearHeat(){
+    const el = document.getElementById('year-heat');
+    const now = new Date(), y = now.getFullYear();
+    const jan1 = new Date(y,0,1);
+    const startOffset = jan1.getDay();
+    const days = Math.round((new Date(y+1,0,1) - jan1) / 86400000);
+    const cell = 9, gap = 2.4;
+    const cols = Math.ceil((startOffset + days) / 7);
+    const W = Math.round(cols * (cell + gap)), H = Math.round(7 * (cell + gap));
+    let s = '', total = 0, active = 0, best = 0, run = 0;
+    for(let d = 0; d < days; d++){
+      const date = new Date(y, 0, 1 + d);
+      const key = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+      const v = dayLog[key] || 0;
+      total += v;
+      if(v > 0){ active++; run++; if(run > best) best = run; }
+      else if(date <= now){ run = 0; }
+      const gi = startOffset + d, col = Math.floor(gi/7), row = gi % 7;
+      const future = date > now;
+      const fill = future ? '#f7f6fa'
+        : (v >= 15 ? '#6d5dfa' : v >= 8 ? '#8f83fb' : v >= 4 ? '#bab2fd' : v > 0 ? '#ded9ff' : '#ebe8f3');
+      s += '<rect x="' + (col*(cell+gap)).toFixed(1) + '" y="' + (row*(cell+gap)).toFixed(1)
+        + '" width="' + cell + '" height="' + cell + '" rx="2" fill="' + fill + '"><title>'
+        + key + '　' + v + '点</title></rect>';
+    }
+    el.innerHTML = '<div class="heat-scroll"><svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">' + s + '</svg></div>'
+      + '<div class="heat-legend"><span>少ない</span>'
+      + '<i style="background:#ebe8f3"></i><i style="background:#ded9ff"></i><i style="background:#bab2fd"></i>'
+      + '<i style="background:#8f83fb"></i><i style="background:#6d5dfa"></i>'
+      + '<span>多い</span></div>';
+    return { total: total, active: active, best: best, year: y };
+  }
+
   function openWeekModal(){
     const modal = document.getElementById('week-modal');
     const listEl = document.getElementById('week-list');
     const summaryEl = document.getElementById('week-summary-area');
+    modal.classList.add('show');
+
+    const h = renderYearHeat();
+    const lv = levelOf(totalBlocks);
+    document.getElementById('year-stats').innerHTML =
+        '<div class="yr-stats">'
+      + '<div class="yr-stat"><span>' + h.year + '年の合計</span><b>' + h.total + ' 点</b></div>'
+      + '<div class="yr-stat"><span>積み上げた日</span><b>' + h.active + ' 日</b></div>'
+      + '<div class="yr-stat"><span>最長つづき</span><b>' + h.best + ' 日</b></div>'
+      + '<div class="yr-stat"><span>完成した城</span><b>' + Math.floor(totalBlocks / CASTLE_TOTAL) + ' 城</b></div>'
+      + '<div class="yr-stat"><span>いまのレベル</span><b>LV ' + lv + '</b></div>'
+      + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 点</b></div>'
+      + '</div>';
+
     if(!FIREBASE_READY || !currentUser){
       listEl.innerHTML = '';
-      summaryEl.innerHTML = '<div class="week-summary">ログインすると、1週間分のふりかえりが見られるようになります。</div>';
-      modal.classList.add('show');
+      summaryEl.innerHTML = '<div class="week-summary">ログインすると、日ごとの記録も見られます。</div>';
       return;
     }
     listEl.innerHTML = '';
     summaryEl.innerHTML = '<div class="week-summary">読み込み中…</div>';
-    modal.classList.add('show');
 
     const days = [];
-    for(let i=0;i<7;i++) days.push(dateKeyOffset(i));
+    for(let i=0;i<14;i++) days.push(dateKeyOffset(i));
 
     Promise.all(days.map(d=>
       fbDb.collection('users').doc(currentUser.uid).collection('days').doc(d.key).get()
@@ -2081,7 +2304,7 @@
         const row = document.createElement('div');
         if(!r.data){
           row.className = 'week-row';
-          row.innerHTML = `<div class="wr-date"></div><div class="wr-title" style="color:#c9c5d6;">記録なし</div><div class="wr-stat"></div>`;
+          row.innerHTML = '<div class="wr-date"></div><div class="wr-title" style="color:#c9c5d6;">記録なし</div><div class="wr-stat"></div>';
           row.querySelector('.wr-date').textContent = r.label;
           listEl.appendChild(row);
           return;
@@ -2096,16 +2319,15 @@
         if(achieved) achievedCount++;
         const titles = bigs.map(b=>b.title).filter(Boolean).join('・') || '（未入力）';
         row.className = 'week-row' + (achieved ? ' achieved' : '');
-        row.innerHTML = `<div class="wr-date"></div><div class="wr-title"></div><div class="wr-stat"></div>`;
+        row.innerHTML = '<div class="wr-date"></div><div class="wr-title"></div><div class="wr-stat"></div>';
         row.querySelector('.wr-date').textContent = r.label;
         row.querySelector('.wr-title').textContent = titles;
-        row.querySelector('.wr-stat').textContent = planned > 0 ? (done+'/'+planned+(achieved?' 達成':'')) : '-';
+        row.querySelector('.wr-stat').textContent = (dayLog[r.key] ? dayLog[r.key] + '点' : (planned > 0 ? done + '/' + planned : '-'));
         listEl.appendChild(row);
       });
-      const msg = recordedCount === 0
+      summaryEl.innerHTML = '<div class="week-summary">' + (recordedCount === 0
         ? '記録はまだありません。今日から積み上げていこう。'
-        : '7日中、記録がある日は'+recordedCount+'日。達成できた日は'+achievedCount+'日。できなかった日があっても大丈夫、続けることが一番大事。';
-      summaryEl.innerHTML = `<div class="week-summary">${msg}</div>`;
+        : '14日のうち、記録がある日は' + recordedCount + '日。ぜんぶ達成できた日は' + achievedCount + '日。') + '</div>';
     }).catch(()=>{
       listEl.innerHTML = '';
       summaryEl.innerHTML = '<div class="week-summary">読み込みに失敗しました。もう一度お試しください。</div>';
@@ -2282,8 +2504,18 @@
   // ---- つみあげの城：チェックするたびに天守閣が建ち上がる ----
   // 小さい仕事＝1点、中くらいの仕事＝2点、大きな仕事＝5点。100点で城がひとつ完成。
   const CASTLE_TOTAL = 100;
+  const LV_STEP = 20;              // 20点ごとに1レベル
   let totalBlocks = 0;
 
+  function levelOf(pts){ return Math.floor(pts / LV_STEP) + 1; }
+  function rankOf(lv){
+    if(lv >= 50) return '天下人';
+    if(lv >= 35) return '国主';
+    if(lv >= 20) return '城主';
+    if(lv >= 10) return '棟梁';
+    if(lv >= 5)  return '石工';
+    return '見習い大工';
+  }
   function castleStage(inCastle){
     if(inCastle >= CASTLE_TOTAL) return '完成';
     if(inCastle >= 85) return '四層';
@@ -2293,13 +2525,13 @@
     return '建てはじめ';
   }
 
-  // ---- つみあげの城：天守閣が下から建ち上がる。progress は 0〜1 ----
+  // 横長の絵。枠の幅いっぱいに空と雲海が広がり、中央に天守閣が建つ。
   function castleArtSVG(progress, uid){
-    const W = 220, H = 262;
+    const W = 360, H = 252, DX = 70, DY = -8;
     const p = Math.max(0, Math.min(1, progress));
     const done = p >= 1;
     const id = (s)=> s + '_' + uid;
-  
+
     function roof(x1, x2, y, ext, h){
       const L = x1 - ext, R = x2 + ext, cx = (x1 + x2) / 2, w = x2 - x1;
       return 'M' + L + ',' + y
@@ -2321,57 +2553,52 @@
       }
       return s;
     }
-  
-    let castle =
+
+    let keep =
         '<path d="M14,258 C26,236 34,221 44,210 L176,210 C186,221 194,236 206,258 Z" '
       + 'fill="url(#'+id('stoneG')+')" stroke="#59617a" stroke-width="0.8"/>'
       + '<path d="M31,232 L189,232 M22,245 L198,245" stroke="#727a8e" stroke-width="0.7" opacity="0.5"/>';
-    const tiers = [[48,172,178,210,17,21,5],[62,158,150,177,15,19,4],[76,144,123,149,13,17,3],[90,130,98,122,12,16,2]];
-    tiers.forEach(t=>{
-      castle += wall(t[0],t[1],t[2],t[3]) + wins(t[0],t[1],t[2]+8,t[6],7,9)
+    [[48,172,178,210,17,21,5],[62,158,150,177,15,19,4],[76,144,123,149,13,17,3],[90,130,98,122,12,16,2]].forEach(t=>{
+      keep += wall(t[0],t[1],t[2],t[3]) + wins(t[0],t[1],t[2]+8,t[6],7,9)
         + '<path d="'+roof(t[0],t[1],t[2],t[4],t[5])+'" fill="url(#'+id('roofG')+')"/>';
     });
-    castle += wall(98,122,76,97)
+    keep += wall(98,122,76,97)
       + '<rect x="94" y="88" width="32" height="2.6" rx="1" fill="#b98b4a"/>'
       + wins(98,122,80,2,6,8)
-      + '<path d="'+roof(98,122,76,11,15)+'" fill="url(#'+id('roofG')+')"/>';
-    // 鯱（しゃちほこ）
-    const shachi = '<g'+(done?' filter="url(#'+id('shine')+')"':'')+'>'
+      + '<path d="'+roof(98,122,76,11,15)+'" fill="url(#'+id('roofG')+')"/>'
+      + '<g'+(done?' filter="url(#'+id('shine')+')"':'')+'>'
       + '<path d="M103,62 q-3,-5 1,-7 q4,-2 4,3 q0,3 -2,4 Z" fill="url(#'+id('goldG')+')"/>'
       + '<path d="M117,62 q3,-5 -1,-7 q-4,-2 -4,3 q0,3 2,4 Z" fill="url(#'+id('goldG')+')"/>'
       + '<path d="M110,63 L110,57" stroke="#c9a24a" stroke-width="1.4" stroke-linecap="round"/></g>';
-    castle += shachi;
-  
-    // 桜の花びら
-    const PET = [[18,44,15,1.0],[48,24,60,0.8],[88,54,-25,0.9],[136,28,40,1.0],[176,62,10,0.85],
-                 [202,38,-35,0.75],[30,98,25,0.9],[192,112,-15,0.8],[12,152,45,0.85],[206,170,20,0.9],
-                 [66,86,-40,0.7],[152,142,30,0.75],[40,188,-20,0.8],[180,200,50,0.85]];
+    const castle = '<g transform="translate('+DX+','+DY+')">' + keep + '</g>';
+
+    const PET = [[24,52,15,1.0],[70,26,60,.85],[118,64,-25,.95],[168,30,40,1.0],[214,58,10,.9],
+                 [262,34,-35,.8],[312,64,25,.95],[44,120,-15,.85],[330,120,45,.9],[16,182,20,.95],
+                 [344,186,-40,.8],[96,150,30,.8],[280,150,-20,.85],[196,196,50,.9],[130,214,-10,.8]];
     const petals = PET.map(a=>'<path d="M0,0 C3,-4.2 8,-3 8,1 C8,4.6 3,5 0,0 Z" transform="translate('
       +a[0]+','+a[1]+') rotate('+a[2]+') scale('+a[3]+')" fill="url(#'+id('petalG')+')" opacity="0.8"/>').join('');
-  
-    // 雲海
+
     const cloudsBack = '<g opacity="0.92">'
-      + '<ellipse cx="40" cy="236" rx="54" ry="13" fill="#ffffff"/>'
-      + '<ellipse cx="112" cy="243" rx="72" ry="15" fill="#fdfbff"/>'
-      + '<ellipse cx="188" cy="236" rx="50" ry="12" fill="#f4f1ff"/></g>';
+      + '<ellipse cx="46" cy="228" rx="70" ry="14" fill="#ffffff"/>'
+      + '<ellipse cx="180" cy="236" rx="104" ry="16" fill="#fdfbff"/>'
+      + '<ellipse cx="316" cy="228" rx="68" ry="13" fill="#f4f1ff"/></g>';
     const cloudsFront = '<g opacity="0.96">'
-      + '<ellipse cx="58" cy="253" rx="64" ry="12" fill="#ffffff"/>'
-      + '<ellipse cx="168" cy="255" rx="68" ry="12" fill="#fffdff"/></g>';
-  
-    // 完成時の演出
-    let rays = '', sparks = '', glow = '';
+      + '<ellipse cx="86" cy="246" rx="96" ry="13" fill="#ffffff"/>'
+      + '<ellipse cx="278" cy="248" rx="100" ry="13" fill="#fffdff"/></g>';
+
+    let rays='', sparks='', glow='';
     if(done){
-      glow = '<circle cx="110" cy="118" r="96" fill="url(#'+id('glowG')+')" opacity="0.6"/>';
-      let r = '<g opacity="0.45">';
-      for(let a=-78; a<=78; a+=13){
-        r += '<path d="M110,58 L105,-70 L115,-70 Z" transform="rotate('+a+' 110 58)" fill="url(#'+id('rayG')+')"/>';
+      glow = '<ellipse cx="180" cy="112" rx="150" ry="120" fill="url(#'+id('glowG')+')" opacity="0.6"/>';
+      let r='<g opacity="0.45">';
+      for(let a=-80;a<=80;a+=11){
+        r += '<path d="M180,52 L174,-90 L186,-90 Z" transform="rotate('+a+' 180 52)" fill="url(#'+id('rayG')+')"/>';
       }
-      rays = r + '</g>';
-      const S=[[110,42,1.5],[90,56,1.0],[132,54,1.2],[110,22,0.9],[74,36,0.8],[148,32,0.9],[58,70,0.7],[164,74,0.8]];
+      rays = r+'</g>';
+      const S=[[180,36,1.7],[152,52,1.1],[210,50,1.3],[180,14,1.0],[126,30,.9],[236,26,1.0],[100,66,.8],[262,70,.9]];
       sparks = S.map(a=>'<path d="M0,-6 L1.4,-1.4 L6,0 L1.4,1.4 L0,6 L-1.4,1.4 L-6,0 L-1.4,-1.4 Z" transform="translate('
         +a[0]+','+a[1]+') scale('+a[2]+')" fill="#fff4c9"/>').join('');
     }
-  
+
     const defs =
         '<linearGradient id="'+id('skyG')+'" x1="0" y1="0" x2="0" y2="1">'
       + '<stop offset="0%" stop-color="#cfe1ff"/><stop offset="55%" stop-color="#ffe8f2"/><stop offset="100%" stop-color="#fff6fb"/></linearGradient>'
@@ -2392,67 +2619,80 @@
       + '<filter id="'+id('shine')+'" x="-120%" y="-120%" width="340%" height="340%">'
       + '<feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
       + '<clipPath id="'+id('clip')+'"><rect x="0" y="'+(H-H*p)+'" width="'+W+'" height="'+(H*p)+'"/></clipPath>';
-  
+
     return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="100%" preserveAspectRatio="xMidYMax meet">'
       + '<defs>'+defs+'</defs>'
-      + '<rect x="0" y="0" width="'+W+'" height="'+H+'" rx="12" fill="url(#'+id('skyG')+')"/>'
-      + '<circle cx="180" cy="38" r="15" fill="#fffdf0" opacity="0.9"/>'
-      + glow + rays
-      + cloudsBack
+      + '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+id('skyG')+')"/>'
+      + '<circle cx="300" cy="40" r="16" fill="#fffdf0" opacity="0.9"/>'
+      + glow + rays + cloudsBack
       + '<g opacity="0.14">'+castle+'</g>'
       + '<g clip-path="url(#'+id('clip')+')">'+castle+'</g>'
-      + cloudsFront
-      + petals
-      + sparks
+      + cloudsFront + petals + sparks
       + '</svg>';
   }
 
-  function updateCastleStrip(){
-    const mini = document.getElementById('castle-mini');
-    if(!mini) return;
+  // 日ごとの点数。1年ぶんのふりかえりに使う
+  let dayLog = {};
+  function recordDayPoints(n){
+    const k = todayKey();
+    dayLog[k] = (dayLog[k] || 0) + n;
+    if(!FIREBASE_READY || !currentUser) return;
+    const upd = {}; upd['dayLog.' + k] = dayLog[k];
+    profileRefForUser(currentUser.uid).update(upd).catch(()=>{
+      profileRefForUser(currentUser.uid).set({ dayLog: dayLog }, {merge:true}).catch(()=>{});
+    });
+  }
+
+  const CASTLE_OPEN_KEY = 'tsumiage_castle_open';
+
+  function updateCastleCard(){
+    const body = document.getElementById('castle-body');
+    if(!body) return;
     const inC = (totalBlocks > 0 && totalBlocks % CASTLE_TOTAL === 0) ? CASTLE_TOTAL : totalBlocks % CASTLE_TOTAL;
-    mini.innerHTML = castleArtSVG(inC / CASTLE_TOTAL, 'mini');
     const castles = Math.floor(totalBlocks / CASTLE_TOTAL);
-    const inCastle = totalBlocks % CASTLE_TOTAL;
-    const sub = document.getElementById('castle-strip-sub');
-    const cnt = document.getElementById('castle-strip-count');
-    if(sub) sub.textContent = castleStage(inCastle) + ' ・ あと' + (CASTLE_TOTAL - inCastle) + '点'
-      + (castles > 0 ? '（' + castles + '城 完成ずみ）' : '');
-    if(cnt) cnt.textContent = inCastle + '点';
+    const lv = levelOf(totalBlocks);
+    body.innerHTML = castleArtSVG(inC / CASTLE_TOTAL, 'main');
+    document.getElementById('lv-num').textContent = lv;
+    document.getElementById('lv-rank').textContent = rankOf(lv);
+    document.getElementById('lv-stage').textContent =
+      castleStage(inC) + (castles > 0 ? ' ・ ' + castles + '城 完成' : '');
+    document.getElementById('lv-pts').textContent = inC + ' / ' + CASTLE_TOTAL;
+    document.getElementById('xp-fill').style.width = ((totalBlocks % LV_STEP) / LV_STEP * 100) + '%';
   }
 
   function addBlocks(n){
     if(!n || n < 0) return;
-    const before = Math.floor(totalBlocks / CASTLE_TOTAL);
+    const beforeCastles = Math.floor(totalBlocks / CASTLE_TOTAL);
+    const beforeLv = levelOf(totalBlocks);
     totalBlocks += n;
-    updateCastleStrip();
+    recordDayPoints(n);
+    updateCastleCard();
     if(FIREBASE_READY && currentUser){
       profileRefForUser(currentUser.uid)
         .set({ totalBlocks: totalBlocks }, {merge:true})
         .catch(()=>{});
     }
-    if(Math.floor(totalBlocks / CASTLE_TOTAL) > before){
+    if(Math.floor(totalBlocks / CASTLE_TOTAL) > beforeCastles){
       showToast('天守閣が完成しました！🏯 次の城を建てはじめます。');
+    } else if(levelOf(totalBlocks) > beforeLv){
+      const lv = levelOf(totalBlocks);
+      showToast('レベル ' + lv + ' になりました！　' + rankOf(lv));
     }
   }
 
-  function openCastleModal(){
-    const art = document.getElementById('castle-art');
-    const inC0 = (totalBlocks > 0 && totalBlocks % CASTLE_TOTAL === 0) ? CASTLE_TOTAL : totalBlocks % CASTLE_TOTAL;
-    art.innerHTML = castleArtSVG(inC0 / CASTLE_TOTAL, 'big');
-    const castles = Math.floor(totalBlocks / CASTLE_TOTAL);
-    const inCastle = totalBlocks % CASTLE_TOTAL;
-    document.getElementById('castle-sub').textContent =
-      'チェックを入れるほど下から建ち上がります。小さい仕事＝1点、中くらいの仕事＝2点、大きな仕事＝5点。'
-      + CASTLE_TOTAL + '点で天守閣がひとつ完成します。';
-    document.getElementById('castle-stats').innerHTML =
-      '<div class="castle-stat"><span>いまの城</span><b>' + inCastle + ' / ' + CASTLE_TOTAL + ' 点</b></div>'
-      + '<div class="castle-stat"><span>いまの段階</span><b>' + castleStage(inCastle) + '</b></div>'
-      + '<div class="castle-stat"><span>完成まで</span><b>あと ' + (CASTLE_TOTAL - inCastle) + ' 点</b></div>'
-      + '<div class="castle-stat"><span>完成した城</span><b>' + castles + ' 城</b></div>'
-      + '<div class="castle-stat"><span>積み上げた合計</span><b>' + totalBlocks.toLocaleString() + ' 点</b></div>';
-    document.getElementById('castle-modal').classList.add('show');
+  function setCastleOpen(open){
+    const card = document.getElementById('castle-card');
+    card.classList.toggle('open', open);
+    try{ localStorage.setItem(CASTLE_OPEN_KEY, open ? '1' : '0'); }catch(e){}
   }
+  document.getElementById('castle-head').addEventListener('click', ()=>{
+    setCastleOpen(!document.getElementById('castle-card').classList.contains('open'));
+  });
+  try{
+    if(localStorage.getItem(CASTLE_OPEN_KEY) !== '0'){
+      document.getElementById('castle-card').classList.add('open');
+    }
+  }catch(e){ document.getElementById('castle-card').classList.add('open'); }
 
   const CAL_OPEN_KEY = 'tsumiage_cal_open';
   const calCardEl = document.getElementById('cal-card');
@@ -2461,14 +2701,7 @@
     try{ localStorage.setItem(CAL_OPEN_KEY, open ? '1' : '0'); }catch(e){}
     if(open) loadCalendarNow(!!interactive);
   }
-  document.getElementById('castle-strip').addEventListener('click', openCastleModal);
-  document.getElementById('castle-modal-close').addEventListener('click', ()=>{
-    document.getElementById('castle-modal').classList.remove('show');
-  });
-  document.getElementById('castle-modal').addEventListener('click', (e)=>{
-    if(e.target && e.target.id === 'castle-modal') document.getElementById('castle-modal').classList.remove('show');
-  });
-  updateCastleStrip();
+  updateCastleCard();
 
   document.getElementById('cal-head').addEventListener('click', ()=>{
     setCalOpen(!calCardEl.classList.contains('open'), true);
@@ -2720,7 +2953,8 @@
             if(typeof pd.memo === 'string') state.memo = pd.memo;
             dailyTemplates = Array.isArray(pd.dailyTemplates) ? pd.dailyTemplates : [];
             totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
-            updateCastleStrip();
+            dayLog = (pd.dayLog && typeof pd.dayLog === 'object') ? pd.dayLog : {};
+            updateCastleCard();
           }
         }).catch(()=>{}).then(()=>{
           subscribeToDay(user.uid);
