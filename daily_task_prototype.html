@@ -244,31 +244,6 @@
     border:6px solid transparent;
     border-right-color:var(--mid-bg);
   }
-  .ritual-times{
-    display:flex;
-    gap:10px;
-    flex:none;
-  }
-  .ritual-times label{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    font-size:10px;
-    font-weight:700;
-    color:var(--sub);
-    gap:2px;
-  }
-  .ritual-times input[type="time"]{
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:3px 5px;
-    font-size:11.5px;
-    font-family:inherit;
-    color:var(--text);
-    background:#fbfbfd;
-    width:98px;
-  }
-  .ritual-times input[type="time"]:focus{outline:none; border-color:var(--purple);}
 
   /* ---------- Rings ---------- */
   .ring{display:block;}
@@ -422,6 +397,39 @@
     color:var(--mid);
     font-weight:700;
   }
+
+  .repeat-btn{
+    flex:none;
+    border:none;
+    background:transparent;
+    font-size:16px;
+    line-height:1;
+    padding:5px;
+    border-radius:9px;
+    cursor:pointer;
+    opacity:.25;
+    filter:grayscale(1);
+    transition:opacity .2s ease, filter .2s ease, background .2s ease;
+  }
+  .repeat-btn.on{opacity:1; filter:none; background:var(--mid-bg);}
+  .repeat-btn:active{transform:scale(.92);}
+
+  .mid-check{
+    width:22px;height:22px;
+    border-radius:7px;
+    border:2px solid var(--mid);
+    flex:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    transition:background .2s ease, transform .18s cubic-bezier(.4,0,.2,1);
+  }
+  .mid-check svg{width:14px;height:14px;opacity:0;transition:opacity .15s ease;}
+  .mid-check.on{background:var(--mid);}
+  .mid-check.on svg{opacity:1;}
+  .mid-check:active{transform:scale(.9);}
 
   ul.small-tasks{
     list-style:none;
@@ -655,47 +663,6 @@
   .memo-body textarea:focus{outline:none; border-color:var(--purple);}
 
   /* ---------- 夜のふりかえり（残りをどうするか） ---------- */
-  .evening-banner{
-    background:var(--card);
-    border:1.5px solid #ffe0b2;
-    border-radius:16px;
-    padding:14px 18px;
-    margin-bottom:18px;
-  }
-  .evening-banner .ev-title{
-    font-size:13.5px;
-    font-weight:800;
-    color:var(--text);
-    margin-bottom:10px;
-  }
-  .ev-item{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 0;
-    border-top:1px solid var(--line);
-    flex-wrap:wrap;
-  }
-  .ev-item:first-of-type{border-top:none;}
-  .ev-item .ev-text{
-    flex:1;
-    min-width:120px;
-    font-size:13.5px;
-    color:var(--text);
-    font-weight:600;
-  }
-  .ev-btn{
-    border:none;
-    border-radius:999px;
-    padding:6px 12px;
-    font-size:12px;
-    font-weight:700;
-    cursor:pointer;
-    font-family:inherit;
-  }
-  .ev-btn.carry{background:var(--mid-bg); color:var(--mid);}
-  .ev-btn.stop{background:#f2f1f7; color:var(--sub);}
-  .ev-btn:active{transform:scale(.95);}
 
   /* ---------- 週次ふりかえりモーダル ---------- */
   .review-btn{
@@ -935,6 +902,46 @@
     opacity:1;
     transform:translateX(-50%) translateY(0);
   }
+
+  /* ================= スマホのときだけ効く調整 =================
+     画面の横幅が640px以下のときにだけ適用されるので、
+     パソコンでの見た目はこれまでと一切変わりません。 */
+  @media (max-width: 640px){
+    .app{ padding:16px 12px 80px; }
+
+    /* 文字を大きく、読みやすく */
+    .big-title-input{ font-size:18px; }
+    .mid-title-input{ font-size:16.5px; }
+    .task-text{ font-size:16px; line-height:1.5; }
+    .mid-count{ font-size:13px; }
+    .big-sub{ font-size:13px; }
+    .date-pill{ font-size:14px; }
+    .note{ font-size:13px; }
+
+    /* 指で押せる大きさに */
+    .check{ width:28px; height:28px; border-radius:9px; }
+    .mid-check{ width:28px; height:28px; border-radius:9px; }
+    .mid-check svg{ width:18px; height:18px; }
+    ul.small-tasks li{ padding:13px 2px; gap:12px; }
+    .del{ min-width:36px; min-height:36px; font-size:19px; }
+    .plus-btn{ width:44px; height:44px; }
+    .repeat-btn{ font-size:19px; padding:9px; }
+    .review-btn, .cal-btn{ padding:16px; font-size:15px; }
+    .modal-close, .bulk-btn{ padding:15px; font-size:15px; }
+
+    /* iOSで入力時に画面が勝手に拡大されないよう、入力欄は16px以上にする */
+    input[type="text"], textarea{ font-size:16px; }
+    .add-big-row input{ font-size:16px; padding:14px; }
+    .add-row input, .add-medium-row input{ font-size:16px; padding:12px; }
+
+    /* 余白を詰めて、1画面に多く入るように */
+    .big-card{ padding:14px 12px; }
+    .mid-card{ padding:12px 10px; }
+    .review-banner{ padding:11px 12px; font-size:14px; }
+    .modal-overlay{ padding:12px 8px; }
+    .modal-box{ padding:18px 14px; border-radius:16px; }
+    .bulk-actions{ flex-direction:column; }
+  }
 </style>
 </head>
 <body>
@@ -982,16 +989,8 @@
   <div class="review-banner" id="review-banner">
     <div class="mascot-inline" id="mascot-inline" title="ヒントを見る"></div>
     <div class="hint-bubble" id="review-text"></div>
-    <div class="ritual-times">
-      <label>朝<input type="time" id="morning-time" value="07:00"></label>
-      <label>夜<input type="time" id="evening-time" value="20:00"></label>
-    </div>
   </div>
 
-  <div class="evening-banner" id="evening-banner" style="display:none;">
-    <div class="ev-title">今日の残り、どうする？（タップで選べます）</div>
-    <div id="evening-list"></div>
-  </div>
 
   <div class="blocks" id="blocks"></div>
 
@@ -1091,8 +1090,6 @@
 
   const state = {
     memo: "",
-    morningTime: "07:00",
-    eveningTime: "20:00",
     bigs: [
       { id:0, title:"資料を仕上げる", wasAchieved:false, collapsed:false, mediums:[
         { name:"骨子を作る", wasAchieved:false, items:[
@@ -1117,14 +1114,7 @@
     return h*60+m;
   }
   const nowMinutes = now.getHours()*60 + now.getMinutes();
-  const RITUAL_WINDOW = 180; // 設定時刻から3時間はその儀式の時間帯とみなす
 
-  const morningInput = document.getElementById('morning-time');
-  const eveningInput = document.getElementById('evening-time');
-  morningInput.value = state.morningTime;
-  eveningInput.value = state.eveningTime;
-  morningInput.addEventListener('input', ()=>{ state.morningTime = morningInput.value; render(); });
-  eveningInput.addEventListener('input', ()=>{ state.eveningTime = eveningInput.value; render(); });
 
   // ---- スライムの顔(表情パターン) ----
   // 同じ体の形をベースに、目・眉・口・まわりの飾りだけ変えて
@@ -1234,14 +1224,6 @@
     }
     if(state.dayWasAchieved){
       return { text:"今日はもう達成ずみ！おつかれさま、よく頑張った！", mood:"proud" };
-    }
-    const inMorning = nowMinutes >= toMinutes(state.morningTime) && nowMinutes < toMinutes(state.morningTime)+RITUAL_WINDOW;
-    const inEvening = nowMinutes >= toMinutes(state.eveningTime) && nowMinutes < toMinutes(state.eveningTime)+RITUAL_WINDOW;
-    if(inMorning){
-      return { text:"おはよ！今日の大きな仕事を1つ決めて、そこから積み上げていこう。", mood:"cheer" };
-    }
-    if(inEvening){
-      return { text:"今日の振り返りタイム。どこまで積み上がったか見てみよ。", mood:"calm" };
     }
     // 2. 読み取れる状況が無ければ、ヒントの中からランダムに1つ
     let idx;
@@ -1433,6 +1415,7 @@
         <input class="big-title-input" placeholder="大きな仕事の名前" value="${escapeAttr(big.title)}">
         <div class="big-sub"></div>
       </div>
+      <button class="repeat-btn${big.repeatDaily ? ' on' : ''}" title="毎日くりかえす">🔁</button>
       ${TOGGLE_ARROW_SVG}
     `;
     const dragHandle = head.querySelector('.drag-handle');
@@ -1444,6 +1427,17 @@
       updateHint();
       scheduleSave();
     });
+    const repeatBtn = head.querySelector('.repeat-btn');
+    repeatBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      big.repeatDaily = !big.repeatDaily;
+      showToast(big.repeatDaily
+        ? '「' + (big.title || 'この仕事') + '」を毎日くりかえします。日付が変わると自動で用意されます。'
+        : '毎日くりかえしをやめました。');
+      render();
+      saveDailyTemplates();
+    });
+
     head.addEventListener('click', ()=>{
       big.collapsed = !big.collapsed;
       render();
@@ -1469,12 +1463,18 @@
     let totalDone = 0, totalPlanned = 0;
 
     big.mediums.forEach((medium)=>{
-      const done = medium.items.filter(i=>i.done).length;
+      const doneItems = medium.items.filter(i=>i.done).length;
       const total = medium.items.length;
-      totalDone += done;
-      totalPlanned += total;
-      const percent = total > 0 ? (done/total*100) : 0;
-      const achieved = total > 0 && done === total;
+      // 中くらいの仕事は、チェックを直接つけて完了にできる（小さい仕事が無くてもよい）
+      const manualDone = medium.done === true;
+      const achieved = manualDone || (total > 0 && doneItems === total);
+      // 小さい仕事が無い中くらいの仕事は「1件」として数える
+      totalDone += achieved ? (total > 0 ? total : 1) : doneItems;
+      totalPlanned += total > 0 ? total : 1;
+      const percent = achieved ? 100 : (total > 0 ? (doneItems/total*100) : 0);
+      const countText = total > 0
+        ? (doneItems + '/' + total + ' 完了' + (achieved ? '　達成' : ''))
+        : (achieved ? '完了' : '小さい仕事なし');
 
       const mCard = document.createElement('div');
       mCard.className = 'mid-card' + (achieved ? ' achieved' : '');
@@ -1482,10 +1482,13 @@
 
       mCard.innerHTML = `
         <div class="mid-head">
+          <div class="mid-check${manualDone ? ' on' : ''}" title="この中くらいの仕事を完了にする">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
           <div class="ring-wrap">${ringSVG(percent, 40, 5, '#4c7cff', achieved)}</div>
           <div class="mid-title-wrap">
             <input class="mid-title-input" placeholder="中くらいの仕事の名前" value="${escapeAttr(medium.name)}">
-            <div class="mid-count">${done}/${total} 完了${achieved ? '　達成' : ''}</div>
+            <div class="mid-count">${countText}</div>
           </div>
         </div>
         <ul class="small-tasks"></ul>
@@ -1496,6 +1499,12 @@
       mCard.querySelector('.mid-title-input').addEventListener('input', (e)=>{
         medium.name = e.target.value;
         scheduleSave();
+      });
+
+      const midCheckEl = mCard.querySelector('.mid-check');
+      midCheckEl.addEventListener('click', ()=>{
+        medium.done = !(medium.done === true);
+        render();
       });
 
       const ul = mCard.querySelector('.small-tasks');
@@ -1649,7 +1658,6 @@
       bigFullMsg.style.display = 'none';
     }
 
-    renderEveningBanner();
     updateHint();
     scheduleSave();
   }
@@ -1809,6 +1817,7 @@
         collapsed: false,
         mediums: b.mediums.map(m=>({
           name: m.name,
+          done: false,
           wasAchieved: false,
           items: m.items.map(t=>({text:t, done:false, eveningReviewed:false}))
         }))
@@ -1844,88 +1853,6 @@
   });
 
   // ---- 夜：残っているタスクをどうするか、1タップで選ぶ ----
-  function renderEveningBanner(){
-    const bannerEl = document.getElementById('evening-banner');
-    const listEl = document.getElementById('evening-list');
-    const inEvening = nowMinutes >= toMinutes(state.eveningTime) && nowMinutes < toMinutes(state.eveningTime)+RITUAL_WINDOW;
-
-    const remaining = [];
-    state.bigs.forEach(big=> big.mediums.forEach(medium=> medium.items.forEach(item=>{
-      if(!item.done && !item.eveningReviewed) remaining.push(item);
-    })));
-
-    if(!inEvening || remaining.length === 0){
-      bannerEl.style.display = 'none';
-      return;
-    }
-    bannerEl.style.display = 'block';
-    listEl.innerHTML = '';
-    remaining.forEach(item=>{
-      const row = document.createElement('div');
-      row.className = 'ev-item';
-      row.innerHTML = `
-        <div class="ev-text"></div>
-        <button class="ev-btn carry">→明日に残す</button>
-        <button class="ev-btn stop">✕今日で終わり</button>
-      `;
-      row.querySelector('.ev-text').textContent = item.text;
-      row.querySelector('.carry').addEventListener('click', ()=>{
-        item.eveningReviewed = true;
-        carryItemToTomorrow(item.text);
-        render();
-      });
-      row.querySelector('.stop').addEventListener('click', ()=>{
-        item.eveningReviewed = true;
-        render();
-      });
-      listEl.appendChild(row);
-    });
-  }
-
-  function tomorrowKey(){
-    const d = new Date();
-    d.setDate(d.getDate()+1);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-
-  function carryItemToTomorrow(text){
-    if(!FIREBASE_READY || !currentUser){
-      showToast('明日に残すには、ログインが必要です。');
-      return;
-    }
-    fbDb.collection('users').doc(currentUser.uid).collection('days').doc(tomorrowKey())
-      .set({ carriedOverTasks: firebase.firestore.FieldValue.arrayUnion(text) }, {merge:true})
-      .catch(()=>{});
-  }
-
-  function mergeCarriedOverTasks(list){
-    if(!list || !list.length) return;
-    let targetBig = state.bigs.find(b=> b.title === '持ち越しタスク');
-    if(!targetBig){
-      if(state.bigs.length >= MAX_BIG){
-        targetBig = state.bigs[0];
-      } else {
-        const id = nextBigId++;
-        targetBig = {id, title:'持ち越しタスク', wasAchieved:false, collapsed:false, mediums:[]};
-        state.bigs.push(targetBig);
-        insertBlockKeyBeforeMemo('big:'+id);
-      }
-    }
-    let targetMedium = targetBig.mediums.find(m=> m.name === '前の日から');
-    if(!targetMedium){
-      if(targetBig.mediums.length >= MAX_MEDIUM){
-        targetMedium = targetBig.mediums[0];
-      } else {
-        targetMedium = {name:'前の日から', wasAchieved:false, items:[]};
-        targetBig.mediums.push(targetMedium);
-      }
-    }
-    list.forEach(text=>{
-      if(targetMedium.items.length >= MAX_SMALL_PER_MEDIUM) return;
-      targetMedium.items.push({text, done:false, eveningReviewed:false});
-    });
-  }
-
   // ---- 週に一度のふりかえり画面 ----
   document.getElementById('week-review-btn').addEventListener('click', openWeekModal);
   document.getElementById('week-modal-close').addEventListener('click', closeWeekModal);
@@ -2158,8 +2085,6 @@
 
   function serializeState(){
     return {
-      morningTime: state.morningTime,
-      eveningTime: state.eveningTime,
       dayWasAchieved: state.dayWasAchieved,
       blockOrder: state.blockOrder,
       bigs: state.bigs
@@ -2170,14 +2095,163 @@
     syncStatusEl.textContent = text;
   }
 
+  // ---- 端末どうしのリアルタイム同期 ----
+  // 以前は「開いたときに1回だけ読む」方式だったため、Macを開きっぱなしにしていると
+  // スマホで入れた内容が届かず、しかも古い内容で上書きしてしまっていた。
+  // ここでは常時見張る方式(onSnapshot)にして、どの端末で変えても全部に届くようにする。
+  let unsubscribeDay = null;
+  let subscribedDayKey = null;
+  let applyingRemote = false;   // 受信を反映している最中は保存しない（往復ループ防止）
+  let pendingRemote = null;     // 入力中に届いた分は、入力が終わってから反映する
+  let dailyTemplates = [];
+
+  function isEditingNow(){
+    const el = document.activeElement;
+    if(!el) return false;
+    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA';
+  }
+
+  function applyDayData(data){
+    applyingRemote = true;
+    try{
+      if(typeof data.dayWasAchieved === 'boolean') state.dayWasAchieved = data.dayWasAchieved;
+      if(Array.isArray(data.bigs)){
+        state.bigs = data.bigs.map(b=>({
+          id: typeof b.id === 'number' ? b.id : 0,
+          title: b.title || '',
+          repeatDaily: !!b.repeatDaily,
+          wasAchieved: !!b.wasAchieved,
+          collapsed: !!b.collapsed,
+          mediums: Array.isArray(b.mediums) ? b.mediums.map(m=>({
+            name: m.name || '',
+            done: !!m.done,
+            wasAchieved: !!m.wasAchieved,
+            items: Array.isArray(m.items) ? m.items.map(it=>({
+              text: it.text || '', done: !!it.done, eveningReviewed: !!it.eveningReviewed
+            })) : []
+          })) : []
+        }));
+        const usedIds = new Set();
+        state.bigs.forEach(b=>{ while(usedIds.has(b.id)){ b.id++; } usedIds.add(b.id); });
+        nextBigId = state.bigs.length ? Math.max(...state.bigs.map(b=>b.id)) + 1 : 1;
+      }
+      state.blockOrder = Array.isArray(data.blockOrder) ? data.blockOrder : [];
+      render();
+    } finally {
+      applyingRemote = false;
+    }
+  }
+
+  // 「毎日くりかえす」の印がついた大きな仕事を、型として控えておく
+  function collectDailyTemplates(){
+    return state.bigs.filter(b=> b.repeatDaily).map(b=>({
+      title: b.title || '',
+      mediums: (b.mediums||[]).map(m=>({
+        name: m.name || '',
+        items: (m.items||[]).map(it=> it.text)
+      }))
+    }));
+  }
+  function saveDailyTemplates(){
+    if(!FIREBASE_READY || !currentUser) return;
+    profileRefForUser(currentUser.uid)
+      .set({ dailyTemplates: collectDailyTemplates() }, {merge:true})
+      .catch(()=>{});
+  }
+
+  // 新しい一日のボードを、型から自動で組み立てる
+  function seedFromTemplates(){
+    if(!dailyTemplates.length) return false;
+    let added = false;
+    dailyTemplates.forEach(t=>{
+      if(state.bigs.length >= MAX_BIG) return;
+      const id = nextBigId++;
+      state.bigs.push({
+        id: id,
+        title: t.title || '',
+        repeatDaily: true,
+        wasAchieved: false,
+        collapsed: false,
+        mediums: (t.mediums||[]).slice(0, MAX_MEDIUM).map(m=>({
+          name: m.name || '',
+          done: false,
+          wasAchieved: false,
+          items: (m.items||[]).slice(0, MAX_SMALL_PER_MEDIUM).map(tx=>({
+            text: tx, done:false, eveningReviewed:false
+          }))
+        }))
+      });
+      insertBlockKeyBeforeMemo('big:'+id);
+      added = true;
+    });
+    return added;
+  }
+
+  function subscribeToDay(uid){
+    if(unsubscribeDay){ unsubscribeDay(); unsubscribeDay = null; }
+    subscribedDayKey = todayKey();
+    setSyncStatus('読み込み中…');
+    unsubscribeDay = docRefForUser(uid).onSnapshot(snap=>{
+      // 自分がいま書いた内容が返ってきただけのときは、何もしない
+      if(snap.metadata && snap.metadata.hasPendingWrites) return;
+
+      if(!snap.exists){
+        // その日のボードがまだ無い ＝ 新しい一日
+        applyingRemote = true;
+        try{
+          state.bigs = [];
+          state.blockOrder = state.blockOrder.filter(k=> String(k).indexOf('big:') !== 0);
+          nextBigId = 1;
+          seedFromTemplates();
+          render();
+        } finally { applyingRemote = false; }
+        if(state.bigs.length){
+          setSyncStatus('今日のぶんを用意しました');
+          scheduleSave();
+        } else {
+          setSyncStatus('新しい今日のボードです');
+        }
+        return;
+      }
+
+      const data = snap.data();
+      if(isEditingNow()){ pendingRemote = data; return; }  // 入力中は割りこまない
+      applyDayData(data);
+      setSyncStatus('同期ずみ ✓');
+    }, ()=>{
+      setSyncStatus('同期できていません');
+    });
+  }
+
+  // 入力が終わったタイミングで、待たせていた受信ぶんを反映する
+  document.addEventListener('focusout', ()=>{
+    setTimeout(()=>{
+      if(pendingRemote && !isEditingNow()){
+        const d = pendingRemote; pendingRemote = null;
+        applyDayData(d);
+        setSyncStatus('同期ずみ ✓');
+      }
+    }, 200);
+  });
+
+  // 日付が変わったら、その日のボードに乗りかえる（開きっぱなし対策）
+  setInterval(()=>{
+    if(!FIREBASE_READY || !currentUser) return;
+    if(subscribedDayKey && subscribedDayKey !== todayKey()){
+      subscribeToDay(currentUser.uid);
+    }
+  }, 30000);
+
   function scheduleSave(){
     if(!FIREBASE_READY || !currentUser) return;
+    if(applyingRemote) return;   // 受信を反映しただけのときは書き戻さない
     setSyncStatus('保存中…');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(()=>{
       docRefForUser(currentUser.uid).set(serializeState(), {merge:true})
         .then(()=> setSyncStatus('保存ずみ ✓'))
         .catch(()=> setSyncStatus('保存に失敗しました'));
+      saveDailyTemplates();
     }, 800);
   }
 
@@ -2219,56 +2293,20 @@
         userName.textContent = user.displayName || user.email || 'ログイン中';
         setSyncStatus('読み込み中…');
 
-        Promise.all([
-          profileRefForUser(user.uid).get().catch(()=>null),
-          docRefForUser(user.uid).get()
-        ]).then(([profileSnap, snap])=>{
-          if(profileSnap && profileSnap.exists && typeof profileSnap.data().memo === 'string'){
-            state.memo = profileSnap.data().memo;
+        // プロフィール（メモと「毎日くりかえし」の型）を読んでから、
+        // その日のボードを「ずっと見張る」状態にする。
+        profileRefForUser(user.uid).get().then(ps=>{
+          if(ps && ps.exists){
+            const pd = ps.data();
+            if(typeof pd.memo === 'string') state.memo = pd.memo;
+            dailyTemplates = Array.isArray(pd.dailyTemplates) ? pd.dailyTemplates : [];
           }
-          if(snap.exists){
-            const data = snap.data();
-            if(typeof data.morningTime === 'string') state.morningTime = data.morningTime;
-            if(typeof data.eveningTime === 'string') state.eveningTime = data.eveningTime;
-            if(typeof data.dayWasAchieved === 'boolean') state.dayWasAchieved = data.dayWasAchieved;
-            if(Array.isArray(data.bigs)){
-              state.bigs = data.bigs.map(b=>({
-                id: typeof b.id === 'number' ? b.id : 0,
-                title: b.title || '',
-                wasAchieved: !!b.wasAchieved,
-                collapsed: !!b.collapsed,
-                mediums: Array.isArray(b.mediums) ? b.mediums.map(m=>({
-                  name: m.name || '',
-                  wasAchieved: !!m.wasAchieved,
-                  items: Array.isArray(m.items) ? m.items.map(it=>({
-                    text: it.text || '', done: !!it.done, eveningReviewed: !!it.eveningReviewed
-                  })) : []
-                })) : []
-              }));
-              const usedIds = new Set();
-              state.bigs.forEach(b=>{
-                while(usedIds.has(b.id)){ b.id++; }
-                usedIds.add(b.id);
-              });
-              nextBigId = state.bigs.length ? Math.max(...state.bigs.map(b=>b.id)) + 1 : 1;
-            }
-            state.blockOrder = Array.isArray(data.blockOrder) ? data.blockOrder : [];
-            morningInput.value = state.morningTime;
-            eveningInput.value = state.eveningTime;
-
-            if(Array.isArray(data.carriedOverTasks) && data.carriedOverTasks.length){
-              mergeCarriedOverTasks(data.carriedOverTasks);
-              docRefForUser(user.uid).set({carriedOverTasks: []}, {merge:true}).catch(()=>{});
-            }
-            setSyncStatus('保存ずみ ✓');
-          } else {
-            setSyncStatus('新しい今日のボードです');
-          }
-          render();
-        }).catch(()=>{
-          setSyncStatus('読み込みに失敗しました');
+        }).catch(()=>{}).then(()=>{
+          subscribeToDay(user.uid);
         });
       } else {
+        if(unsubscribeDay){ unsubscribeDay(); unsubscribeDay = null; }
+        subscribedDayKey = null;
         userChip.style.display = 'none';
         loginBtn.style.display = 'inline-block';
         setSyncStatus('');
