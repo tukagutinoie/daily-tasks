@@ -2036,7 +2036,7 @@
     }
     big.wasAchieved = achieved;
 
-    return { el: wrap, achieved, hasItems: totalPlanned > 0 };
+    return { el: wrap, achieved, hasItems: totalPlanned > 0, manualDone: manualBigDone };
   }
 
   function render(){
@@ -2057,8 +2057,9 @@
       const big = state.bigs.find(b=>b.id===id);
       if(!big) return;
       const result = renderBigBlock(big);
-      // 終わった大きな仕事は、いちばん下にまとめる
-      if(result.achieved && result.hasItems) finishedBigs.push(result.el);
+      // 大きな仕事は、自分でチェックを押したときだけ下にまとめる。
+      // 中くらいの仕事が全部終わっただけでは、勝手にしまわない。
+      if(result.manualDone) finishedBigs.push(result.el);
       else blocksEl.appendChild(result.el);
       if(result.hasItems){
         anyBigWithItems = true;
