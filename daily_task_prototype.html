@@ -972,6 +972,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div class="toast" id="toast"></div>
 
@@ -1007,31 +1008,11 @@
     fbAuth = firebase.auth();
     fbDb = firebase.firestore();
 
-    // Googleカレンダーの許可は、ポップアップだと途中で消えてしまう端末があるため
-    // 画面ごと切り替わる方式(リダイレクト)で行い、戻ってきたときにここで受け取る。
-    fbAuth.getRedirectResult().then(result=>{
-      const pending = sessionStorage.getItem('tsumiage_cal_pending');
-      if(!pending) return;
-      sessionStorage.removeItem('tsumiage_cal_pending');
-      if(!result || !result.user){
-        return;
-      }
-      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-      const token = cred && cred.accessToken;
-      if(!token){
-        console.error('[calendar] redirect result had no accessToken', cred, result);
-        showToast('カレンダーへのアクセスを取得できませんでした。もう一度お試しください。');
-        return;
-      }
-      calendarAccessToken = token;
-      setTimeout(()=>{ fetchTodayCalendarEvents(calendarAccessToken); }, 300);
-    }).catch(err=>{
-      const pending = sessionStorage.getItem('tsumiage_cal_pending');
-      if(!pending) return;
-      sessionStorage.removeItem('tsumiage_cal_pending');
-      console.error('[calendar] getRedirectResult failed', err && err.code, err && err.message);
-      showToast('カレンダーへのアクセスが許可されませんでした。');
-    });
+    // 【メモ】以前はここで signInWithRedirect の結果を受け取っていたが、
+    // このアプリの住所(tukagutinoie.github.io)と、Firebaseの受付窓口
+    // (daily-tasks-802ee.firebaseapp.com)が別の住所のため、最近のブラウザでは
+    // 帰り道で「鍵」を持ち帰れず、必ず失敗していた。
+    // カレンダーの許可だけ、Google公式の別方式に変更した(viewGoogleCalendar を参照)。
   }
 
   const state = {
@@ -1778,6 +1759,42 @@
   // ---- Googleカレンダーの予定を「見る」だけ（つみあげ側からは何も書き込まない） ----
   let calendarAccessToken = null;
 
+  // カレンダーを見る許可は、Firebaseを通さずGoogle公式の仕組み
+  // (Google Identity Services)から直接もらう。こうするとやり取りが
+  // このアプリの住所の中だけで完結するので、ブラウザのプライバシー設定に邪魔されない。
+  const GOOGLE_OAUTH_CLIENT_ID = '579478191235-s2f00417mneo9hv7g9vhf20lj2hqbhjm.apps.googleusercontent.com';
+  let calTokenClient = null;
+
+  function ensureCalTokenClient(){
+    if(calTokenClient) return calTokenClient;
+    if(!(window.google && window.google.accounts && window.google.accounts.oauth2)) return null;
+    calTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_OAUTH_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      callback: (resp)=>{
+        if(resp && resp.access_token){
+          calendarAccessToken = resp.access_token;
+          fetchTodayCalendarEvents(calendarAccessToken);
+        } else {
+          console.error('[calendar] no access_token in response', resp);
+          showToast('カレンダーへのアクセスが許可されませんでした。');
+        }
+      },
+      error_callback: (err)=>{
+        const type = err && err.type;
+        console.error('[calendar] GIS error', type, err);
+        if(type === 'popup_closed'){
+          showToast('カレンダーの許可が途中で閉じられました。');
+        } else if(type === 'popup_failed_to_open'){
+          showToast('ポップアップがブロックされました。ブラウザの設定で許可してください。');
+        } else {
+          showToast('カレンダーへのアクセスが許可されませんでした。');
+        }
+      }
+    });
+    return calTokenClient;
+  }
+
   const CAL_DAYS = ['日','月','火','水','木','金','土'];
 
   function formatEventDate(ev){
@@ -1858,21 +1875,14 @@
       fetchTodayCalendarEvents(calendarAccessToken);
       return;
     }
-    const calProvider = new firebase.auth.GoogleAuthProvider();
-    calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-    // 前に許可した内容を覚えていて、確認画面を飛ばしてしまうことがあるため、
-    // 毎回かならず確認画面(アクセストークン付き)を出すよう強制する。
-    calProvider.setCustomParameters({ prompt: 'consent select_account' });
-    // ポップアップ方式だと、ブラウザのプライバシー設定によっては許可した後も
-    // 鍵(アクセストークン)がうまく戻ってこないことがあるため、
-    // 画面ごとGoogleに移動する方式(リダイレクト)を使う。
-    sessionStorage.setItem('tsumiage_cal_pending', '1');
-    showToast('カレンダーの閲覧を許可してください…');
-    fbAuth.signInWithRedirect(calProvider).catch(err=>{
-      sessionStorage.removeItem('tsumiage_cal_pending');
-      console.error('[calendar] signInWithRedirect failed', err && err.code, err && err.message);
-      showToast('カレンダーへのアクセスが許可されませんでした。');
-    });
+    const client = ensureCalTokenClient();
+    if(!client){
+      showToast('カレンダーの準備中です。少し待ってから、もう一度押してください。');
+      return;
+    }
+    // ボタンを押した直後に、間を空けずそのまま呼ぶこと。
+    // 待ち時間をはさむと、ブラウザにポップアップを止められてしまう。
+    client.requestAccessToken();
   }
 
   document.getElementById('cal-sync').addEventListener('click', viewGoogleCalendar);
