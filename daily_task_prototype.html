@@ -1738,9 +1738,6 @@
     head.className = 'big-head';
     head.innerHTML = `
       ${DRAG_HANDLE_SVG}
-      <div class="big-check${big.done ? ' on' : ''}" title="この大きな仕事を完了にする">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
       <div class="ring-wrap"></div>
       <div class="big-title-wrap">
         <textarea class="big-title-input" rows="1" placeholder="大きな仕事の名前"></textarea>
@@ -1796,14 +1793,6 @@
         e.stopPropagation();
         moveBig(Number(btn.dataset.dir));
       });
-    });
-
-    const bigCheckEl = head.querySelector('.big-check');
-    bigCheckEl.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      big.done = !(big.done === true);
-      if(big.done) addBlocks(1);   // 大きな仕事＝1点
-      render();
     });
 
     const repeatBtn = head.querySelector('.repeat-btn');
@@ -2022,6 +2011,8 @@
       input.addEventListener('keydown', e=>{ if(e.key==='Enter') addMediumHere(); });
     }
 
+    // 大きな仕事は、中くらいの仕事が全部終わったら自動で達成になる。
+    // （big.done は以前のデータとの互換のために見るだけ）
     const manualBigDone = big.done === true;
     const percent = manualBigDone ? 100 : (totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0);
     const achieved = manualBigDone || (totalPlanned > 0 && totalDone === totalPlanned);
@@ -2033,6 +2024,8 @@
 
     if(achieved && !big.wasAchieved){
       burstConfetti(card, 20, ['#6d5dfa','#ff5ca8','#4c7cff']);
+      // 達成になった瞬間に1点。受信を反映しているだけのときは数えない。
+      if(!applyingRemote) addBlocks(1);
     }
     big.wasAchieved = achieved;
 
@@ -2057,9 +2050,8 @@
       const big = state.bigs.find(b=>b.id===id);
       if(!big) return;
       const result = renderBigBlock(big);
-      // 大きな仕事は、自分でチェックを押したときだけ下にまとめる。
-      // 中くらいの仕事が全部終わっただけでは、勝手にしまわない。
-      if(result.manualDone) finishedBigs.push(result.el);
+      // 達成した大きな仕事は、いちばん下にまとめる
+      if(result.achieved && result.hasItems) finishedBigs.push(result.el);
       else blocksEl.appendChild(result.el);
       if(result.hasItems){
         anyBigWithItems = true;
