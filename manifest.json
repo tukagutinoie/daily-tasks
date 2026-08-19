@@ -1,6 +1,6 @@
 {
-  "name": "今日の積み上げ",
-  "short_name": "積み上げ",
+  "name": "つみあげ",
+  "short_name": "つみあげ",
   "start_url": "./daily_task_prototype.html",
   "scope": "./",
   "display": "standalone",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>今日の積み上げ</title>
+<title>つみあげ</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -293,17 +293,6 @@
   .block-wrap.dragging{
     opacity:.5;
   }
-  .drag-handle{
-    flex:none;
-    cursor:grab;
-    touch-action:none;
-    color:#c9c5d6;
-    font-size:16px;
-    padding:6px 4px;
-    line-height:1;
-    user-select:none;
-  }
-  .drag-handle:active{cursor:grabbing;}
 
   /* ---------- 大きな仕事カード（複数・開閉できる） ---------- */
   .big-card{
@@ -352,14 +341,7 @@
     font-weight:600;
     margin-top:2px;
   }
-  .big-toggle-arrow{
-    flex:none;
-    font-size:13px;
-    color:var(--sub);
-    transition:transform .25s ease;
-    padding:6px;
-  }
-  .big-card.open .big-toggle-arrow{transform:rotate(90deg);}
+  .big-card.open .toggle-arrow{transform:rotate(90deg);}
   .big-body{
     max-height:0;
     opacity:0;
@@ -382,6 +364,7 @@
     display:flex;
     align-items:center;
     gap:9px;
+    margin-top:18px;
     margin-bottom:14px;
   }
   .add-big-row input{
@@ -569,38 +552,82 @@
     100%{ transform:translateY(70px) rotate(340deg); opacity:0; }
   }
 
+  /* ---------- ドラッグの持ち手・開閉の矢印（共通パーツ） ---------- */
+  .drag-handle{
+    flex:none;
+    cursor:grab;
+    touch-action:none;
+    color:#d3cfe0;
+    padding:6px 2px;
+    display:flex;
+    align-items:center;
+  }
+  .drag-handle:active{cursor:grabbing;}
+  .toggle-arrow{
+    flex:none;
+    color:var(--sub);
+    transition:transform .25s ease;
+    padding:6px;
+    display:flex;
+    align-items:center;
+  }
+  .memo-card.open .toggle-arrow{transform:rotate(90deg);}
+
   /* ---------- メモ欄（アコーディオン） ---------- */
   .memo-card{
     background:var(--card);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:6px 22px;
+    padding:0 22px;
+    position:relative;
     overflow:hidden;
     transition:box-shadow .25s ease;
+  }
+  .memo-card::before{
+    content:'';
+    position:absolute;
+    left:18px; right:18px; top:0;
+    height:5px;
+    border-radius:0 0 5px 5px;
+    background:linear-gradient(120deg, #4c7cff 0%, #6d5dfa 100%);
   }
   .memo-card:hover{box-shadow:var(--shadow-hover);}
   .memo-toggle{
     width:100%;
     border:none;
     background:none;
-    padding:16px 0;
+    padding:19px 0 17px;
     display:flex;
     align-items:center;
-    gap:8px;
-    font-size:15px;
-    font-weight:800;
+    gap:13px;
     color:var(--text);
     cursor:pointer;
     font-family:inherit;
   }
-  .memo-toggle .label{flex:1; text-align:left;}
-  .memo-toggle .arrow{
-    display:inline-block;
-    transition:transform .25s ease;
-    color:var(--sub);
-    font-size:13px;
+  .memo-icon{
+    flex:none;
+    width:36px;height:36px;
+    border-radius:50%;
+    background:var(--mid-bg);
+    color:var(--mid);
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
-  .memo-card.open .memo-toggle .arrow{transform:rotate(90deg);}
+  .memo-title-wrap{flex:1; min-width:0; text-align:left;}
+  .memo-title{
+    display:block;
+    font-size:15px;
+    font-weight:800;
+    color:var(--text);
+  }
+  .memo-sub{
+    display:block;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--sub);
+    margin-top:1px;
+  }
   .memo-body{
     max-height:0;
     opacity:0;
@@ -837,7 +864,6 @@
     <div class="header-row">
       <div>
         <div class="date-pill" id="today-date"></div>
-        <h1 class="title">今日の積み上げ</h1>
       </div>
       <div class="account-box" id="account-box">
         <button class="login-btn" id="login-btn" style="display:none;">Googleでログイン</button>
@@ -861,15 +887,19 @@
 
   <div class="review-banner" id="review-banner">
     <div class="mascot-inline" id="mascot-inline" title="ヒントを見る">
-      <svg class="mascot-body" width="38" height="34" viewBox="0 0 64 56">
+      <svg class="mascot-body" width="42" height="38" viewBox="0 0 64 56">
         <path d="M32 4 C50 4 58 22 58 34 C58 46 46 52 32 52 C18 52 6 46 6 34 C6 22 14 4 32 4 Z"
           fill="url(#slimeGrad)" stroke="#1f7fce" stroke-width="1.5"/>
-        <ellipse cx="19" cy="17" rx="6" ry="4" fill="#ffffff" opacity="0.55"/>
-        <circle cx="23" cy="30" r="4" fill="#17334a"/>
-        <circle cx="41" cy="30" r="4" fill="#17334a"/>
-        <circle cx="24.3" cy="28.7" r="1.1" fill="#ffffff"/>
-        <circle cx="42.3" cy="28.7" r="1.1" fill="#ffffff"/>
-        <path d="M23 39 Q32 46 41 39" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="19" cy="16" rx="7.5" ry="5" fill="#ffffff" opacity="0.6"/>
+        <ellipse cx="16" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="0.55"/>
+        <ellipse cx="48" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="0.55"/>
+        <circle cx="23" cy="30" r="5.2" fill="#17334a"/>
+        <circle cx="41" cy="30" r="5.2" fill="#17334a"/>
+        <circle cx="24.6" cy="28.2" r="1.5" fill="#ffffff"/>
+        <circle cx="42.6" cy="28.2" r="1.5" fill="#ffffff"/>
+        <circle cx="21.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/>
+        <circle cx="39.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/>
+        <path d="M23 39 Q32 46.5 41 39" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
       </svg>
     </div>
     <div class="hint-bubble" id="review-text"></div>
@@ -896,7 +926,7 @@
 
   <footer>
     <button class="review-btn" id="week-review-btn">📅 今週のふりかえりを見る</button>
-    <button class="cal-btn" id="cal-sync">Googleカレンダーに同期（この試作品ではまだ未接続）</button>
+    <button class="cal-btn" id="cal-sync">Googleカレンダーに同期</button>
     <div class="note" id="save-note"></div>
   </footer>
 
@@ -923,6 +953,10 @@
   const MAX_BIG = 4;
   const MAX_MEDIUM = 3;
   const MAX_SMALL_PER_MEDIUM = 5;
+
+  const DRAG_HANDLE_SVG = `<svg class="drag-handle" viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-label="ドラッグして並べ替え"><circle cx="6" cy="4" r="1.7"/><circle cx="14" cy="4" r="1.7"/><circle cx="6" cy="10" r="1.7"/><circle cx="14" cy="10" r="1.7"/><circle cx="6" cy="16" r="1.7"/><circle cx="14" cy="16" r="1.7"/></svg>`;
+  const TOGGLE_ARROW_SVG = `<svg class="toggle-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const MEMO_ICON_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20l4.6-1.1L19.5 8a1.7 1.7 0 000-2.4l-1.1-1.1a1.7 1.7 0 00-2.4 0L5.1 15.4 4 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M13.8 6.7l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
   // ---- ここにFirebaseの設定を貼りつける ----
   // Firebaseコンソール(https://console.firebase.google.com)で
@@ -1174,9 +1208,13 @@
     card.className = 'memo-card' + (memoOpen ? ' open' : '');
     card.innerHTML = `
       <button class="memo-toggle" type="button">
-        <span class="drag-handle" title="ドラッグして並べ替え">⠿</span>
-        <span class="label">📝 メモ（タップで開く）</span>
-        <span class="arrow">▶</span>
+        ${DRAG_HANDLE_SVG}
+        <span class="memo-icon">${MEMO_ICON_SVG}</span>
+        <span class="memo-title-wrap">
+          <span class="memo-title">メモ</span>
+          <span class="memo-sub">タップで開く・自由に書けます</span>
+        </span>
+        ${TOGGLE_ARROW_SVG}
       </button>
       <div class="memo-body">
         <textarea placeholder="思ったこと、考え中のこと、なんでも自由に書けます"></textarea>
@@ -1195,7 +1233,7 @@
     textarea.value = state.memo || '';
     textarea.addEventListener('input', ()=>{
       state.memo = textarea.value;
-      scheduleSave();
+      scheduleMemoSave();
     });
 
     wrap.appendChild(card);
@@ -1214,13 +1252,13 @@
     const head = document.createElement('div');
     head.className = 'big-head';
     head.innerHTML = `
-      <span class="drag-handle" title="ドラッグして並べ替え">⠿</span>
+      ${DRAG_HANDLE_SVG}
       <div class="ring-wrap"></div>
       <div class="big-title-wrap">
         <input class="big-title-input" placeholder="大きな仕事の名前" value="${escapeAttr(big.title)}">
         <div class="big-sub"></div>
       </div>
-      <span class="big-toggle-arrow">▶</span>
+      ${TOGGLE_ARROW_SVG}
     `;
     const dragHandle = head.querySelector('.drag-handle');
     dragHandle.addEventListener('pointerdown', e=> e.stopPropagation());
@@ -1326,7 +1364,7 @@
         const btn = addRow.querySelector('button');
         function addSmall(){
           const val = input.value.trim();
-          if(!val) return;
+          if(!val){ showToast('仕事の名前を入力してください。'); return; }
           if(medium.items.length >= MAX_SMALL_PER_MEDIUM){
             showToast('小さい仕事は5つまでです。');
             return;
@@ -1360,7 +1398,7 @@
       const btn = addMediumRow.querySelector('button');
       function addMediumHere(){
         const val = input.value.trim();
-        if(!val) return;
+        if(!val){ showToast('仕事の名前を入力してください。'); return; }
         if(big.mediums.length >= MAX_MEDIUM){
           showToast('中くらいの仕事は3つまでです。');
           return;
@@ -1447,7 +1485,7 @@
   function addBig(){
     const input = document.getElementById('big-input');
     const val = input.value.trim();
-    if(!val) return;
+    if(!val){ showToast('仕事の名前を入力してください。'); return; }
     if(state.bigs.length >= MAX_BIG){
       showToast('大きな仕事は4つまでです。');
       return;
@@ -1617,9 +1655,102 @@
     });
   }
 
-  document.getElementById('cal-sync').addEventListener('click', ()=>{
-    showToast('この試作品ではカレンダー連携は未接続です。次の段階で追加します。');
-  });
+  // ---- Googleカレンダーに同期する ----
+  let calendarAccessToken = null;
+
+  function buildCalendarEventPayload(){
+    const lines = [];
+    let doneAll = 0, plannedAll = 0;
+    state.bigs.forEach(big=>{
+      if(!big.title || !big.title.trim()) return;
+      lines.push('■ '+big.title);
+      big.mediums.forEach(medium=>{
+        lines.push('　・'+medium.name);
+        medium.items.forEach(item=>{
+          plannedAll++; if(item.done) doneAll++;
+          lines.push('　　'+(item.done?'✅':'⬜')+' '+item.text);
+        });
+      });
+    });
+    const titles = state.bigs.map(b=>b.title).filter(Boolean).join('・') || 'つみあげ';
+    const description = (lines.length ? lines.join('\n') : '（タスクはまだ入力されていません）')
+      + '\n\n進み具合：' + doneAll + '/' + plannedAll;
+    const dateStr = todayKey();
+    return {
+      summary: 'つみあげ：'+titles,
+      description: description,
+      start: { date: dateStr },
+      end: { date: dateStr }
+    };
+  }
+
+  function doCalendarSync(token){
+    setSyncStatus('カレンダーに同期中…');
+    const eventId = 'tsumiage' + todayKey().replace(/-/g, '');
+    const payload = buildCalendarEventPayload();
+    const base = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+
+    fetch(base + '/' + eventId, { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(res=>{
+        if(res.status === 200){
+          return fetch(base + '/' + eventId, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+        return fetch(base, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({id: eventId}, payload))
+        });
+      })
+      .then(res=>{
+        if(!res.ok){
+          if(res.status === 401 || res.status === 403){
+            calendarAccessToken = null;
+            showToast('カレンダーへのアクセスが切れました。もう一度ボタンを押してください。');
+          } else {
+            showToast('カレンダーへの同期に失敗しました。');
+          }
+          setSyncStatus('保存ずみ ✓');
+          return;
+        }
+        showToast('Googleカレンダーに同期しました！');
+        setSyncStatus('保存ずみ ✓');
+      })
+      .catch(()=>{
+        showToast('カレンダーへの同期に失敗しました（通信エラー）。');
+        setSyncStatus('保存ずみ ✓');
+      });
+  }
+
+  function syncToGoogleCalendar(){
+    if(!FIREBASE_READY || !currentUser){
+      showToast('カレンダーに同期するには、ログインが必要です。');
+      return;
+    }
+    if(calendarAccessToken){
+      doCalendarSync(calendarAccessToken);
+      return;
+    }
+    const calProvider = new firebase.auth.GoogleAuthProvider();
+    calProvider.addScope('https://www.googleapis.com/auth/calendar.events');
+    showToast('カレンダーへのアクセスを許可してください…');
+    fbAuth.signInWithPopup(calProvider).then(result=>{
+      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      calendarAccessToken = cred && cred.accessToken;
+      if(!calendarAccessToken){
+        showToast('カレンダーへのアクセスを取得できませんでした。');
+        return;
+      }
+      doCalendarSync(calendarAccessToken);
+    }).catch(()=>{
+      showToast('カレンダーへのアクセスが許可されませんでした。');
+    });
+  }
+
+  document.getElementById('cal-sync').addEventListener('click', syncToGoogleCalendar);
 
   // ---- Googleアカウントでログインして、保存・共有する仕組み ----
   const loginBtn = document.getElementById('login-btn');
@@ -1640,9 +1771,13 @@
     return fbDb.collection('users').doc(uid).collection('days').doc(todayKey());
   }
 
+  // ---- メモ欄は日付をまたいで消えないよう、日ごとのデータとは別の場所に保存する ----
+  function profileRefForUser(uid){
+    return fbDb.collection('users').doc(uid);
+  }
+
   function serializeState(){
     return {
-      memo: state.memo,
       morningTime: state.morningTime,
       eveningTime: state.eveningTime,
       dayWasAchieved: state.dayWasAchieved,
@@ -1666,12 +1801,24 @@
     }, 800);
   }
 
+  let memoSaveTimer = null;
+  function scheduleMemoSave(){
+    if(!FIREBASE_READY || !currentUser) return;
+    setSyncStatus('保存中…');
+    clearTimeout(memoSaveTimer);
+    memoSaveTimer = setTimeout(()=>{
+      profileRefForUser(currentUser.uid).set({memo: state.memo}, {merge:true})
+        .then(()=> setSyncStatus('保存ずみ ✓'))
+        .catch(()=> setSyncStatus('保存に失敗しました'));
+    }, 800);
+  }
+
   if(!FIREBASE_READY){
     firebaseOffEl.style.display = 'block';
     saveNoteEl.innerHTML = 'これは試作品です。画面を閉じたり更新すると、入力した内容は消えます。<br>Firebaseの設定を貼りつけると、Googleアカウントでログインして保存・共有できるようになります。';
   } else {
     loginBtn.style.display = 'inline-block';
-    saveNoteEl.innerHTML = 'ログインすると、この端末とほかの端末(Mac・スマホなど)で内容が共有されます。<br>ログインしていない間は、この画面だけの一時的な内容です。';
+    saveNoteEl.innerHTML = 'ログインすると、この端末とほかの端末(Mac・スマホなど)で内容が共有されます。';
 
     const provider = new firebase.auth.GoogleAuthProvider();
     loginBtn.addEventListener('click', ()=>{
@@ -1692,10 +1839,15 @@
         userName.textContent = user.displayName || user.email || 'ログイン中';
         setSyncStatus('読み込み中…');
 
-        docRefForUser(user.uid).get().then(snap=>{
+        Promise.all([
+          profileRefForUser(user.uid).get().catch(()=>null),
+          docRefForUser(user.uid).get()
+        ]).then(([profileSnap, snap])=>{
+          if(profileSnap && profileSnap.exists && typeof profileSnap.data().memo === 'string'){
+            state.memo = profileSnap.data().memo;
+          }
           if(snap.exists){
             const data = snap.data();
-            if(typeof data.memo === 'string') state.memo = data.memo;
             if(typeof data.morningTime === 'string') state.morningTime = data.morningTime;
             if(typeof data.eveningTime === 'string') state.eveningTime = data.eveningTime;
             if(typeof data.dayWasAchieved === 'boolean') state.dayWasAchieved = data.dayWasAchieved;
