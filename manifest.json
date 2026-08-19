@@ -1,10 +1,10 @@
 {
-  "name": "つみあげ",
-  "short_name": "つみあげ",
+  "name": "tumiage（スケジュール管理）",
+  "short_name": "tumiage",
   "start_url": "./daily_task_prototype.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "icons": [
     {
       "src": "icon-192.png",
