@@ -813,6 +813,47 @@
     transition:box-shadow .2s ease, transform .15s ease;
   }
   .cal-btn:hover{box-shadow:0 16px 32px rgba(109,93,250,0.36); transform:translateY(-1px);}
+  .cal-events{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:6px 16px;
+    margin-top:10px;
+  }
+  .cal-event-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 0;
+    border-top:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .cal-event-row:first-child{border-top:none;}
+  .cal-event-date{
+    flex:none;
+    width:64px;
+    font-weight:700;
+    color:var(--sub);
+    font-size:11.5px;
+  }
+  .cal-event-time{
+    flex:none;
+    width:44px;
+    font-weight:800;
+    color:var(--purple);
+    font-size:12.5px;
+  }
+  .cal-event-title{
+    flex:1;
+    color:var(--text);
+    font-weight:600;
+  }
+  .cal-empty{
+    padding:14px 0;
+    font-size:12.5px;
+    color:var(--sub);
+    text-align:center;
+  }
   .note{
     text-align:center;
     font-size:12px;
@@ -926,7 +967,8 @@
 
   <footer>
     <button class="review-btn" id="week-review-btn">📅 今週のふりかえりを見る</button>
-    <button class="cal-btn" id="cal-sync">Googleカレンダーに同期</button>
+    <button class="cal-btn" id="cal-sync">Googleカレンダーの予定を見る</button>
+    <div class="cal-events" id="cal-events" style="display:none;"></div>
     <div class="note" id="save-note"></div>
   </footer>
 
@@ -1655,88 +1697,92 @@
     });
   }
 
-  // ---- Googleカレンダーに同期する ----
+  // ---- Googleカレンダーの予定を「見る」だけ（つみあげ側からは何も書き込まない） ----
   let calendarAccessToken = null;
 
-  function buildCalendarEventPayload(){
-    const lines = [];
-    let doneAll = 0, plannedAll = 0;
-    state.bigs.forEach(big=>{
-      if(!big.title || !big.title.trim()) return;
-      lines.push('■ '+big.title);
-      big.mediums.forEach(medium=>{
-        lines.push('　・'+medium.name);
-        medium.items.forEach(item=>{
-          plannedAll++; if(item.done) doneAll++;
-          lines.push('　　'+(item.done?'✅':'⬜')+' '+item.text);
-        });
-      });
-    });
-    const titles = state.bigs.map(b=>b.title).filter(Boolean).join('・') || 'つみあげ';
-    const description = (lines.length ? lines.join('\n') : '（タスクはまだ入力されていません）')
-      + '\n\n進み具合：' + doneAll + '/' + plannedAll;
-    const dateStr = todayKey();
-    return {
-      summary: 'つみあげ：'+titles,
-      description: description,
-      start: { date: dateStr },
-      end: { date: dateStr }
-    };
+  const CAL_DAYS = ['日','月','火','水','木','金','土'];
+
+  function formatEventDate(ev){
+    const raw = (ev.start && (ev.start.dateTime || ev.start.date));
+    if(!raw) return '';
+    const d = new Date(raw);
+    return (d.getMonth()+1) + '/' + d.getDate() + '（' + CAL_DAYS[d.getDay()] + '）';
   }
 
-  function doCalendarSync(token){
-    setSyncStatus('カレンダーに同期中…');
-    const eventId = 'tsumiage' + todayKey().replace(/-/g, '');
-    const payload = buildCalendarEventPayload();
-    const base = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+  function formatEventTime(ev){
+    if(ev.start && ev.start.dateTime){
+      const d = new Date(ev.start.dateTime);
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+    return '終日';
+  }
 
-    fetch(base + '/' + eventId, { headers: { 'Authorization': 'Bearer ' + token } })
-      .then(res=>{
-        if(res.status === 200){
-          return fetch(base + '/' + eventId, {
-            method: 'PUT',
-            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        }
-        return fetch(base, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({id: eventId}, payload))
-        });
-      })
+  function renderCalendarEvents(events){
+    const box = document.getElementById('cal-events');
+    box.style.display = 'block';
+    if(!events || events.length === 0){
+      box.innerHTML = '<div class="cal-empty">これから3日間の予定は見つかりませんでした。</div>';
+      return;
+    }
+    box.innerHTML = '';
+    events.forEach(ev=>{
+      const row = document.createElement('div');
+      row.className = 'cal-event-row';
+      row.innerHTML = `<span class="cal-event-date"></span><span class="cal-event-time"></span><span class="cal-event-title"></span>`;
+      row.querySelector('.cal-event-date').textContent = formatEventDate(ev);
+      row.querySelector('.cal-event-time').textContent = formatEventTime(ev);
+      row.querySelector('.cal-event-title').textContent = ev.summary || '（タイトルなし）';
+      box.appendChild(row);
+    });
+  }
+
+  function fetchTodayCalendarEvents(token){
+    setSyncStatus('カレンダーを読み込み中…');
+    const d = new Date();
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0,0,0).toISOString();
+    const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate()+2, 23,59,59).toISOString();
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+      + '?timeMin=' + encodeURIComponent(dayStart)
+      + '&timeMax=' + encodeURIComponent(dayEnd)
+      + '&singleEvents=true&orderBy=startTime';
+
+    fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
       .then(res=>{
         if(!res.ok){
           if(res.status === 401 || res.status === 403){
             calendarAccessToken = null;
             showToast('カレンダーへのアクセスが切れました。もう一度ボタンを押してください。');
           } else {
-            showToast('カレンダーへの同期に失敗しました。');
+            showToast('カレンダーの読み込みに失敗しました。');
           }
           setSyncStatus('保存ずみ ✓');
-          return;
+          return null;
         }
-        showToast('Googleカレンダーに同期しました！');
+        return res.json();
+      })
+      .then(data=>{
+        if(!data) return;
+        renderCalendarEvents(data.items || []);
         setSyncStatus('保存ずみ ✓');
       })
       .catch(()=>{
-        showToast('カレンダーへの同期に失敗しました（通信エラー）。');
+        showToast('カレンダーの読み込みに失敗しました（通信エラー）。');
         setSyncStatus('保存ずみ ✓');
       });
   }
 
-  function syncToGoogleCalendar(){
+  function viewGoogleCalendar(){
     if(!FIREBASE_READY || !currentUser){
-      showToast('カレンダーに同期するには、ログインが必要です。');
+      showToast('カレンダーを見るには、ログインが必要です。');
       return;
     }
     if(calendarAccessToken){
-      doCalendarSync(calendarAccessToken);
+      fetchTodayCalendarEvents(calendarAccessToken);
       return;
     }
     const calProvider = new firebase.auth.GoogleAuthProvider();
-    calProvider.addScope('https://www.googleapis.com/auth/calendar.events');
-    showToast('カレンダーへのアクセスを許可してください…');
+    calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+    showToast('カレンダーの閲覧を許可してください…');
     fbAuth.signInWithPopup(calProvider).then(result=>{
       const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
       calendarAccessToken = cred && cred.accessToken;
@@ -1744,13 +1790,13 @@
         showToast('カレンダーへのアクセスを取得できませんでした。');
         return;
       }
-      doCalendarSync(calendarAccessToken);
+      fetchTodayCalendarEvents(calendarAccessToken);
     }).catch(()=>{
       showToast('カレンダーへのアクセスが許可されませんでした。');
     });
   }
 
-  document.getElementById('cal-sync').addEventListener('click', syncToGoogleCalendar);
+  document.getElementById('cal-sync').addEventListener('click', viewGoogleCalendar);
 
   // ---- Googleアカウントでログインして、保存・共有する仕組み ----
   const loginBtn = document.getElementById('login-btn');
