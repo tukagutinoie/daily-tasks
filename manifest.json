@@ -1,6 +1,6 @@
 {
-  "name": "つみあげ",
-  "short_name": "つみあげ",
+  "name": "tumiage（スケジュール管理）",
+  "short_name": "tumiage（スケジュール管理）",
   "start_url": "./daily_task_prototype.html",
   "scope": "./",
   "display": "standalone",
