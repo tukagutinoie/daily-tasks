@@ -1802,7 +1802,7 @@
     bigCheckEl.addEventListener('click', (e)=>{
       e.stopPropagation();
       big.done = !(big.done === true);
-      if(big.done) addBlocks(5);   // 大きな仕事＝5点
+      if(big.done) addBlocks(1);   // 大きな仕事＝1点
       render();
     });
 
@@ -1884,7 +1884,7 @@
       const midCheckEl = mCard.querySelector('.mid-check');
       midCheckEl.addEventListener('click', ()=>{
         medium.done = !(medium.done === true);
-        if(medium.done) addBlocks(2);   // 中くらいの仕事＝2点
+        if(medium.done) addBlocks(1);   // 中くらいの仕事＝1点
         render();
       });
 
@@ -2323,9 +2323,9 @@
   function pointsOfDay(data){
     let pts = 0;
     (data && data.bigs ? data.bigs : []).forEach(b=>{
-      if(b.done) pts += 5;
+      if(b.done) pts += 1;
       (b.mediums||[]).forEach(m=>{
-        if(m.done) pts += 2;
+        if(m.done) pts += 1;
         (m.items||[]).forEach(it=>{ if(it.done) pts += 1; });
       });
     });
@@ -2366,40 +2366,51 @@
     return { total: total, active: active, best: best, year: y };
   }
 
-  // その日の中身（大→中→小）を開いて見せる
+  // その日「終わったもの」だけを、大→中→小で見せる。
+  // 未完了まで入れると量が膨大になって読めなくなるため、完了分だけを残す。
   function buildDayDetail(data){
     const wrap = document.createElement('div');
     wrap.className = 'wr-detail';
     const bigs = Array.isArray(data.bigs) ? data.bigs : [];
-    if(!bigs.length){
-      wrap.innerHTML = '<div class="wd-empty">中身の記録がありません。</div>';
-      return wrap;
-    }
+    let any = false;
+
     bigs.forEach(b=>{
+      const mids = [];
+      (b.mediums||[]).forEach(m=>{
+        const doneItems = (m.items||[]).filter(it=> it.done);
+        if(m.done || doneItems.length) mids.push({ m: m, items: doneItems });
+      });
+      if(!b.done && !mids.length) return;   // この大きな仕事は、この日なにも終わっていない
+      any = true;
+
+      let cnt = 0;
+      mids.forEach(x=> cnt += x.items.length);
+
       const bg = document.createElement('div');
       bg.className = 'wd-big';
-      let dn = 0, pl = 0;
-      (b.mediums||[]).forEach(m=> (m.items||[]).forEach(it=>{ pl++; if(it.done) dn++; }));
       bg.innerHTML = '<div class="wd-big-t"><b></b><span></span></div>';
       bg.querySelector('b').textContent = (b.done ? '✓ ' : '') + (b.title || '（無題）');
-      bg.querySelector('span').textContent = pl ? (dn + '/' + pl) : '';
-      (b.mediums||[]).forEach(m=>{
+      bg.querySelector('span').textContent = cnt ? (cnt + '件') : '';
+
+      mids.forEach(x=>{
         const md = document.createElement('div');
         md.className = 'wd-mid';
         const mt = document.createElement('div');
         mt.className = 'wd-mid-t';
-        mt.textContent = (m.done ? '✓ ' : '') + (m.name || '（無題）');
+        mt.textContent = (x.m.done ? '✓ ' : '') + (x.m.name || '（無題）');
         md.appendChild(mt);
-        (m.items||[]).forEach(it=>{
+        x.items.forEach(it=>{
           const li = document.createElement('div');
-          li.className = 'wd-item' + (it.done ? ' done' : '');
-          li.textContent = (it.done ? '✓ ' : '・ ') + (it.text || '');
+          li.className = 'wd-item';
+          li.textContent = '✓ ' + (it.text || '');
           md.appendChild(li);
         });
         bg.appendChild(md);
       });
       wrap.appendChild(bg);
     });
+
+    if(!any) wrap.innerHTML = '<div class="wd-empty">この日は終わったものがありません。</div>';
     return wrap;
   }
 
@@ -2666,7 +2677,7 @@
   }
 
   // ---- つみあげの城：チェックするたびに天守閣が建ち上がる ----
-  // 小さい仕事＝1点、中くらいの仕事＝2点、大きな仕事＝5点。100点で城がひとつ完成。
+  // チェック1つ＝1点（大・中・小どれも同じ）。100点で城がひとつ完成。
   const CASTLE_TOTAL = 100;
   const LV_STEP = 20;              // 20点ごとに1レベル
   let totalBlocks = 0;
