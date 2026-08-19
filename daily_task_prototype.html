@@ -432,6 +432,15 @@
     font-weight:700;
   }
 
+  .trash-btn, .mid-trash{
+    flex:none; border:none; background:transparent;
+    color:#cbc7d8; cursor:pointer; padding:5px;
+    border-radius:8px; line-height:0;
+    transition:color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .trash-btn:hover, .mid-trash:hover{ color:#e0566b; background:#fdeff1; }
+  .trash-btn:active, .mid-trash:active{ transform:scale(.88); }
+
   .move-btns{
     flex:none; display:flex; flex-direction:column; gap:2px;
   }
@@ -1171,7 +1180,11 @@
 
     /* 指で押せる大きさに */
     .check{ width:28px; height:28px; border-radius:9px; }
-    .move-btn{ width:30px; height:23px; font-size:10px; }
+    /* ボタンが増えたぶん、名前の場所を確保するため少し小さくする */
+    .move-btn{ width:24px; height:20px; font-size:9px; }
+    .trash-btn, .mid-trash{ padding:6px; }
+    .repeat-btn{ font-size:16px; padding:5px; }
+    .big-head{ gap:6px; }
     .big-check{ width:30px; height:30px; border-radius:10px; }
     .big-check svg{ width:19px; height:19px; }
     .mid-check{ width:28px; height:28px; border-radius:9px; }
@@ -1748,6 +1761,7 @@
         <button class="move-btn" data-dir="1" title="下に動かす">▼</button>
       </div>
       <button class="repeat-btn${big.repeatDaily ? ' on' : ''}" title="毎日くりかえす">🔁</button>
+      <button class="trash-btn" title="この大きな仕事を削除"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       ${TOGGLE_ARROW_SVG}
     `;
     const dragHandle = head.querySelector('.drag-handle');
@@ -1793,6 +1807,18 @@
         e.stopPropagation();
         moveBig(Number(btn.dataset.dir));
       });
+    });
+
+    const trashBtn = head.querySelector('.trash-btn');
+    trashBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const name = big.title || 'この大きな仕事';
+      if(!window.confirm('「' + name + '」を削除します。\n中の中くらいの仕事・小さい仕事も一緒に消えます。\nよろしいですか？')) return;
+      const ix = state.bigs.indexOf(big);
+      if(ix !== -1) state.bigs.splice(ix, 1);
+      state.blockOrder = state.blockOrder.filter(k=> k !== 'big:' + big.id);
+      render();
+      showToast('削除しました。');
     });
 
     const repeatBtn = head.querySelector('.repeat-btn');
@@ -1859,6 +1885,7 @@
             <input class="mid-title-input" placeholder="中くらいの仕事の名前" value="${escapeAttr(medium.name)}">
             <div class="mid-count">${countText}</div>
           </div>
+          <button class="mid-trash" title="この中くらいの仕事を削除"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
         <ul class="small-tasks"></ul>
         <div class="add-row"></div>
@@ -1868,6 +1895,16 @@
       mCard.querySelector('.mid-title-input').addEventListener('input', (e)=>{
         medium.name = e.target.value;
         scheduleSave();
+      });
+
+      const midTrash = mCard.querySelector('.mid-trash');
+      midTrash.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const name = medium.name || 'この中くらいの仕事';
+        if(!window.confirm('「' + name + '」を削除します。\n中の小さい仕事も一緒に消えます。\nよろしいですか？')) return;
+        big.mediums.splice(mIdx, 1);
+        render();
+        showToast('削除しました。');
       });
 
       const midCheckEl = mCard.querySelector('.mid-check');
