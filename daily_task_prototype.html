@@ -418,6 +418,23 @@
   .repeat-btn.on{opacity:1; filter:none; background:var(--mid-bg);}
   .repeat-btn:active{transform:scale(.92);}
 
+  .big-check{
+    width:24px;height:24px;
+    border-radius:8px;
+    border:2px solid var(--purple);
+    flex:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    transition:background .2s ease, transform .18s cubic-bezier(.4,0,.2,1);
+  }
+  .big-check svg{width:15px;height:15px;opacity:0;transition:opacity .15s ease;}
+  .big-check.on{background:var(--purple);}
+  .big-check.on svg{opacity:1;}
+  .big-check:active{transform:scale(.9);}
+
   .mid-check{
     width:22px;height:22px;
     border-radius:7px;
@@ -837,12 +854,105 @@
     transition:box-shadow .2s ease, transform .15s ease;
   }
   .cal-btn:hover{box-shadow:0 16px 32px rgba(109,93,250,0.36); transform:translateY(-1px);}
-  .cal-events{
+  .castle-strip{
+    display:flex;
+    align-items:center;
+    gap:12px;
     background:var(--card);
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:6px 16px;
-    margin-top:10px;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:11px 16px;
+    margin-bottom:18px;
+    cursor:pointer;
+    user-select:none;
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .castle-strip:active{transform:scale(.995);}
+  .castle-mini{
+    flex:none;
+    width:44px;
+    height:52px;
+    display:flex;
+    align-items:flex-end;
+  }
+  .castle-strip-text{flex:1; min-width:0;}
+  .castle-strip-title{font-size:13.5px; font-weight:800; color:var(--text);}
+  .castle-strip-sub{
+    font-size:11.5px; color:var(--sub); font-weight:700; margin-top:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .castle-strip-count{
+    flex:none; font-size:13px; font-weight:800;
+    background:linear-gradient(120deg, var(--purple) 0%, var(--pink) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .castle-art{
+    margin:14px 0 4px;
+    padding:12px;
+    background:var(--bg);
+    border-radius:14px;
+    height:280px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .castle-stat{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 2px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--sub); font-weight:700;
+  }
+  .castle-stat b{color:var(--text); font-size:14px;}
+
+  .cal-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+    overflow:hidden;
+  }
+  .cal-head{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:15px 16px;
+    cursor:pointer;
+    user-select:none;
+    /* もとのボタンと同じグラデーション。少しだけ薄めの色にしている */
+    background:linear-gradient(120deg, #8f83fb 0%, #ff8fc4 100%);
+    color:#fff;
+  }
+  .cal-ico{flex:none; font-size:15px;}
+  .cal-title{
+    flex:1;
+    min-width:0;
+    font-size:14.5px;
+    font-weight:800;
+    color:#fff;
+    /* かならず1行におさめる */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .cal-status{
+    font-size:11px;
+    color:rgba(255,255,255,0.92);
+    font-weight:700;
+    flex:none;
+    max-width:46%;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .cal-arrow{flex:none; color:rgba(255,255,255,0.95); transition:transform .25s ease;}
+  .cal-card.open .cal-arrow{transform:rotate(90deg);}
+  .cal-body{display:none; padding:12px 18px 14px;}
+  .cal-card.open .cal-body{display:block;}
+  .cal-events{
+    background:transparent;
+    border:none;
+    border-radius:0;
+    padding:0;
+    margin-top:0;
   }
   .cal-event-row{
     display:flex;
@@ -931,6 +1041,8 @@
 
     /* 指で押せる大きさに */
     .check{ width:28px; height:28px; border-radius:9px; }
+    .big-check{ width:30px; height:30px; border-radius:10px; }
+    .big-check svg{ width:19px; height:19px; }
     .mid-check{ width:28px; height:28px; border-radius:9px; }
     .mid-check svg{ width:18px; height:18px; }
     ul.small-tasks li{ padding:13px 2px; gap:12px; }
@@ -938,6 +1050,12 @@
     .plus-btn{ width:44px; height:44px; }
     .repeat-btn{ font-size:17px; padding:6px; }
     .review-btn, .cal-btn{ padding:16px; font-size:15px; }
+    .castle-strip{ padding:10px 13px; gap:10px; }
+    .castle-mini{ width:40px; height:48px; }
+    .castle-art{ height:230px; }
+    .cal-head{ padding:13px 13px; gap:7px; }
+    .cal-title{ font-size:13.5px; }
+    .cal-status{ font-size:10px; max-width:42%; }
     .modal-close, .bulk-btn{ padding:15px; font-size:15px; }
 
     /* iOSで入力時に画面が勝手に拡大されないよう、入力欄は16px以上にする */
@@ -1002,6 +1120,27 @@
   </div>
 
 
+  <div class="cal-card" id="cal-card">
+    <div class="cal-head" id="cal-head">
+      <span class="cal-ico">📅</span>
+      <div class="cal-title">Googleカレンダーの予定</div>
+      <div class="cal-status" id="cal-status"></div>
+      <svg class="cal-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="cal-body">
+      <div class="cal-events" id="cal-events"></div>
+    </div>
+  </div>
+
+  <div class="castle-strip" id="castle-strip" title="押すと大きく見られます">
+    <div class="castle-mini" id="castle-mini"></div>
+    <div class="castle-strip-text">
+      <div class="castle-strip-title">つみあげの城</div>
+      <div class="castle-strip-sub" id="castle-strip-sub"></div>
+    </div>
+    <div class="castle-strip-count" id="castle-strip-count"></div>
+  </div>
+
   <div class="blocks" id="blocks"></div>
 
   <div class="add-big-row" id="add-big-row">
@@ -1013,8 +1152,6 @@
   <footer>
     <button class="review-btn" id="bulk-add-btn">📋 まとめて追加</button>
     <button class="review-btn" id="week-review-btn">📅 今週のふりかえりを見る</button>
-    <button class="cal-btn" id="cal-sync">Googleカレンダーの予定を見る</button>
-    <div class="cal-events" id="cal-events" style="display:none;"></div>
     <div class="note" id="save-note"></div>
   </footer>
 
@@ -1047,6 +1184,16 @@
       <button class="bulk-btn danger" id="bulk-replace-btn">ぜんぶ置きかえる</button>
     </div>
     <button class="modal-close" id="bulk-modal-close">閉じる</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="castle-modal">
+  <div class="modal-box">
+    <h2>つみあげの城</h2>
+    <div class="modal-sub" id="castle-sub"></div>
+    <div class="castle-art" id="castle-art"></div>
+    <div id="castle-stats"></div>
+    <button class="modal-close" id="castle-modal-close">閉じる</button>
   </div>
 </div>
 
@@ -1095,7 +1242,7 @@
     // このアプリの住所(tukagutinoie.github.io)と、Firebaseの受付窓口
     // (daily-tasks-802ee.firebaseapp.com)が別の住所のため、最近のブラウザでは
     // 帰り道で「鍵」を持ち帰れず、必ず失敗していた。
-    // カレンダーの許可だけ、Google公式の別方式に変更した(viewGoogleCalendar を参照)。
+    // カレンダーの許可だけ、Google公式の別方式に変更した(loadCalendarNow を参照)。
   }
 
   const state = {
@@ -1420,6 +1567,9 @@
     head.className = 'big-head';
     head.innerHTML = `
       ${DRAG_HANDLE_SVG}
+      <div class="big-check${big.done ? ' on' : ''}" title="この大きな仕事を完了にする">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
       <div class="ring-wrap"></div>
       <div class="big-title-wrap">
         <textarea class="big-title-input" rows="1" placeholder="大きな仕事の名前"></textarea>
@@ -1449,6 +1599,14 @@
       updateHint();
       scheduleSave();
     });
+    const bigCheckEl = head.querySelector('.big-check');
+    bigCheckEl.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      big.done = !(big.done === true);
+      if(big.done) addBlocks(5);   // 大きな仕事＝5点
+      render();
+    });
+
     const repeatBtn = head.querySelector('.repeat-btn');
     repeatBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -1526,6 +1684,7 @@
       const midCheckEl = mCard.querySelector('.mid-check');
       midCheckEl.addEventListener('click', ()=>{
         medium.done = !(medium.done === true);
+        if(medium.done) addBlocks(2);   // 中くらいの仕事＝2点
         render();
       });
 
@@ -1544,7 +1703,7 @@
         const checkEl = li.querySelector('.check');
         checkEl.addEventListener('click', ()=>{
           item.done = !item.done;
-          if(item.done) item.eveningReviewed = false;
+          if(item.done){ item.eveningReviewed = false; addBlocks(1); }   // 小さい仕事＝1点
           checkEl.classList.add('pop');
           setTimeout(()=> checkEl.classList.remove('pop'), 180);
           render();
@@ -1616,11 +1775,14 @@
       input.addEventListener('keydown', e=>{ if(e.key==='Enter') addMediumHere(); });
     }
 
-    const percent = totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0;
-    const achieved = totalPlanned > 0 && totalDone === totalPlanned;
+    const manualBigDone = big.done === true;
+    const percent = manualBigDone ? 100 : (totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0);
+    const achieved = manualBigDone || (totalPlanned > 0 && totalDone === totalPlanned);
 
     head.querySelector('.ring-wrap').innerHTML = ringSVG(percent, 52, 6, 'url(#bigGrad)', achieved);
-    head.querySelector('.big-sub').textContent = totalDone + '/' + totalPlanned + ' 完了' + (achieved ? '　達成' : '');
+    head.querySelector('.big-sub').textContent = totalPlanned > 0
+      ? (totalDone + '/' + totalPlanned + ' 完了' + (achieved ? '　達成' : ''))
+      : (achieved ? '完了' : '中くらいの仕事なし');
 
     if(achieved && !big.wasAchieved){
       burstConfetti(card, 20, ['#6d5dfa','#ff5ca8','#4c7cff']);
@@ -1959,15 +2121,44 @@
   const GOOGLE_OAUTH_CLIENT_ID = '579478191235-s2f00417mneo9hv7g9vhf20lj2hqbhjm.apps.googleusercontent.com';
   let calTokenClient = null;
 
+  // 一度もらった鍵(アクセストークン)は、有効期限まで端末に覚えておく。
+  // こうすると画面を更新しても、期限内は許可画面が出ない。
+  const CAL_TOKEN_KEY = 'tsumiage_cal_token';
+  function saveCalToken(token, expiresInSec){
+    try{
+      localStorage.setItem(CAL_TOKEN_KEY, JSON.stringify({
+        token: token,
+        expiresAt: Date.now() + (Number(expiresInSec || 3600) * 1000) - 60000
+      }));
+    }catch(e){}
+  }
+  function loadCalToken(){
+    try{
+      const raw = localStorage.getItem(CAL_TOKEN_KEY);
+      if(!raw) return null;
+      const o = JSON.parse(raw);
+      if(!o || !o.token || !o.expiresAt) return null;
+      if(Date.now() >= o.expiresAt){ localStorage.removeItem(CAL_TOKEN_KEY); return null; }
+      return o.token;
+    }catch(e){ return null; }
+  }
+  function clearCalToken(){
+    try{ localStorage.removeItem(CAL_TOKEN_KEY); }catch(e){}
+    calendarAccessToken = null;
+  }
+
   function ensureCalTokenClient(){
     if(calTokenClient) return calTokenClient;
     if(!(window.google && window.google.accounts && window.google.accounts.oauth2)) return null;
     calTokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_OAUTH_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      // 空にしておくと、一度許可したあとは確認画面を出さずに鍵を出し直してくれる
+      prompt: '',
       callback: (resp)=>{
         if(resp && resp.access_token){
           calendarAccessToken = resp.access_token;
+          saveCalToken(resp.access_token, resp.expires_in);
           fetchTodayCalendarEvents(calendarAccessToken);
         } else {
           console.error('[calendar] no access_token in response', resp);
@@ -2026,7 +2217,7 @@
   }
 
   function fetchTodayCalendarEvents(token){
-    setSyncStatus('カレンダーを読み込み中…');
+    setCalStatus('読み込み中…');
     const d = new Date();
     const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0,0,0).toISOString();
     const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate()+2, 23,59,59).toISOString();
@@ -2039,12 +2230,11 @@
       .then(res=>{
         if(!res.ok){
           if(res.status === 401 || res.status === 403){
-            calendarAccessToken = null;
-            showToast('カレンダーへのアクセスが切れました。もう一度ボタンを押してください。');
+            clearCalToken();
+            setCalStatus('もう一度タップしてください');
           } else {
-            showToast('カレンダーの読み込みに失敗しました。');
+            setCalStatus('読み込めませんでした');
           }
-          setSyncStatus('保存ずみ ✓');
           return null;
         }
         return res.json();
@@ -2052,21 +2242,32 @@
       .then(data=>{
         if(!data) return;
         renderCalendarEvents(data.items || []);
-        setSyncStatus('保存ずみ ✓');
+        setCalStatus('');
       })
       .catch(()=>{
-        showToast('カレンダーの読み込みに失敗しました（通信エラー）。');
-        setSyncStatus('保存ずみ ✓');
+        setCalStatus('通信エラー');
       });
   }
 
-  function viewGoogleCalendar(){
+  function setCalStatus(t){
+    const el = document.getElementById('cal-status');
+    if(el) el.textContent = t || '';
+  }
+
+  // interactive = 自分でタップしたときだけ true。
+  // 開いた直後の自動読み込みでは、勝手にポップアップを出さない。
+  function loadCalendarNow(interactive){
     if(!FIREBASE_READY || !currentUser){
-      showToast('カレンダーを見るには、ログインが必要です。');
+      setCalStatus('ログインが必要です');
       return;
     }
+    if(!calendarAccessToken) calendarAccessToken = loadCalToken();
     if(calendarAccessToken){
       fetchTodayCalendarEvents(calendarAccessToken);
+      return;
+    }
+    if(!interactive){
+      setCalStatus('タップして読み込み');
       return;
     }
     const client = ensureCalTokenClient();
@@ -2074,12 +2275,207 @@
       showToast('カレンダーの準備中です。少し待ってから、もう一度押してください。');
       return;
     }
-    // ボタンを押した直後に、間を空けずそのまま呼ぶこと。
-    // 待ち時間をはさむと、ブラウザにポップアップを止められてしまう。
+    // タップ直後に間を空けずそのまま呼ぶこと（待つとポップアップが止められる）
     client.requestAccessToken();
   }
 
-  document.getElementById('cal-sync').addEventListener('click', viewGoogleCalendar);
+  // ---- つみあげの城：チェックするたびに天守閣が建ち上がる ----
+  // 小さい仕事＝1点、中くらいの仕事＝2点、大きな仕事＝5点。100点で城がひとつ完成。
+  const CASTLE_TOTAL = 100;
+  let totalBlocks = 0;
+
+  function castleStage(inCastle){
+    if(inCastle >= CASTLE_TOTAL) return '完成';
+    if(inCastle >= 85) return '四層';
+    if(inCastle >= 60) return '三層';
+    if(inCastle >= 35) return '一層・二層';
+    if(inCastle >= 15) return '石垣';
+    return '建てはじめ';
+  }
+
+  // ---- つみあげの城：天守閣が下から建ち上がる。progress は 0〜1 ----
+  function castleArtSVG(progress, uid){
+    const W = 220, H = 262;
+    const p = Math.max(0, Math.min(1, progress));
+    const done = p >= 1;
+    const id = (s)=> s + '_' + uid;
+  
+    function roof(x1, x2, y, ext, h){
+      const L = x1 - ext, R = x2 + ext, cx = (x1 + x2) / 2, w = x2 - x1;
+      return 'M' + L + ',' + y
+        + ' Q' + (L + ext*0.32) + ',' + (y + 3.5) + ' ' + (x1 - ext*0.18) + ',' + (y - h*0.28)
+        + ' Q' + (cx - w*0.30) + ',' + (y - h*0.95) + ' ' + cx + ',' + (y - h)
+        + ' Q' + (cx + w*0.30) + ',' + (y - h*0.95) + ' ' + (x2 + ext*0.18) + ',' + (y - h*0.28)
+        + ' Q' + (R - ext*0.32) + ',' + (y + 3.5) + ' ' + R + ',' + y
+        + ' Q' + cx + ',' + (y + h*0.32) + ' ' + L + ',' + y + ' Z';
+    }
+    function wall(x1, x2, yt, yb){
+      return '<rect x="'+x1+'" y="'+yt+'" width="'+(x2-x1)+'" height="'+(yb-yt)
+        + '" rx="1.5" fill="url(#'+id('wallG')+')" stroke="#c8c2d8" stroke-width="0.7"/>';
+    }
+    function wins(x1, x2, y, n, wd, ht){
+      let s = ''; const step = (x2-x1)/(n+1);
+      for(let i=1;i<=n;i++){
+        s += '<rect x="'+(x1+step*i-wd/2)+'" y="'+y+'" width="'+wd+'" height="'+ht
+          + '" rx="1" fill="#3b4358" opacity="0.88"/>';
+      }
+      return s;
+    }
+  
+    let castle =
+        '<path d="M14,258 C26,236 34,221 44,210 L176,210 C186,221 194,236 206,258 Z" '
+      + 'fill="url(#'+id('stoneG')+')" stroke="#59617a" stroke-width="0.8"/>'
+      + '<path d="M31,232 L189,232 M22,245 L198,245" stroke="#727a8e" stroke-width="0.7" opacity="0.5"/>';
+    const tiers = [[48,172,178,210,17,21,5],[62,158,150,177,15,19,4],[76,144,123,149,13,17,3],[90,130,98,122,12,16,2]];
+    tiers.forEach(t=>{
+      castle += wall(t[0],t[1],t[2],t[3]) + wins(t[0],t[1],t[2]+8,t[6],7,9)
+        + '<path d="'+roof(t[0],t[1],t[2],t[4],t[5])+'" fill="url(#'+id('roofG')+')"/>';
+    });
+    castle += wall(98,122,76,97)
+      + '<rect x="94" y="88" width="32" height="2.6" rx="1" fill="#b98b4a"/>'
+      + wins(98,122,80,2,6,8)
+      + '<path d="'+roof(98,122,76,11,15)+'" fill="url(#'+id('roofG')+')"/>';
+    // 鯱（しゃちほこ）
+    const shachi = '<g'+(done?' filter="url(#'+id('shine')+')"':'')+'>'
+      + '<path d="M103,62 q-3,-5 1,-7 q4,-2 4,3 q0,3 -2,4 Z" fill="url(#'+id('goldG')+')"/>'
+      + '<path d="M117,62 q3,-5 -1,-7 q-4,-2 -4,3 q0,3 2,4 Z" fill="url(#'+id('goldG')+')"/>'
+      + '<path d="M110,63 L110,57" stroke="#c9a24a" stroke-width="1.4" stroke-linecap="round"/></g>';
+    castle += shachi;
+  
+    // 桜の花びら
+    const PET = [[18,44,15,1.0],[48,24,60,0.8],[88,54,-25,0.9],[136,28,40,1.0],[176,62,10,0.85],
+                 [202,38,-35,0.75],[30,98,25,0.9],[192,112,-15,0.8],[12,152,45,0.85],[206,170,20,0.9],
+                 [66,86,-40,0.7],[152,142,30,0.75],[40,188,-20,0.8],[180,200,50,0.85]];
+    const petals = PET.map(a=>'<path d="M0,0 C3,-4.2 8,-3 8,1 C8,4.6 3,5 0,0 Z" transform="translate('
+      +a[0]+','+a[1]+') rotate('+a[2]+') scale('+a[3]+')" fill="url(#'+id('petalG')+')" opacity="0.8"/>').join('');
+  
+    // 雲海
+    const cloudsBack = '<g opacity="0.92">'
+      + '<ellipse cx="40" cy="236" rx="54" ry="13" fill="#ffffff"/>'
+      + '<ellipse cx="112" cy="243" rx="72" ry="15" fill="#fdfbff"/>'
+      + '<ellipse cx="188" cy="236" rx="50" ry="12" fill="#f4f1ff"/></g>';
+    const cloudsFront = '<g opacity="0.96">'
+      + '<ellipse cx="58" cy="253" rx="64" ry="12" fill="#ffffff"/>'
+      + '<ellipse cx="168" cy="255" rx="68" ry="12" fill="#fffdff"/></g>';
+  
+    // 完成時の演出
+    let rays = '', sparks = '', glow = '';
+    if(done){
+      glow = '<circle cx="110" cy="118" r="96" fill="url(#'+id('glowG')+')" opacity="0.6"/>';
+      let r = '<g opacity="0.45">';
+      for(let a=-78; a<=78; a+=13){
+        r += '<path d="M110,58 L105,-70 L115,-70 Z" transform="rotate('+a+' 110 58)" fill="url(#'+id('rayG')+')"/>';
+      }
+      rays = r + '</g>';
+      const S=[[110,42,1.5],[90,56,1.0],[132,54,1.2],[110,22,0.9],[74,36,0.8],[148,32,0.9],[58,70,0.7],[164,74,0.8]];
+      sparks = S.map(a=>'<path d="M0,-6 L1.4,-1.4 L6,0 L1.4,1.4 L0,6 L-1.4,1.4 L-6,0 L-1.4,-1.4 Z" transform="translate('
+        +a[0]+','+a[1]+') scale('+a[2]+')" fill="#fff4c9"/>').join('');
+    }
+  
+    const defs =
+        '<linearGradient id="'+id('skyG')+'" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#cfe1ff"/><stop offset="55%" stop-color="#ffe8f2"/><stop offset="100%" stop-color="#fff6fb"/></linearGradient>'
+      + '<linearGradient id="'+id('roofG')+'" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#4c5c7e"/><stop offset="100%" stop-color="#252f47"/></linearGradient>'
+      + '<linearGradient id="'+id('wallG')+'" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eeeaf7"/></linearGradient>'
+      + '<linearGradient id="'+id('stoneG')+'" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#8f97a9"/><stop offset="100%" stop-color="#5c657a"/></linearGradient>'
+      + '<linearGradient id="'+id('goldG')+'" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#ffe9a3"/><stop offset="100%" stop-color="#d59c26"/></linearGradient>'
+      + '<linearGradient id="'+id('petalG')+'" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0%" stop-color="#ffd6e6"/><stop offset="100%" stop-color="#ff9ec4"/></linearGradient>'
+      + '<radialGradient id="'+id('glowG')+'"><stop offset="0%" stop-color="#fff3c4" stop-opacity="0.95"/>'
+      + '<stop offset="100%" stop-color="#fff3c4" stop-opacity="0"/></radialGradient>'
+      + '<linearGradient id="'+id('rayG')+'" x1="0" y1="1" x2="0" y2="0">'
+      + '<stop offset="0%" stop-color="#ffe9a0" stop-opacity="0.85"/><stop offset="100%" stop-color="#ffe9a0" stop-opacity="0"/></linearGradient>'
+      + '<filter id="'+id('shine')+'" x="-120%" y="-120%" width="340%" height="340%">'
+      + '<feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+      + '<clipPath id="'+id('clip')+'"><rect x="0" y="'+(H-H*p)+'" width="'+W+'" height="'+(H*p)+'"/></clipPath>';
+  
+    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="100%" preserveAspectRatio="xMidYMax meet">'
+      + '<defs>'+defs+'</defs>'
+      + '<rect x="0" y="0" width="'+W+'" height="'+H+'" rx="12" fill="url(#'+id('skyG')+')"/>'
+      + '<circle cx="180" cy="38" r="15" fill="#fffdf0" opacity="0.9"/>'
+      + glow + rays
+      + cloudsBack
+      + '<g opacity="0.14">'+castle+'</g>'
+      + '<g clip-path="url(#'+id('clip')+')">'+castle+'</g>'
+      + cloudsFront
+      + petals
+      + sparks
+      + '</svg>';
+  }
+
+  function updateCastleStrip(){
+    const mini = document.getElementById('castle-mini');
+    if(!mini) return;
+    const inC = (totalBlocks > 0 && totalBlocks % CASTLE_TOTAL === 0) ? CASTLE_TOTAL : totalBlocks % CASTLE_TOTAL;
+    mini.innerHTML = castleArtSVG(inC / CASTLE_TOTAL, 'mini');
+    const castles = Math.floor(totalBlocks / CASTLE_TOTAL);
+    const inCastle = totalBlocks % CASTLE_TOTAL;
+    const sub = document.getElementById('castle-strip-sub');
+    const cnt = document.getElementById('castle-strip-count');
+    if(sub) sub.textContent = castleStage(inCastle) + ' ・ あと' + (CASTLE_TOTAL - inCastle) + '点'
+      + (castles > 0 ? '（' + castles + '城 完成ずみ）' : '');
+    if(cnt) cnt.textContent = inCastle + '点';
+  }
+
+  function addBlocks(n){
+    if(!n || n < 0) return;
+    const before = Math.floor(totalBlocks / CASTLE_TOTAL);
+    totalBlocks += n;
+    updateCastleStrip();
+    if(FIREBASE_READY && currentUser){
+      profileRefForUser(currentUser.uid)
+        .set({ totalBlocks: totalBlocks }, {merge:true})
+        .catch(()=>{});
+    }
+    if(Math.floor(totalBlocks / CASTLE_TOTAL) > before){
+      showToast('天守閣が完成しました！🏯 次の城を建てはじめます。');
+    }
+  }
+
+  function openCastleModal(){
+    const art = document.getElementById('castle-art');
+    const inC0 = (totalBlocks > 0 && totalBlocks % CASTLE_TOTAL === 0) ? CASTLE_TOTAL : totalBlocks % CASTLE_TOTAL;
+    art.innerHTML = castleArtSVG(inC0 / CASTLE_TOTAL, 'big');
+    const castles = Math.floor(totalBlocks / CASTLE_TOTAL);
+    const inCastle = totalBlocks % CASTLE_TOTAL;
+    document.getElementById('castle-sub').textContent =
+      'チェックを入れるほど下から建ち上がります。小さい仕事＝1点、中くらいの仕事＝2点、大きな仕事＝5点。'
+      + CASTLE_TOTAL + '点で天守閣がひとつ完成します。';
+    document.getElementById('castle-stats').innerHTML =
+      '<div class="castle-stat"><span>いまの城</span><b>' + inCastle + ' / ' + CASTLE_TOTAL + ' 点</b></div>'
+      + '<div class="castle-stat"><span>いまの段階</span><b>' + castleStage(inCastle) + '</b></div>'
+      + '<div class="castle-stat"><span>完成まで</span><b>あと ' + (CASTLE_TOTAL - inCastle) + ' 点</b></div>'
+      + '<div class="castle-stat"><span>完成した城</span><b>' + castles + ' 城</b></div>'
+      + '<div class="castle-stat"><span>積み上げた合計</span><b>' + totalBlocks.toLocaleString() + ' 点</b></div>';
+    document.getElementById('castle-modal').classList.add('show');
+  }
+
+  const CAL_OPEN_KEY = 'tsumiage_cal_open';
+  const calCardEl = document.getElementById('cal-card');
+  function setCalOpen(open, interactive){
+    calCardEl.classList.toggle('open', open);
+    try{ localStorage.setItem(CAL_OPEN_KEY, open ? '1' : '0'); }catch(e){}
+    if(open) loadCalendarNow(!!interactive);
+  }
+  document.getElementById('castle-strip').addEventListener('click', openCastleModal);
+  document.getElementById('castle-modal-close').addEventListener('click', ()=>{
+    document.getElementById('castle-modal').classList.remove('show');
+  });
+  document.getElementById('castle-modal').addEventListener('click', (e)=>{
+    if(e.target && e.target.id === 'castle-modal') document.getElementById('castle-modal').classList.remove('show');
+  });
+  updateCastleStrip();
+
+  document.getElementById('cal-head').addEventListener('click', ()=>{
+    setCalOpen(!calCardEl.classList.contains('open'), true);
+  });
+  try{
+    if(localStorage.getItem(CAL_OPEN_KEY) === '1') calCardEl.classList.add('open');
+  }catch(e){}
 
   // ---- Googleアカウントでログインして、保存・共有する仕組み ----
   const loginBtn = document.getElementById('login-btn');
@@ -2141,6 +2537,7 @@
         state.bigs = data.bigs.map(b=>({
           id: typeof b.id === 'number' ? b.id : 0,
           title: b.title || '',
+          done: !!b.done,
           repeatDaily: !!b.repeatDaily,
           wasAchieved: !!b.wasAchieved,
           collapsed: !!b.collapsed,
@@ -2322,9 +2719,12 @@
             const pd = ps.data();
             if(typeof pd.memo === 'string') state.memo = pd.memo;
             dailyTemplates = Array.isArray(pd.dailyTemplates) ? pd.dailyTemplates : [];
+            totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
+            updateCastleStrip();
           }
         }).catch(()=>{}).then(()=>{
           subscribeToDay(user.uid);
+          if(calCardEl && calCardEl.classList.contains('open')) loadCalendarNow(false);
         });
       } else {
         if(unsubscribeDay){ unsubscribeDay(); unsubscribeDay = null; }
