@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#6d5dfa">
+<!-- 枠(タイトルバー)の色は指定しない＝Macのシステム標準の色になる -->
 <style>
   :root{
     --bg:#f7f6fb;
@@ -37,10 +37,7 @@
   body{
     margin:0;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-    background:
-      radial-gradient(1100px 420px at 12% -10%, #e6f2ff 0%, rgba(230,242,255,0) 60%),
-      radial-gradient(900px 360px at 105% 0%, #e8faf0 0%, rgba(232,250,240,0) 55%),
-      #ffffff;
+    background:#000000;
     color:var(--text);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
@@ -793,6 +790,59 @@
     cursor:pointer;
     font-family:inherit;
   }
+  .bulk-example{
+    background:var(--card-soft);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:12px;
+    line-height:1.85;
+    color:var(--sub);
+    margin-bottom:10px;
+    white-space:pre-wrap;
+  }
+  #bulk-input{
+    width:100%;
+    min-height:170px;
+    resize:vertical;
+    border:1.5px solid var(--line);
+    border-radius:13px;
+    padding:12px;
+    font-size:13.5px;
+    line-height:1.7;
+    font-family:inherit;
+    color:var(--text);
+    box-sizing:border-box;
+  }
+  #bulk-input:focus{outline:none; border-color:var(--purple);}
+  .bulk-preview{
+    margin-top:12px;
+    font-size:12.5px;
+    line-height:1.8;
+    white-space:pre-wrap;
+    color:var(--text);
+    background:var(--bg);
+    border-radius:12px;
+    padding:10px 12px;
+    display:none;
+    max-height:240px;
+    overflow-y:auto;
+  }
+  .bulk-preview .bulk-warn{color:#b45309; font-weight:800;}
+  .bulk-preview .bulk-head{font-weight:800; margin-bottom:4px; display:block;}
+  .bulk-actions{display:flex; gap:8px; margin-top:12px;}
+  .bulk-btn{
+    flex:1;
+    padding:12px;
+    border-radius:13px;
+    border:none;
+    font-size:13px;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .bulk-btn.primary{background:var(--purple); color:#fff;}
+  .bulk-btn.danger{background:#fff; color:#b91c1c; border:1.5px solid #f2cdcd;}
 
   footer{margin-top:24px;}
   .cal-btn{
@@ -946,11 +996,10 @@
     <input type="text" id="big-input" placeholder="大きな仕事を追加（例：資料を仕上げる）">
     <button class="plus-btn big-accent" id="big-add-btn">＋</button>
   </div>
-  <div class="big-full-msg" id="big-full-msg" style="display:none;">
-    大きな仕事は4つまでです。増やすには先に1つ終わらせるか削除してください。
-  </div>
+  <div class="big-full-msg" id="big-full-msg" style="display:none;"></div>
 
   <footer>
+    <button class="review-btn" id="bulk-add-btn">📋 まとめて追加</button>
     <button class="review-btn" id="week-review-btn">📅 今週のふりかえりを見る</button>
     <button class="cal-btn" id="cal-sync">Googleカレンダーの予定を見る</button>
     <div class="cal-events" id="cal-events" style="display:none;"></div>
@@ -969,6 +1018,26 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="bulk-modal">
+  <div class="modal-box">
+    <h2>まとめて追加</h2>
+    <div class="modal-sub">字下げ（スペース・全角スペース・タブ）で段をつけて貼りつけてください。<b>段なし＝大きな仕事／1段下げ＝中くらいの仕事／2段下げ＝小さい仕事</b>です。行頭の「-」や「・」は自動で外します。</div>
+    <div class="bulk-example">資料を仕上げる
+　骨子を作る
+　　見出し構成を決める
+　　データを集める
+　デザインを整える
+　　配色を決める</div>
+    <textarea id="bulk-input" placeholder="ここに貼りつけてください"></textarea>
+    <div class="bulk-preview" id="bulk-preview"></div>
+    <div class="bulk-actions">
+      <button class="bulk-btn primary" id="bulk-append-btn">いまの内容に追加</button>
+      <button class="bulk-btn danger" id="bulk-replace-btn">ぜんぶ置きかえる</button>
+    </div>
+    <button class="modal-close" id="bulk-modal-close">閉じる</button>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -978,9 +1047,11 @@
 
 <script>
 (function(){
-  const MAX_BIG = 4;
-  const MAX_MEDIUM = 3;
-  const MAX_SMALL_PER_MEDIUM = 5;
+  // ---- 入れられる数の上限（増やしたいときは、この3行の数字だけ変えれば
+  //      画面の案内文も自動でそろいます） ----
+  const MAX_BIG = 10;
+  const MAX_MEDIUM = 10;
+  const MAX_SMALL_PER_MEDIUM = 20;
 
   const DRAG_HANDLE_SVG = `<svg class="drag-handle" viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-label="ドラッグして並べ替え"><circle cx="6" cy="4" r="1.7"/><circle cx="14" cy="4" r="1.7"/><circle cx="6" cy="10" r="1.7"/><circle cx="14" cy="10" r="1.7"/><circle cx="6" cy="16" r="1.7"/><circle cx="14" cy="16" r="1.7"/></svg>`;
   const TOGGLE_ARROW_SVG = `<svg class="toggle-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -1385,7 +1456,7 @@
     const mediumFullMsg = document.createElement('div');
     mediumFullMsg.className = 'medium-full-msg';
     mediumFullMsg.style.display = 'none';
-    mediumFullMsg.textContent = '中くらいの仕事は3つまでです。増やすには先に1つ終わらせるか削除してください。';
+    mediumFullMsg.textContent = '中くらいの仕事は' + MAX_MEDIUM + 'つまでです。増やすには先に1つ終わらせるか削除してください。';
     body.appendChild(mediumsEl);
     body.appendChild(addMediumRow);
     body.appendChild(mediumFullMsg);
@@ -1416,7 +1487,7 @@
         </div>
         <ul class="small-tasks"></ul>
         <div class="add-row"></div>
-        <div class="full-msg" style="display:none;">小さい仕事は5つまでです。先に1つ終わらせるか削除してください。</div>
+        <div class="full-msg" style="display:none;">小さい仕事は${MAX_SMALL_PER_MEDIUM}つまでです。先に1つ終わらせるか削除してください。</div>
       `;
 
       mCard.querySelector('.mid-title-input').addEventListener('input', (e)=>{
@@ -1467,7 +1538,7 @@
           const val = input.value.trim();
           if(!val){ showToast('仕事の名前を入力してください。'); return; }
           if(medium.items.length >= MAX_SMALL_PER_MEDIUM){
-            showToast('小さい仕事は5つまでです。');
+            showToast('小さい仕事は' + MAX_SMALL_PER_MEDIUM + 'つまでです。');
             return;
           }
           medium.items.push({text:val, done:false, eveningReviewed:false});
@@ -1501,7 +1572,7 @@
         const val = input.value.trim();
         if(!val){ showToast('仕事の名前を入力してください。'); return; }
         if(big.mediums.length >= MAX_MEDIUM){
-          showToast('中くらいの仕事は3つまでです。');
+          showToast('中くらいの仕事は' + MAX_MEDIUM + 'つまでです。');
           return;
         }
         big.mediums.push({name:val, wasAchieved:false, items:[]});
@@ -1568,6 +1639,7 @@
     const bigFullMsg = document.getElementById('big-full-msg');
     if(state.bigs.length >= MAX_BIG){
       addBigRow.style.display = 'none';
+      bigFullMsg.textContent = '大きな仕事は' + MAX_BIG + 'つまでです。増やすには先に1つ終わらせるか削除してください。';
       bigFullMsg.style.display = 'block';
     } else {
       addBigRow.style.display = 'flex';
@@ -1588,7 +1660,7 @@
     const val = input.value.trim();
     if(!val){ showToast('仕事の名前を入力してください。'); return; }
     if(state.bigs.length >= MAX_BIG){
-      showToast('大きな仕事は4つまでです。');
+      showToast('大きな仕事は' + MAX_BIG + 'つまでです。');
       return;
     }
     const id = nextBigId++;
@@ -1597,6 +1669,176 @@
     input.value = '';
     render();
   }
+
+  // ---- まとめて追加：字下げテキストを 大／中／小 にまとめて取りこむ ----
+  function parseBulkText(raw){
+    const lines = String(raw||'').replace(/\r/g,'').split('\n');
+    const entries = [];
+    lines.forEach(line=>{
+      if(!line.trim()) return;
+      // 「# 見出し」「## 〜」「### 〜」形式にも対応する
+      const head = line.match(/^[\s　]*(#{1,3})[\s　]+(.*)$/);
+      if(head){
+        const t = head[2].trim();
+        if(t) entries.push({level: head[1].length - 1, text: t});
+        return;
+      }
+      const m = line.match(/^([\s　]*)([\s\S]*)$/);
+      let width = 0;
+      for(const ch of (m[1]||'')){
+        if(ch === '\t') width += 4;
+        else if(ch === '　') width += 2;
+        else width += 1;
+      }
+      // 行頭の「-」「・」などの記号は目印なので外す
+      const text = (m[2]||'').replace(/^[-*+＊・●○◯•▪]+[\s　]*/,'').trim();
+      if(!text) return;
+      entries.push({indent: width, text});
+    });
+
+    // 字下げの深さから段を決める。
+    // 「全体で何種類あるか」ではなく「直前の行と比べて深いか浅いか」で判定するので、
+    // スペース字下げとタブ字下げが混ざっていても正しく段が決まる。
+    const stack = [];
+    entries.forEach(e=>{
+      if(typeof e.level === 'number') return;
+      const w = e.indent;
+      while(stack.length && w < stack[stack.length - 1]) stack.pop();
+      if(!stack.length || w > stack[stack.length - 1]) stack.push(w);
+      let lv = stack.length - 1;
+      if(lv > 2) lv = 2;
+      e.level = lv;
+    });
+
+    const bigs = [];
+    const warnings = [];
+    let curBig = null, curMed = null, dropped = 0;
+    entries.forEach(e=>{
+      if(e.level === 0){
+        curBig = {title:e.text, mediums:[]};
+        bigs.push(curBig);
+        curMed = null;
+        return;
+      }
+      if(!curBig){
+        curBig = {title:'その他', mediums:[]};
+        bigs.push(curBig);
+        curMed = null;
+      }
+      if(e.level === 1){
+        if(curBig.mediums.length >= MAX_MEDIUM){ dropped++; curMed = null; return; }
+        curMed = {name:e.text, items:[]};
+        curBig.mediums.push(curMed);
+        return;
+      }
+      if(!curMed){
+        if(curBig.mediums.length >= MAX_MEDIUM){ dropped++; return; }
+        curMed = {name:'やること', items:[]};
+        curBig.mediums.push(curMed);
+      }
+      if(curMed.items.length >= MAX_SMALL_PER_MEDIUM){ dropped++; return; }
+      curMed.items.push(e.text);
+    });
+    if(dropped > 0){
+      warnings.push('上限を超えた ' + dropped + ' 件は取りこまれません（中くらいは' + MAX_MEDIUM + 'つ、小さいは' + MAX_SMALL_PER_MEDIUM + 'つまで）。');
+    }
+    return {bigs:bigs, warnings:warnings};
+  }
+
+  function renderBulkPreview(){
+    const box = document.getElementById('bulk-preview');
+    const raw = document.getElementById('bulk-input').value;
+    if(!raw.trim()){ box.style.display='none'; box.textContent=''; return; }
+    const parsed = parseBulkText(raw);
+    if(!parsed.bigs.length){ box.style.display='none'; box.textContent=''; return; }
+
+    let meds = 0, smalls = 0;
+    const lines = [];
+    parsed.bigs.forEach(b=>{
+      lines.push('■ ' + b.title);
+      b.mediums.forEach(m=>{
+        meds++;
+        lines.push('　└ ' + m.name);
+        m.items.forEach(it=>{ smalls++; lines.push('　　・' + it); });
+      });
+    });
+
+    const warns = parsed.warnings.slice();
+    const willBe = state.bigs.length + parsed.bigs.length;
+    if(willBe > MAX_BIG){
+      warns.push('「追加」だと大きな仕事が ' + willBe + ' 個になり、上限の ' + MAX_BIG + ' を超えます。超えた分は入りません（「ぜんぶ置きかえる」なら収まります）。');
+    }
+
+    box.innerHTML = '';
+    const head = document.createElement('span');
+    head.className = 'bulk-head';
+    head.textContent = 'この形で取りこみます（大 ' + parsed.bigs.length + ' ／中 ' + meds + ' ／小 ' + smalls + '）';
+    box.appendChild(head);
+    box.appendChild(document.createTextNode(lines.join('\n')));
+    warns.forEach(w=>{
+      const el = document.createElement('div');
+      el.className = 'bulk-warn';
+      el.textContent = '⚠ ' + w;
+      box.appendChild(el);
+    });
+    box.style.display = 'block';
+  }
+
+  function applyBulk(mode){
+    const inputEl = document.getElementById('bulk-input');
+    const parsed = parseBulkText(inputEl.value);
+    if(!parsed.bigs.length){ showToast('取りこむ内容がありません。'); return; }
+
+    if(mode === 'replace'){
+      if(!window.confirm('いまの大きな仕事をぜんぶ消して、貼りつけた内容に置きかえます。よろしいですか？')) return;
+      state.bigs = [];
+      state.blockOrder = state.blockOrder.filter(k=> String(k).indexOf('big:') !== 0);
+    }
+
+    let added = 0, skipped = 0;
+    parsed.bigs.forEach(b=>{
+      if(state.bigs.length >= MAX_BIG){ skipped++; return; }
+      const id = nextBigId++;
+      state.bigs.push({
+        id: id,
+        title: b.title,
+        wasAchieved: false,
+        collapsed: false,
+        mediums: b.mediums.map(m=>({
+          name: m.name,
+          wasAchieved: false,
+          items: m.items.map(t=>({text:t, done:false, eveningReviewed:false}))
+        }))
+      });
+      insertBlockKeyBeforeMemo('big:'+id);
+      added++;
+    });
+
+    inputEl.value = '';
+    renderBulkPreview();
+    closeBulkModal();
+    render();
+    showToast(skipped > 0
+      ? (added + '件を取りこみました。上限を超えた ' + skipped + '件は入りませんでした。')
+      : (added + '件の大きな仕事を取りこみました。'));
+  }
+
+  function openBulkModal(){
+    document.getElementById('bulk-modal').classList.add('show');
+    renderBulkPreview();
+  }
+  function closeBulkModal(){
+    document.getElementById('bulk-modal').classList.remove('show');
+  }
+
+  document.getElementById('bulk-add-btn').addEventListener('click', openBulkModal);
+  document.getElementById('bulk-modal-close').addEventListener('click', closeBulkModal);
+  document.getElementById('bulk-input').addEventListener('input', renderBulkPreview);
+  document.getElementById('bulk-append-btn').addEventListener('click', ()=> applyBulk('append'));
+  document.getElementById('bulk-replace-btn').addEventListener('click', ()=> applyBulk('replace'));
+  document.getElementById('bulk-modal').addEventListener('click', (e)=>{
+    if(e.target && e.target.id === 'bulk-modal') closeBulkModal();
+  });
 
   // ---- 夜：残っているタスクをどうするか、1タップで選ぶ ----
   function renderEveningBanner(){
