@@ -307,6 +307,10 @@
     padding:2px 0;
     font-family:inherit;
     letter-spacing:-0.01em;
+    display:block;
+    resize:none;
+    overflow:hidden;
+    line-height:1.35;
   }
   .big-title-input:focus{outline:none;}
   .big-title-input::placeholder{color:#c9c5d6;font-weight:700;}
@@ -910,7 +914,14 @@
     .app{ padding:16px 12px 80px; }
 
     /* 文字を大きく、読みやすく */
-    .big-title-input{ font-size:18px; }
+    .big-title-input{ font-size:16.5px; }
+    /* 進捗リングを小さくし、左右の余白と間隔を詰めて、名前の場所を広げる */
+    .big-card{ padding:0 10px; }
+    .big-head{ gap:8px; padding:18px 0 12px; }
+    /* 並べ替え用の点を小さくして、進捗リングを左端に寄せる */
+    .big-head .drag-handle{ width:11px; height:11px; }
+    .big-head .ring{ width:42px; height:42px; }
+    .mid-head .ring{ width:34px; height:34px; }
     .mid-title-input{ font-size:16.5px; }
     .task-text{ font-size:16px; line-height:1.5; }
     .mid-count{ font-size:13px; }
@@ -925,7 +936,7 @@
     ul.small-tasks li{ padding:13px 2px; gap:12px; }
     .del{ min-width:36px; min-height:36px; font-size:19px; }
     .plus-btn{ width:44px; height:44px; }
-    .repeat-btn{ font-size:19px; padding:9px; }
+    .repeat-btn{ font-size:17px; padding:6px; }
     .review-btn, .cal-btn{ padding:16px; font-size:15px; }
     .modal-close, .bulk-btn{ padding:15px; font-size:15px; }
 
@@ -935,7 +946,6 @@
     .add-row input, .add-medium-row input{ font-size:16px; padding:12px; }
 
     /* 余白を詰めて、1画面に多く入るように */
-    .big-card{ padding:14px 12px; }
     .mid-card{ padding:12px 10px; }
     .review-banner{ padding:11px 12px; font-size:14px; }
     .modal-overlay{ padding:12px 8px; }
@@ -1412,7 +1422,7 @@
       ${DRAG_HANDLE_SVG}
       <div class="ring-wrap"></div>
       <div class="big-title-wrap">
-        <input class="big-title-input" placeholder="大きな仕事の名前" value="${escapeAttr(big.title)}">
+        <textarea class="big-title-input" rows="1" placeholder="大きな仕事の名前"></textarea>
         <div class="big-sub"></div>
       </div>
       <button class="repeat-btn${big.repeatDaily ? ' on' : ''}" title="毎日くりかえす">🔁</button>
@@ -1421,9 +1431,21 @@
     const dragHandle = head.querySelector('.drag-handle');
     dragHandle.addEventListener('pointerdown', e=> e.stopPropagation());
     const titleInput = head.querySelector('.big-title-input');
+    titleInput.value = big.title;
+    // 中身の行数に合わせて高さを自動で伸ばす（長い名前も全部見えるように）
+    const growTitle = ()=>{
+      titleInput.style.height = 'auto';
+      titleInput.style.height = titleInput.scrollHeight + 'px';
+    };
+    requestAnimationFrame(growTitle);
     titleInput.addEventListener('click', e=> e.stopPropagation());
+    titleInput.addEventListener('keydown', (e)=>{
+      // 改行は入れず、Enterで入力を終える
+      if(e.key === 'Enter'){ e.preventDefault(); titleInput.blur(); }
+    });
     titleInput.addEventListener('input', (e)=>{
       big.title = e.target.value;
+      growTitle();
       updateHint();
       scheduleSave();
     });
