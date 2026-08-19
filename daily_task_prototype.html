@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日の積み上げ</title>
+<style>
+  :root{
+    --bg:#f7f6fb;
+    --card:#ffffff;
+    --card-soft:#fbfaff;
+    --text:#1a1523;
+    --sub:#8b869a;
+    --line:#ecebf3;
+
+    --purple:#6d5dfa;
+    --pink:#ff5ca8;
+    --grad:linear-gradient(120deg, var(--purple) 0%, var(--pink) 100%);
+
+    --mid:#4c7cff;
+    --mid-bg:#eef2ff;
+    --small:#ff6fa8;
+    --small-bg:#fff0f6;
+
+    --dark-bg:#161022;
+    --ring-track:#efeef6;
+    --radius:22px;
+    --radius-sm:16px;
+    --shadow:0 1px 2px rgba(30,20,50,0.05), 0 14px 30px rgba(40,20,70,0.07);
+    --shadow-hover:0 2px 4px rgba(30,20,50,0.07), 0 20px 40px rgba(40,20,70,0.11);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background:
+      radial-gradient(1100px 420px at 12% -10%, #e6f2ff 0%, rgba(230,242,255,0) 60%),
+      radial-gradient(900px 360px at 105% 0%, #e8faf0 0%, rgba(232,250,240,0) 55%),
+      #ffffff;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .app{
+    max-width:640px;
+    margin:0 auto;
+    padding:40px 20px 90px;
+    position:relative;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    margin-bottom:16px;
+  }
+  .header-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  header.top .date-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    font-weight:700;
+    color:#fff;
+    background:var(--grad);
+    border-radius:999px;
+    padding:6px 14px;
+    box-shadow:0 8px 18px rgba(109,93,250,0.28);
+  }
+  h1.title{
+    font-size:30px;
+    font-weight:800;
+    margin:10px 0 0;
+    letter-spacing:-0.03em;
+    color:var(--text);
+  }
+
+  /* ---------- アカウント（ログイン） ---------- */
+  .account-box{
+    flex:none;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:5px;
+  }
+  .login-btn{
+    border:none;
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:12px;
+    font-weight:700;
+    color:#fff;
+    background:var(--grad);
+    cursor:pointer;
+    box-shadow:0 6px 14px rgba(109,93,250,0.25);
+  }
+  .login-btn:hover{filter:brightness(1.06);}
+  .firebase-off{
+    font-size:11px;
+    color:var(--sub);
+    font-weight:600;
+    text-align:right;
+    max-width:150px;
+    line-height:1.5;
+  }
+  .user-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px 6px 4px 4px;
+  }
+  .user-chip img{
+    width:22px;height:22px;
+    border-radius:50%;
+    display:block;
+  }
+  .user-chip span{
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--text);
+    max-width:90px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .user-chip button{
+    border:none;
+    background:none;
+    color:var(--sub);
+    font-size:13px;
+    cursor:pointer;
+    padding:0 2px;
+    line-height:1;
+  }
+  .user-chip button:hover{color:#ff3b30;}
+  .sync-status{
+    font-size:10.5px;
+    color:var(--sub);
+    font-weight:600;
+  }
+
+  /* ---------- Achievement banner (dark hero) ---------- */
+  .achieve-banner{
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    transition:max-height .45s ease, opacity .35s ease, margin .45s ease;
+    margin-bottom:0;
+  }
+  .achieve-banner.show{
+    max-height:110px;
+    opacity:1;
+    margin-bottom:18px;
+  }
+  .achieve-banner .inner{
+    background:var(--dark-bg);
+    border-radius:18px;
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 16px 34px rgba(22,16,34,0.35);
+  }
+  .achieve-banner .inner::before{
+    content:'';
+    position:absolute;
+    inset:-40% -10% auto auto;
+    width:220px;height:220px;
+    background:var(--grad);
+    filter:blur(46px);
+    opacity:.55;
+  }
+  .achieve-banner .headline{
+    position:relative;
+    font-size:16px;
+    font-weight:800;
+    background:linear-gradient(120deg, #fff8e1 0%, #ffd76a 45%, #fff1c2 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .achieve-banner .sub{
+    position:relative;
+    display:block;
+    font-size:12.5px;
+    font-weight:500;
+    color:#c9c4dd;
+    margin-top:4px;
+  }
+
+  .review-banner{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:12px 16px;
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    row-gap:8px;
+    gap:11px;
+    font-size:13.5px;
+    color:var(--text);
+  }
+  .mascot-inline{
+    flex:none;
+    cursor:pointer;
+    animation:mascot-bounce 2.6s ease-in-out infinite;
+  }
+  @keyframes mascot-bounce{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
+  }
+  .mascot-body{ display:block; }
+  .hint-bubble{
+    position:relative;
+    flex:1;
+    min-width:150px;
+    background:var(--mid-bg);
+    border-radius:12px;
+    padding:8px 13px;
+    font-size:13px;
+    font-weight:600;
+    line-height:1.5;
+    color:var(--text);
+    transition:opacity .2s ease;
+  }
+  .hint-bubble::before{
+    content:'';
+    position:absolute;
+    left:-6px;
+    top:50%;
+    transform:translateY(-50%);
+    width:0;height:0;
+    border:6px solid transparent;
+    border-right-color:var(--mid-bg);
+  }
+  .ritual-times{
+    display:flex;
+    gap:10px;
+    flex:none;
+  }
+  .ritual-times label{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    font-size:10px;
+    font-weight:700;
+    color:var(--sub);
+    gap:2px;
+  }
+  .ritual-times input[type="time"]{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:3px 5px;
+    font-size:11.5px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fbfbfd;
+    width:78px;
+  }
+  .ritual-times input[type="time"]:focus{outline:none; border-color:var(--purple);}
+
+  /* ---------- Rings ---------- */
+  .ring{display:block;}
+  .ring-fill{
+    transition:stroke-dashoffset .5s cubic-bezier(.4,0,.2,1);
+  }
+  .ring-achieved .ring-fill{
+    filter:drop-shadow(0 0 5px rgba(109,93,250,0.5));
+  }
+
+  /* ---------- 大きな仕事カード ---------- */
+  .big-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:25px 22px 16px;
+    margin-bottom:20px;
+    margin-top:5px;
+    position:relative;
+    transition:box-shadow .25s ease;
+  }
+  .big-card::before{
+    content:'';
+    position:absolute;
+    left:18px; right:18px; top:0;
+    height:5px;
+    border-radius:0 0 5px 5px;
+    background:var(--grad);
+  }
+  .big-card:hover{box-shadow:var(--shadow-hover);}
+  .big-head{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+  }
+  .big-head .ring-wrap{flex:none; position:relative;}
+  .big-title-wrap{flex:1; min-width:0;}
+  .big-title-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-size:20px;
+    font-weight:800;
+    color:var(--text);
+    padding:2px 0;
+    font-family:inherit;
+    letter-spacing:-0.01em;
+  }
+  .big-title-input:focus{outline:none;}
+  .big-title-input::placeholder{color:#c9c5d6;font-weight:700;}
+  .big-sub{
+    font-size:12.5px;
+    color:var(--sub);
+    font-weight:600;
+    margin-top:2px;
+  }
+
+  .mediums{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  /* ---------- 中カテゴリー ---------- */
+  .mid-card{
+    background:var(--card-soft);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    padding:14px 16px 12px;
+    transition:background .3s ease, border-color .3s ease, transform .15s ease;
+  }
+  .mid-card:hover{transform:translateY(-1px);}
+  .mid-card.achieved{
+    background:linear-gradient(120deg, #eef2ff 0%, #fff0f6 100%);
+    border-color:#e0d9ff;
+  }
+  .mid-head{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .mid-head .ring-wrap{flex:none;}
+  .mid-title-wrap{flex:1; min-width:0;}
+  .mid-title-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--text);
+    font-family:inherit;
+  }
+  .mid-title-input:focus{outline:none;}
+  .mid-title-input::placeholder{color:#bcb8c9;font-weight:700;}
+  .mid-count{
+    font-size:11.5px;
+    color:var(--mid);
+    font-weight:700;
+  }
+
+  ul.small-tasks{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  ul.small-tasks li{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 2px;
+    border-top:1px solid var(--line);
+  }
+  ul.small-tasks li:first-child{border-top:none;}
+  .check{
+    width:20px;height:20px;
+    border-radius:6px;
+    border:2px solid var(--small);
+    flex:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    transition:transform .18s cubic-bezier(.4,0,.2,1), background .2s ease;
+  }
+  .check.pop{transform:scale(1.28);}
+  li.done .check{background:var(--small);}
+  .check svg{width:11px;height:11px;display:none;}
+  li.done .check svg{display:block;}
+  .task-text{
+    flex:1;
+    font-size:14.5px;
+  }
+  li.done .task-text{
+    color:var(--sub);
+    text-decoration:line-through;
+  }
+  .del{
+    border:none;
+    background:none;
+    color:#d2cfdc;
+    font-size:17px;
+    cursor:pointer;
+    padding:2px 6px;
+    line-height:1;
+    transition:color .15s ease;
+  }
+  .del:hover{color:#ff3b30;}
+
+  .add-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:9px;
+  }
+  .add-row input{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 11px;
+    font-size:13.5px;
+    font-family:inherit;
+    background:#fff;
+    transition:border-color .15s ease;
+  }
+  .add-row input:focus{outline:none;border-color:var(--small);}
+  .plus-btn{
+    flex:none;
+    width:30px;height:30px;
+    border-radius:50%;
+    border:none;
+    color:#fff;
+    cursor:pointer;
+    font-size:17px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .plus-btn:hover{filter:brightness(1.08);}
+  .plus-btn:active{transform:scale(.9);}
+  .plus-btn.small-accent{background:var(--small);}
+  .plus-btn.mid-accent{background:var(--mid);}
+
+  .full-msg{
+    font-size:12px;
+    color:var(--sub);
+    margin-top:8px;
+  }
+
+  .add-medium-row{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin-top:14px;
+  }
+  .add-medium-row input{
+    flex:1;
+    border:1.5px dashed #cfd6ff;
+    border-radius:13px;
+    padding:10px 13px;
+    font-size:13.5px;
+    font-family:inherit;
+    background:#fbfbff;
+    transition:border-color .15s ease;
+  }
+  .add-medium-row input:focus{outline:none;border-color:var(--mid);}
+  .medium-full-msg{
+    font-size:12px;
+    color:var(--sub);
+    margin-top:12px;
+  }
+
+  /* ---------- confetti ---------- */
+  .confetti-piece{
+    position:absolute;
+    top:0;
+    width:7px;height:11px;
+    border-radius:2px;
+    pointer-events:none;
+    animation:confetti-fall 900ms ease-out forwards;
+  }
+  @keyframes confetti-fall{
+    0%{ transform:translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform:translateY(70px) rotate(340deg); opacity:0; }
+  }
+
+  footer{margin-top:24px;}
+  .cal-btn{
+    width:100%;
+    padding:14px;
+    border-radius:15px;
+    border:none;
+    background:var(--grad);
+    color:#fff;
+    font-size:14.5px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 12px 26px rgba(109,93,250,0.28);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition:box-shadow .2s ease, transform .15s ease;
+  }
+  .cal-btn:hover{box-shadow:0 16px 32px rgba(109,93,250,0.36); transform:translateY(-1px);}
+  .note{
+    text-align:center;
+    font-size:12px;
+    color:var(--sub);
+    margin-top:14px;
+    line-height:1.7;
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%) translateY(20px);
+    background:#1a1523;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:12px;
+    font-size:13px;
+    opacity:0;
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+    max-width:80%;
+    text-align:center;
+    z-index:20;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <linearGradient id="bigGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6d5dfa"/>
+      <stop offset="100%" stop-color="#ff5ca8"/>
+    </linearGradient>
+    <linearGradient id="slimeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8fdcff"/>
+      <stop offset="100%" stop-color="#2f9be8"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+
+  <header class="top">
+    <div class="header-row">
+      <div>
+        <div class="date-pill" id="today-date"></div>
+        <h1 class="title">今日の積み上げ</h1>
+      </div>
+      <div class="account-box" id="account-box">
+        <button class="login-btn" id="login-btn" style="display:none;">Googleでログイン</button>
+        <div class="user-chip" id="user-chip" style="display:none;">
+          <img id="user-avatar" alt="">
+          <span id="user-name"></span>
+          <button id="logout-btn" title="ログアウト">⎋</button>
+        </div>
+        <div class="firebase-off" id="firebase-off" style="display:none;">保存機能は未設定です</div>
+        <div class="sync-status" id="sync-status"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="achieve-banner" id="achieve-banner">
+    <div class="inner">
+      <div class="headline">今日の目標を達成しました</div>
+      <span class="sub">お疲れさまでした。積み上げ、確認できています。</span>
+    </div>
+  </div>
+
+  <div class="review-banner" id="review-banner">
+    <div class="mascot-inline" id="mascot-inline" title="ヒントを見る">
+      <svg class="mascot-body" width="38" height="34" viewBox="0 0 64 56">
+        <path d="M32 4 C50 4 58 22 58 34 C58 46 46 52 32 52 C18 52 6 46 6 34 C6 22 14 4 32 4 Z"
+          fill="url(#slimeGrad)" stroke="#1f7fce" stroke-width="1.5"/>
+        <ellipse cx="19" cy="17" rx="6" ry="4" fill="#ffffff" opacity="0.55"/>
+        <circle cx="23" cy="30" r="4" fill="#17334a"/>
+        <circle cx="41" cy="30" r="4" fill="#17334a"/>
+        <circle cx="24.3" cy="28.7" r="1.1" fill="#ffffff"/>
+        <circle cx="42.3" cy="28.7" r="1.1" fill="#ffffff"/>
+        <path d="M23 39 Q32 46 41 39" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="hint-bubble" id="review-text"></div>
+    <div class="ritual-times">
+      <label>朝<input type="time" id="morning-time" value="07:00"></label>
+      <label>夜<input type="time" id="evening-time" value="20:00"></label>
+    </div>
+  </div>
+
+  <div class="big-card">
+    <div class="big-head">
+      <div class="ring-wrap" id="big-ring"></div>
+      <div class="big-title-wrap">
+        <input class="big-title-input" id="big-title" placeholder="今日の大きな仕事を1つ書く">
+        <div class="big-sub" id="big-label">0/0 完了</div>
+      </div>
+    </div>
+
+    <div class="mediums" id="mediums"></div>
+
+    <div class="add-medium-row" id="add-medium-row">
+      <input type="text" id="medium-input" placeholder="中くらいの仕事を追加（例：骨子を作る）">
+      <button class="plus-btn mid-accent" id="medium-add-btn">＋</button>
+    </div>
+    <div class="medium-full-msg" id="medium-full-msg" style="display:none;">
+      中くらいの仕事は3つまでです。増やすには先に1つ終わらせるか削除してください。
+    </div>
+  </div>
+
+  <footer>
+    <button class="cal-btn" id="cal-sync">Googleカレンダーに同期（この試作品ではまだ未接続）</button>
+    <div class="note" id="save-note"></div>
+  </footer>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const MAX_MEDIUM = 3;
+  const MAX_SMALL_PER_MEDIUM = 5;
+
+  // ---- ここにFirebaseの設定を貼りつける ----
+  // Firebaseコンソール(https://console.firebase.google.com)で
+  // プロジェクトを作り「ウェブアプリを追加」した時に表示される
+  // firebaseConfig の中身を、そのままこの6行に貼りつけてください。
+  // 貼りつけるまでは、保存機能なしのこれまで通りの動きになります。
+  const firebaseConfig = {
+    apiKey: "AIzaSyDuSyvvhmJ22M0lnely5RMViHzy-E6pyqk",
+    authDomain: "daily-tasks-802ee.firebaseapp.com",
+    projectId: "daily-tasks-802ee",
+    storageBucket: "daily-tasks-802ee.firebasestorage.app",
+    messagingSenderId: "579478191235",
+    appId: "1:579478191235:web:247eb75542aafcb56aefb6"
+  };
+  const FIREBASE_READY = typeof firebase !== 'undefined'
+    && firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('ここに');
+
+  let fbAuth = null, fbDb = null, currentUser = null, saveTimer = null;
+  if(FIREBASE_READY){
+    firebase.initializeApp(firebaseConfig);
+    fbAuth = firebase.auth();
+    fbDb = firebase.firestore();
+  }
+
+  const state = {
+    bigTitle: "資料を仕上げる",
+    bigWasAchieved: false,
+    morningTime: "07:00",
+    eveningTime: "20:00",
+    mediums: [
+      { name:"骨子を作る", wasAchieved:false, items:[
+        {text:"見出し構成を決める", done:true},
+        {text:"データを集める", done:false}
+      ]},
+      { name:"デザインを整える", wasAchieved:false, items:[
+        {text:"配色を決める", done:false}
+      ]}
+    ]
+  };
+
+  const dateEl = document.getElementById('today-date');
+  const days = ['日','月','火','水','木','金','土'];
+  const now = new Date();
+  dateEl.textContent = now.getFullYear()+"年"+(now.getMonth()+1)+"月"+now.getDate()+"日（"+days[now.getDay()]+"）";
+
+  // ---- 朝・夜の儀式の時間設定 ----
+  function toMinutes(hhmm){
+    const [h,m] = hhmm.split(':').map(Number);
+    return h*60+m;
+  }
+  const nowMinutes = now.getHours()*60 + now.getMinutes();
+  const RITUAL_WINDOW = 180; // 設定時刻から3時間はその儀式の時間帯とみなす
+
+  const morningInput = document.getElementById('morning-time');
+  const eveningInput = document.getElementById('evening-time');
+  morningInput.value = state.morningTime;
+  eveningInput.value = state.eveningTime;
+  morningInput.addEventListener('input', ()=>{ state.morningTime = morningInput.value; updateHint(); scheduleSave(); });
+  eveningInput.addEventListener('input', ()=>{ state.eveningTime = eveningInput.value; updateHint(); scheduleSave(); });
+
+  // ---- スライムのヒント(吹き出し) ----
+  const TIP_POOL = [
+    // ふつうのヒント（ポップ・友達口調）
+    "小さい仕事を1つ終えたら、それだけでもう勝ちだよ！",
+    "迷ったら、いちばん簡単なやつからでOK。",
+    "9個ぜんぶ埋まらなくても、今日はここまでで上出来！",
+    "終わったタスクは消さずに残しておくと、あとで見て嬉しくなるよ。",
+    "詰め込みすぎたら、1個だけ明日にまわそう。それでいい。",
+    "やる気が出ない日は、いちばん小さいことだけやってみて。",
+    "毎日同じ時間に開くクセをつけると、グッと続けやすくなるよ。",
+    "全部終わらなくても、進んだ分はちゃんと前進だから。",
+    "大きい仕事は3つくらいに分けると、一気にラクになるよ。",
+    "今の気分でできそうなものから選んでOK、それでいい。",
+    "ちょっと休憩してから、また1個いこう。",
+    // 挫折しやすい人・落ち込みやすい人向け（自己肯定感を守るヒント）
+    "できなかった日があっても、それは『失敗』じゃなくて『そういう日』ってだけ。",
+    "自分に厳しくしすぎなくて大丈夫。親友に言うみたいに、自分にも優しくしてあげて。",
+    "『いつもできない』はウソ。今日できなかっただけ。それだけの話。",
+    "習慣は1回サボったくらいじゃ崩れないよ。すぐ戻ればちゃんと続く。",
+    "落ち込んでる時こそ、超簡単なこと1個だけやってみて。それで十分リセットできる。",
+    "完璧に戻そうとしなくていい。ちょっとだけ動けたら、それでもう合格。",
+    "できなかった自分を責めるより、次の1個に目を向けよう。そのほうがずっと続くよ。",
+    "誰だって波はある。今日が低い日でも、また積み上がっていくから大丈夫。"
+  ];
+  let lastTipIndex = -1;
+
+  function pickTip(){
+    // 1. 今の状況を読み取って、優先度の高いヒントを出す
+    if(!state.bigTitle || !state.bigTitle.trim()){
+      return "今日の大きな仕事、1コだけ書いてみよ！";
+    }
+    if(state.mediums.length === 0){
+      return "大きな仕事、中くらいの仕事に分けてみよっか。";
+    }
+    const emptyMedium = state.mediums.find(m => m.items.length === 0);
+    if(emptyMedium){
+      return "「"+emptyMedium.name+"」に小さい仕事、まだないよ。1個足してみて！";
+    }
+    if(state.bigWasAchieved){
+      return "今日はもう達成ずみ！おつかれさま、よく頑張った！";
+    }
+    const inMorning = nowMinutes >= toMinutes(state.morningTime) && nowMinutes < toMinutes(state.morningTime)+RITUAL_WINDOW;
+    const inEvening = nowMinutes >= toMinutes(state.eveningTime) && nowMinutes < toMinutes(state.eveningTime)+RITUAL_WINDOW;
+    if(inMorning){
+      return "おはよ！今日の大きな仕事を1つ決めて、そこから積み上げていこう。";
+    }
+    if(inEvening){
+      return "今日の振り返りタイム。どこまで積み上がったか見てみよ。";
+    }
+    // 2. 読み取れる状況が無ければ、ヒントの中からランダムに1つ
+    let idx;
+    do{ idx = Math.floor(Math.random()*TIP_POOL.length); } while(idx === lastTipIndex && TIP_POOL.length > 1);
+    lastTipIndex = idx;
+    return TIP_POOL[idx];
+  }
+
+  function updateHint(){
+    document.getElementById('review-text').textContent = pickTip();
+  }
+  document.getElementById('mascot-inline').addEventListener('click', updateHint);
+  setInterval(updateHint, 25000);
+
+  const bigTitleInput = document.getElementById('big-title');
+  bigTitleInput.value = state.bigTitle;
+  bigTitleInput.addEventListener('input', ()=>{ state.bigTitle = bigTitleInput.value; updateHint(); scheduleSave(); });
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+
+  function ringSVG(percent, size, stroke, color, achieved){
+    const r = (size - stroke) / 2;
+    const c = 2 * Math.PI * r;
+    const offset = c * (1 - Math.min(percent,100) / 100);
+    const centerText = achieved
+      ? `<text x="50%" y="55%" text-anchor="middle" font-size="${size*0.34}" font-weight="800" fill="${color}">✓</text>`
+      : `<text x="50%" y="55%" text-anchor="middle" font-size="${size*0.22}" font-weight="800" fill="${color}">${Math.round(percent)}%</text>`;
+    return `<svg class="ring ${achieved?'ring-achieved':''}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="${stroke}"/>
+      <circle class="ring-fill" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+        transform="rotate(-90 ${size/2} ${size/2})"/>
+      ${centerText}
+    </svg>`;
+  }
+
+  function burstConfetti(container, count, colors){
+    for(let i=0;i<count;i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.background = color;
+      piece.style.left = (Math.random()*100) + '%';
+      piece.style.top = (10 + Math.random()*10) + 'px';
+      piece.style.animationDelay = (Math.random()*120) + 'ms';
+      piece.style.transform = 'rotate(' + Math.floor(Math.random()*360) + 'deg)';
+      container.appendChild(piece);
+      setTimeout(()=> piece.remove(), 1200);
+    }
+  }
+
+  function escapeAttr(s){
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  function render(){
+    const mediumsEl = document.getElementById('mediums');
+    mediumsEl.innerHTML = '';
+
+    let totalDone = 0, totalPlanned = 0;
+
+    state.mediums.forEach((medium)=>{
+      const done = medium.items.filter(i=>i.done).length;
+      const total = medium.items.length;
+      totalDone += done;
+      totalPlanned += total;
+      const percent = total > 0 ? (done/total*100) : 0;
+      const achieved = total > 0 && done === total;
+
+      const card = document.createElement('div');
+      card.className = 'mid-card' + (achieved ? ' achieved' : '');
+      card.style.position = 'relative';
+
+      card.innerHTML = `
+        <div class="mid-head">
+          <div class="ring-wrap">${ringSVG(percent, 40, 5, '#4c7cff', achieved)}</div>
+          <div class="mid-title-wrap">
+            <input class="mid-title-input" placeholder="中くらいの仕事の名前" value="${escapeAttr(medium.name)}">
+            <div class="mid-count">${done}/${total} 完了${achieved ? '　達成' : ''}</div>
+          </div>
+        </div>
+        <ul class="small-tasks"></ul>
+        <div class="add-row"></div>
+        <div class="full-msg" style="display:none;">小さい仕事は5つまでです。先に1つ終わらせるか削除してください。</div>
+      `;
+
+      card.querySelector('.mid-title-input').addEventListener('input', (e)=>{
+        medium.name = e.target.value;
+        scheduleSave();
+      });
+
+      const ul = card.querySelector('.small-tasks');
+      medium.items.forEach((item, iIdx)=>{
+        const li = document.createElement('li');
+        if(item.done) li.classList.add('done');
+        li.innerHTML = `
+          <div class="check">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="task-text"></div>
+          <button class="del" title="削除">×</button>
+        `;
+        li.querySelector('.task-text').textContent = item.text;
+        const checkEl = li.querySelector('.check');
+        checkEl.addEventListener('click', ()=>{
+          item.done = !item.done;
+          checkEl.classList.add('pop');
+          setTimeout(()=> checkEl.classList.remove('pop'), 180);
+          render();
+        });
+        li.querySelector('.del').addEventListener('click', ()=>{
+          medium.items.splice(iIdx,1);
+          render();
+        });
+        ul.appendChild(li);
+      });
+
+      const addRow = card.querySelector('.add-row');
+      const fullMsg = card.querySelector('.full-msg');
+      if(medium.items.length >= MAX_SMALL_PER_MEDIUM){
+        addRow.style.display = 'none';
+        fullMsg.style.display = 'block';
+      } else {
+        addRow.innerHTML = `
+          <input type="text" placeholder="小さい仕事を追加（例：見出しを書き出す）">
+          <button class="plus-btn small-accent">＋</button>
+        `;
+        const input = addRow.querySelector('input');
+        const btn = addRow.querySelector('button');
+        function addSmall(){
+          const val = input.value.trim();
+          if(!val) return;
+          if(medium.items.length >= MAX_SMALL_PER_MEDIUM){
+            showToast('小さい仕事は5つまでです。');
+            return;
+          }
+          medium.items.push({text:val, done:false});
+          render();
+        }
+        btn.addEventListener('click', addSmall);
+        input.addEventListener('keydown', e=>{ if(e.key==='Enter') addSmall(); });
+      }
+
+      mediumsEl.appendChild(card);
+
+      if(achieved && !medium.wasAchieved){
+        burstConfetti(card, 14, ['#6d5dfa','#ff5ca8','#4c7cff']);
+      }
+      medium.wasAchieved = achieved;
+    });
+
+    const percent = totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0;
+    const bigAchieved = totalPlanned > 0 && totalDone === totalPlanned;
+
+    document.getElementById('big-ring').innerHTML = ringSVG(percent, 62, 7, 'url(#bigGrad)', bigAchieved);
+    document.getElementById('big-label').textContent = totalDone + '/' + totalPlanned + ' 完了';
+
+    const banner = document.getElementById('achieve-banner');
+    if(bigAchieved && !state.bigWasAchieved){
+      banner.classList.add('show');
+      burstConfetti(document.getElementById('app'), 36, ['#6d5dfa','#ff5ca8','#4c7cff']);
+    }
+    if(bigAchieved){
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+    }
+    state.bigWasAchieved = bigAchieved;
+
+    const addMediumRow = document.getElementById('add-medium-row');
+    const mediumFullMsg = document.getElementById('medium-full-msg');
+    if(state.mediums.length >= MAX_MEDIUM){
+      addMediumRow.style.display = 'none';
+      mediumFullMsg.style.display = 'block';
+    } else {
+      addMediumRow.style.display = 'flex';
+      mediumFullMsg.style.display = 'none';
+    }
+
+    updateHint();
+    scheduleSave();
+  }
+
+  document.getElementById('medium-add-btn').addEventListener('click', addMedium);
+  document.getElementById('medium-input').addEventListener('keydown', e=>{
+    if(e.key==='Enter') addMedium();
+  });
+  function addMedium(){
+    const input = document.getElementById('medium-input');
+    const val = input.value.trim();
+    if(!val) return;
+    if(state.mediums.length >= MAX_MEDIUM){
+      showToast('中くらいの仕事は3つまでです。');
+      return;
+    }
+    state.mediums.push({name:val, wasAchieved:false, items:[]});
+    input.value = '';
+    render();
+  }
+
+  document.getElementById('cal-sync').addEventListener('click', ()=>{
+    showToast('この試作品ではカレンダー連携は未接続です。次の段階で追加します。');
+  });
+
+  // ---- Googleアカウントでログインして、保存・共有する仕組み ----
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const userChip = document.getElementById('user-chip');
+  const userAvatar = document.getElementById('user-avatar');
+  const userName = document.getElementById('user-name');
+  const firebaseOffEl = document.getElementById('firebase-off');
+  const syncStatusEl = document.getElementById('sync-status');
+  const saveNoteEl = document.getElementById('save-note');
+
+  function todayKey(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function docRefForUser(uid){
+    return fbDb.collection('users').doc(uid).collection('days').doc(todayKey());
+  }
+
+  function serializeState(){
+    return {
+      bigTitle: state.bigTitle,
+      bigWasAchieved: state.bigWasAchieved,
+      morningTime: state.morningTime,
+      eveningTime: state.eveningTime,
+      mediums: state.mediums
+    };
+  }
+
+  function setSyncStatus(text){
+    syncStatusEl.textContent = text;
+  }
+
+  function scheduleSave(){
+    if(!FIREBASE_READY || !currentUser) return;
+    setSyncStatus('保存中…');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{
+      docRefForUser(currentUser.uid).set(serializeState(), {merge:true})
+        .then(()=> setSyncStatus('保存ずみ ✓'))
+        .catch(()=> setSyncStatus('保存に失敗しました'));
+    }, 800);
+  }
+
+  if(!FIREBASE_READY){
+    firebaseOffEl.style.display = 'block';
+    saveNoteEl.innerHTML = 'これは試作品です。画面を閉じたり更新すると、入力した内容は消えます。<br>Firebaseの設定を貼りつけると、Googleアカウントでログインして保存・共有できるようになります。';
+  } else {
+    loginBtn.style.display = 'inline-block';
+    saveNoteEl.innerHTML = 'ログインすると、この端末とほかの端末(Mac・スマホなど)で内容が共有されます。<br>ログインしていない間は、この画面だけの一時的な内容です。';
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+    loginBtn.addEventListener('click', ()=>{
+      fbAuth.signInWithPopup(provider).catch(()=>{
+        showToast('ログインできませんでした。もう一度お試しください。');
+      });
+    });
+    logoutBtn.addEventListener('click', ()=>{
+      fbAuth.signOut();
+    });
+
+    fbAuth.onAuthStateChanged(user=>{
+      currentUser = user;
+      if(user){
+        loginBtn.style.display = 'none';
+        userChip.style.display = 'flex';
+        userAvatar.src = user.photoURL || '';
+        userName.textContent = user.displayName || user.email || 'ログイン中';
+        setSyncStatus('読み込み中…');
+
+        docRefForUser(user.uid).get().then(snap=>{
+          if(snap.exists){
+            const data = snap.data();
+            if(typeof data.bigTitle === 'string') state.bigTitle = data.bigTitle;
+            if(typeof data.bigWasAchieved === 'boolean') state.bigWasAchieved = data.bigWasAchieved;
+            if(typeof data.morningTime === 'string') state.morningTime = data.morningTime;
+            if(typeof data.eveningTime === 'string') state.eveningTime = data.eveningTime;
+            if(Array.isArray(data.mediums)) state.mediums = data.mediums;
+            bigTitleInput.value = state.bigTitle;
+            morningInput.value = state.morningTime;
+            eveningInput.value = state.eveningTime;
+            setSyncStatus('保存ずみ ✓');
+          } else {
+            setSyncStatus('新しい今日のボードです');
+          }
+          render();
+        }).catch(()=>{
+          setSyncStatus('読み込みに失敗しました');
+        });
+      } else {
+        userChip.style.display = 'none';
+        loginBtn.style.display = 'inline-block';
+        setSyncStatus('');
+      }
+    });
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>
