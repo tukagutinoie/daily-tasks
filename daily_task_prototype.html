@@ -1782,17 +1782,26 @@
     }
     const calProvider = new firebase.auth.GoogleAuthProvider();
     calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+    // 前に許可した内容を覚えていて、確認画面を飛ばしてしまうことがあるため、
+    // 毎回かならず確認画面(アクセストークン付き)を出すよう強制する。
+    calProvider.setCustomParameters({ prompt: 'consent select_account' });
     showToast('カレンダーの閲覧を許可してください…');
     fbAuth.signInWithPopup(calProvider).then(result=>{
       const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
       calendarAccessToken = cred && cred.accessToken;
       if(!calendarAccessToken){
-        showToast('カレンダーへのアクセスを取得できませんでした。');
+        console.error('[calendar] no accessToken in credential', cred, result);
+        showToast('カレンダーへのアクセスを取得できませんでした。もう一度お試しください。');
         return;
       }
       fetchTodayCalendarEvents(calendarAccessToken);
-    }).catch(()=>{
-      showToast('カレンダーへのアクセスが許可されませんでした。');
+    }).catch(err=>{
+      console.error('[calendar] signInWithPopup failed', err && err.code, err && err.message);
+      if(err && err.code === 'auth/popup-blocked'){
+        showToast('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。');
+      } else {
+        showToast('カレンダーへのアクセスが許可されませんでした。');
+      }
     });
   }
 
