@@ -790,6 +790,50 @@
   }
   .yr-stat span{display:block; font-size:10.5px; color:var(--sub); font-weight:700;}
   .yr-stat b{font-size:17px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .task-text[contenteditable]{
+    outline:none;
+    border-radius:6px;
+    padding:2px 4px;
+    margin:-2px -4px;
+    transition:background .15s ease;
+  }
+  .task-text[contenteditable]:focus{
+    background:var(--mid-bg);
+  }
+
+  .mid-done-bar, .big-done-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; cursor:pointer; user-select:none;
+  }
+  .mid-done-bar{
+    padding:10px 12px; margin-top:2px;
+    border:1px dashed var(--line); border-radius:12px;
+    background:var(--card-soft);
+  }
+  .big-done-bar{
+    padding:14px 18px; margin-bottom:18px;
+    background:var(--card); border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+
+  .wr-box{border-bottom:1px solid var(--line);}
+  .wr-box:last-child{border-bottom:none;}
+  .week-row.clickable{cursor:pointer;}
+  .wr-arrow{flex:none; color:var(--sub); transition:transform .22s ease;}
+  .week-row.open .wr-arrow{transform:rotate(90deg);}
+  .wr-detail{padding:2px 0 12px 6px;}
+  .wd-big{margin-top:10px;}
+  .wd-big-t{
+    display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+    font-size:12.5px; font-weight:800; color:var(--text);
+  }
+  .wd-big-t span{color:var(--sub); font-weight:700; font-size:11px; flex:none;}
+  .wd-mid{margin:5px 0 6px 10px;}
+  .wd-mid-t{font-size:12px; font-weight:800; color:var(--mid);}
+  .wd-item{font-size:12px; color:var(--text); padding:2px 0 2px 11px; line-height:1.6;}
+  .wd-item.done{color:var(--sub); text-decoration:line-through;}
+  .wd-empty{font-size:12px; color:var(--sub); padding:6px 0;}
+
   .rv-sub{
     font-size:12.5px; font-weight:800; color:var(--sub);
     margin:6px 0 8px; letter-spacing:.03em;
@@ -1797,6 +1841,7 @@
 
     let totalDone = 0, totalPlanned = 0;
 
+    const openMids = [], finishedMids = [];
     big.mediums.forEach((medium, mIdx)=>{
       const doneItems = medium.items.filter(i=>i.done).length;
       const total = medium.items.length;
@@ -1852,10 +1897,19 @@
           <div class="check">
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <div class="task-text"></div>
+          <div class="task-text" contenteditable="true" spellcheck="false"></div>
           <button class="del" title="削除">×</button>
         `;
-        li.querySelector('.task-text').textContent = item.text;
+        const textEl = li.querySelector('.task-text');
+        textEl.textContent = item.text;
+        // 追加したあとでも書き直せるようにする
+        textEl.addEventListener('input', ()=>{
+          item.text = textEl.textContent;
+          scheduleSave();
+        });
+        textEl.addEventListener('keydown', (e)=>{
+          if(e.key === 'Enter'){ e.preventDefault(); textEl.blur(); }
+        });
         const checkEl = li.querySelector('.check');
         checkEl.addEventListener('click', ()=>{
           item.done = !item.done;
@@ -1918,13 +1972,29 @@
         input.addEventListener('keydown', e=>{ if(e.key==='Enter') addSmall(); });
       }
 
-      mediumsEl.appendChild(mCard);
+      if(achieved) finishedMids.push(mCard); else openMids.push(mCard);
 
       if(achieved && !medium.wasAchieved){
         burstConfetti(mCard, 14, ['#6d5dfa','#ff5ca8','#4c7cff']);
       }
       medium.wasAchieved = achieved;
     });
+
+    openMids.forEach(el=> mediumsEl.appendChild(el));
+    if(finishedMids.length){
+      const mKey = 'midbar:' + big.id;
+      const mBar = document.createElement('div');
+      mBar.className = 'mid-done-bar';
+      mBar.innerHTML = '<span class="done-bar-txt">✓ 終わった中くらいの仕事 ' + finishedMids.length + '件</span>'
+        + '<span class="done-bar-act">' + (doneOpen[mKey] ? 'たたむ' : 'ひらく') + '</span>';
+      mBar.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        doneOpen[mKey] = !doneOpen[mKey];
+        render();
+      });
+      mediumsEl.appendChild(mBar);
+      if(doneOpen[mKey]) finishedMids.forEach(el=> mediumsEl.appendChild(el));
+    }
 
     if(big.mediums.length >= MAX_MEDIUM){
       addMediumRow.style.display = 'none';
@@ -1977,6 +2047,7 @@
     let anyBigWithItems = false;
     let allAchieved = true;
 
+    const finishedBigs = [];
     state.blockOrder.forEach(key=>{
       if(key === 'memo'){
         blocksEl.appendChild(renderMemoBlock());
@@ -1986,12 +2057,27 @@
       const big = state.bigs.find(b=>b.id===id);
       if(!big) return;
       const result = renderBigBlock(big);
-      blocksEl.appendChild(result.el);
+      // 終わった大きな仕事は、いちばん下にまとめる
+      if(result.achieved && result.hasItems) finishedBigs.push(result.el);
+      else blocksEl.appendChild(result.el);
       if(result.hasItems){
         anyBigWithItems = true;
         if(!result.achieved) allAchieved = false;
       }
     });
+    if(finishedBigs.length){
+      const bKey = 'bigbar';
+      const bBar = document.createElement('div');
+      bBar.className = 'big-done-bar';
+      bBar.innerHTML = '<span class="done-bar-txt">✓ 終わった大きな仕事 ' + finishedBigs.length + '件</span>'
+        + '<span class="done-bar-act">' + (doneOpen[bKey] ? 'たたむ' : 'ひらく') + '</span>';
+      bBar.addEventListener('click', ()=>{
+        doneOpen[bKey] = !doneOpen[bKey];
+        render();
+      });
+      blocksEl.appendChild(bBar);
+      if(doneOpen[bKey]) finishedBigs.forEach(el=> blocksEl.appendChild(el));
+    }
 
     enableDragReorder(blocksEl, onBlocksReordered);
 
@@ -2231,8 +2317,22 @@
       label: (d.getMonth()+1)+'/'+d.getDate()
     };
   }
+  // 保存されている各日のデータから、その日の点数を計算する
+  // （小さい仕事1点・中くらい2点・大きい5点。実際に残っている記録から出す）
+  function pointsOfDay(data){
+    let pts = 0;
+    (data && data.bigs ? data.bigs : []).forEach(b=>{
+      if(b.done) pts += 5;
+      (b.mediums||[]).forEach(m=>{
+        if(m.done) pts += 2;
+        (m.items||[]).forEach(it=>{ if(it.done) pts += 1; });
+      });
+    });
+    return pts;
+  }
+
   // 1年ぶんの積み上げを、日ごとのマスで見せる
-  function renderYearHeat(){
+  function renderYearHeat(log){
     const el = document.getElementById('year-heat');
     const now = new Date(), y = now.getFullYear();
     const jan1 = new Date(y,0,1);
@@ -2245,7 +2345,7 @@
     for(let d = 0; d < days; d++){
       const date = new Date(y, 0, 1 + d);
       const key = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
-      const v = dayLog[key] || 0;
+      const v = Math.max(log[key] || 0, dayLog[key] || 0);
       total += v;
       if(v > 0){ active++; run++; if(run > best) best = run; }
       else if(date <= now){ run = 0; }
@@ -2265,52 +2365,101 @@
     return { total: total, active: active, best: best, year: y };
   }
 
+  // その日の中身（大→中→小）を開いて見せる
+  function buildDayDetail(data){
+    const wrap = document.createElement('div');
+    wrap.className = 'wr-detail';
+    const bigs = Array.isArray(data.bigs) ? data.bigs : [];
+    if(!bigs.length){
+      wrap.innerHTML = '<div class="wd-empty">中身の記録がありません。</div>';
+      return wrap;
+    }
+    bigs.forEach(b=>{
+      const bg = document.createElement('div');
+      bg.className = 'wd-big';
+      let dn = 0, pl = 0;
+      (b.mediums||[]).forEach(m=> (m.items||[]).forEach(it=>{ pl++; if(it.done) dn++; }));
+      bg.innerHTML = '<div class="wd-big-t"><b></b><span></span></div>';
+      bg.querySelector('b').textContent = (b.done ? '✓ ' : '') + (b.title || '（無題）');
+      bg.querySelector('span').textContent = pl ? (dn + '/' + pl) : '';
+      (b.mediums||[]).forEach(m=>{
+        const md = document.createElement('div');
+        md.className = 'wd-mid';
+        const mt = document.createElement('div');
+        mt.className = 'wd-mid-t';
+        mt.textContent = (m.done ? '✓ ' : '') + (m.name || '（無題）');
+        md.appendChild(mt);
+        (m.items||[]).forEach(it=>{
+          const li = document.createElement('div');
+          li.className = 'wd-item' + (it.done ? ' done' : '');
+          li.textContent = (it.done ? '✓ ' : '・ ') + (it.text || '');
+          md.appendChild(li);
+        });
+        bg.appendChild(md);
+      });
+      wrap.appendChild(bg);
+    });
+    return wrap;
+  }
+
   function openWeekModal(){
     const modal = document.getElementById('week-modal');
     const listEl = document.getElementById('week-list');
     const summaryEl = document.getElementById('week-summary-area');
     modal.classList.add('show');
 
-    const h = renderYearHeat();
-    const lv = levelOf(totalBlocks);
-    document.getElementById('year-stats').innerHTML =
-        '<div class="yr-stats">'
-      + '<div class="yr-stat"><span>' + h.year + '年の合計</span><b>' + h.total + ' 点</b></div>'
-      + '<div class="yr-stat"><span>積み上げた日</span><b>' + h.active + ' 日</b></div>'
-      + '<div class="yr-stat"><span>最長つづき</span><b>' + h.best + ' 日</b></div>'
-      + '<div class="yr-stat"><span>完成した城</span><b>' + Math.floor(totalBlocks / CASTLE_TOTAL) + ' 城</b></div>'
-      + '<div class="yr-stat"><span>いまのレベル</span><b>LV ' + lv + '</b></div>'
-      + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 点</b></div>'
-      + '</div>';
-
     if(!FIREBASE_READY || !currentUser){
+      renderYearHeat({});
+      document.getElementById('year-stats').innerHTML = '';
       listEl.innerHTML = '';
-      summaryEl.innerHTML = '<div class="week-summary">ログインすると、日ごとの記録も見られます。</div>';
+      summaryEl.innerHTML = '<div class="week-summary">ログインすると、これまでの記録が見られます。</div>';
       return;
     }
+
     listEl.innerHTML = '';
     summaryEl.innerHTML = '<div class="week-summary">読み込み中…</div>';
 
-    const days = [];
-    for(let i=0;i<14;i++) days.push(dateKeyOffset(i));
+    // 保存されている日をまとめて1回で読む
+    fbDb.collection('users').doc(currentUser.uid).collection('days').get().then(snap=>{
+      const log = {}, store = {};
+      snap.forEach(doc=>{
+        const d = doc.data();
+        store[doc.id] = d;
+        log[doc.id] = pointsOfDay(d);
+      });
 
-    Promise.all(days.map(d=>
-      fbDb.collection('users').doc(currentUser.uid).collection('days').doc(d.key).get()
-        .then(snap=> Object.assign({}, d, { data: snap.exists ? snap.data() : null }))
-    )).then(results=>{
+      const h = renderYearHeat(log);
+      const lv = levelOf(totalBlocks);
+      document.getElementById('year-stats').innerHTML =
+          '<div class="yr-stats">'
+        + '<div class="yr-stat"><span>' + h.year + '年の合計</span><b>' + h.total + ' 点</b></div>'
+        + '<div class="yr-stat"><span>積み上げた日</span><b>' + h.active + ' 日</b></div>'
+        + '<div class="yr-stat"><span>最長つづき</span><b>' + h.best + ' 日</b></div>'
+        + '<div class="yr-stat"><span>完成した城</span><b>' + Math.floor(totalBlocks / CASTLE_TOTAL) + ' 城</b></div>'
+        + '<div class="yr-stat"><span>いまのレベル</span><b>LV ' + lv + '</b></div>'
+        + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 点</b></div>'
+        + '</div>';
+
       listEl.innerHTML = '';
-      let achievedCount = 0, recordedCount = 0;
-      results.forEach(r=>{
+      let recordedCount = 0, achievedCount = 0;
+      for(let i=0;i<14;i++){
+        const d = dateKeyOffset(i);
+        const data = store[d.key] || null;
+        const box = document.createElement('div');
+        box.className = 'wr-box';
         const row = document.createElement('div');
-        if(!r.data){
+
+        if(!data){
           row.className = 'week-row';
           row.innerHTML = '<div class="wr-date"></div><div class="wr-title" style="color:#c9c5d6;">記録なし</div><div class="wr-stat"></div>';
-          row.querySelector('.wr-date').textContent = r.label;
-          listEl.appendChild(row);
-          return;
+          row.querySelector('.wr-date').textContent = d.label;
+          box.appendChild(row);
+          listEl.appendChild(box);
+          continue;
         }
+
         recordedCount++;
-        const bigs = Array.isArray(r.data.bigs) ? r.data.bigs : [];
+        const bigs = Array.isArray(data.bigs) ? data.bigs : [];
         let done = 0, planned = 0;
         bigs.forEach(b=> (b.mediums||[]).forEach(m=> (m.items||[]).forEach(it=>{
           planned++; if(it.done) done++;
@@ -2318,17 +2467,31 @@
         const achieved = planned > 0 && done === planned;
         if(achieved) achievedCount++;
         const titles = bigs.map(b=>b.title).filter(Boolean).join('・') || '（未入力）';
-        row.className = 'week-row' + (achieved ? ' achieved' : '');
-        row.innerHTML = '<div class="wr-date"></div><div class="wr-title"></div><div class="wr-stat"></div>';
-        row.querySelector('.wr-date').textContent = r.label;
+
+        row.className = 'week-row clickable' + (achieved ? ' achieved' : '');
+        row.innerHTML = '<div class="wr-date"></div><div class="wr-title"></div><div class="wr-stat"></div>'
+          + '<svg class="wr-arrow" viewBox="0 0 24 24" width="11" height="11" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        row.querySelector('.wr-date').textContent = d.label;
         row.querySelector('.wr-title').textContent = titles;
-        row.querySelector('.wr-stat').textContent = (dayLog[r.key] ? dayLog[r.key] + '点' : (planned > 0 ? done + '/' + planned : '-'));
-        listEl.appendChild(row);
-      });
+        row.querySelector('.wr-stat').textContent = (log[d.key] || 0) + '点';
+        box.appendChild(row);
+
+        const det = buildDayDetail(data);
+        det.style.display = 'none';
+        row.addEventListener('click', ()=>{
+          const willOpen = det.style.display === 'none';
+          det.style.display = willOpen ? 'block' : 'none';
+          row.classList.toggle('open', willOpen);
+        });
+        box.appendChild(det);
+        listEl.appendChild(box);
+      }
+
       summaryEl.innerHTML = '<div class="week-summary">' + (recordedCount === 0
         ? '記録はまだありません。今日から積み上げていこう。'
-        : '14日のうち、記録がある日は' + recordedCount + '日。ぜんぶ達成できた日は' + achievedCount + '日。') + '</div>';
+        : '直近14日のうち、記録がある日は' + recordedCount + '日。日付を押すと、その日の中身が開きます。') + '</div>';
     }).catch(()=>{
+      renderYearHeat({});
       listEl.innerHTML = '';
       summaryEl.innerHTML = '<div class="week-summary">読み込みに失敗しました。もう一度お試しください。</div>';
     });
@@ -2759,7 +2922,7 @@
   function isEditingNow(){
     const el = document.activeElement;
     if(!el) return false;
-    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA';
+    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true;
   }
 
   function applyDayData(data){
