@@ -927,22 +927,7 @@
   </div>
 
   <div class="review-banner" id="review-banner">
-    <div class="mascot-inline" id="mascot-inline" title="ヒントを見る">
-      <svg class="mascot-body" width="42" height="38" viewBox="0 0 64 56">
-        <path d="M32 4 C50 4 58 22 58 34 C58 46 46 52 32 52 C18 52 6 46 6 34 C6 22 14 4 32 4 Z"
-          fill="url(#slimeGrad)" stroke="#1f7fce" stroke-width="1.5"/>
-        <ellipse cx="19" cy="16" rx="7.5" ry="5" fill="#ffffff" opacity="0.6"/>
-        <ellipse cx="16" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="0.55"/>
-        <ellipse cx="48" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="0.55"/>
-        <circle cx="23" cy="30" r="5.2" fill="#17334a"/>
-        <circle cx="41" cy="30" r="5.2" fill="#17334a"/>
-        <circle cx="24.6" cy="28.2" r="1.5" fill="#ffffff"/>
-        <circle cx="42.6" cy="28.2" r="1.5" fill="#ffffff"/>
-        <circle cx="21.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/>
-        <circle cx="39.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/>
-        <path d="M23 39 Q32 46.5 41 39" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      </svg>
-    </div>
+    <div class="mascot-inline" id="mascot-inline" title="ヒントを見る"></div>
     <div class="hint-bubble" id="review-text"></div>
     <div class="ritual-times">
       <label>朝<input type="time" id="morning-time" value="07:00"></label>
@@ -1021,6 +1006,32 @@
     firebase.initializeApp(firebaseConfig);
     fbAuth = firebase.auth();
     fbDb = firebase.firestore();
+
+    // Googleカレンダーの許可は、ポップアップだと途中で消えてしまう端末があるため
+    // 画面ごと切り替わる方式(リダイレクト)で行い、戻ってきたときにここで受け取る。
+    fbAuth.getRedirectResult().then(result=>{
+      const pending = sessionStorage.getItem('tsumiage_cal_pending');
+      if(!pending) return;
+      sessionStorage.removeItem('tsumiage_cal_pending');
+      if(!result || !result.user){
+        return;
+      }
+      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      const token = cred && cred.accessToken;
+      if(!token){
+        console.error('[calendar] redirect result had no accessToken', cred, result);
+        showToast('カレンダーへのアクセスを取得できませんでした。もう一度お試しください。');
+        return;
+      }
+      calendarAccessToken = token;
+      setTimeout(()=>{ fetchTodayCalendarEvents(calendarAccessToken); }, 300);
+    }).catch(err=>{
+      const pending = sessionStorage.getItem('tsumiage_cal_pending');
+      if(!pending) return;
+      sessionStorage.removeItem('tsumiage_cal_pending');
+      console.error('[calendar] getRedirectResult failed', err && err.code, err && err.message);
+      showToast('カレンダーへのアクセスが許可されませんでした。');
+    });
   }
 
   const state = {
@@ -1060,57 +1071,122 @@
   morningInput.addEventListener('input', ()=>{ state.morningTime = morningInput.value; render(); });
   eveningInput.addEventListener('input', ()=>{ state.eveningTime = eveningInput.value; render(); });
 
+  // ---- スライムの顔(表情パターン) ----
+  // 同じ体の形をベースに、目・眉・口・まわりの飾りだけ変えて
+  // コメントの内容にあわせて表情を出し分ける。
+  const SLIME_BODY = 'M32 4 C50 4 58 22 58 34 C58 46 46 52 32 52 C18 52 6 46 6 34 C6 22 14 4 32 4 Z';
+  const SLIME_HIGHLIGHT = '<ellipse cx="19" cy="16" rx="7.5" ry="5" fill="#ffffff" opacity="0.6"/>';
+  function slimeBlush(op){
+    op = (op===undefined) ? 0.55 : op;
+    return '<ellipse cx="16" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="'+op+'"/>'
+      + '<ellipse cx="48" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="'+op+'"/>';
+  }
+  const FACES = {
+    // ふだんの、にこっと目を開いた顔
+    happy: () =>
+      slimeBlush() +
+      '<circle cx="23" cy="30" r="5.2" fill="#17334a"/><circle cx="41" cy="30" r="5.2" fill="#17334a"/>' +
+      '<circle cx="24.6" cy="28.2" r="1.5" fill="#ffffff"/><circle cx="42.6" cy="28.2" r="1.5" fill="#ffffff"/>' +
+      '<circle cx="21.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/><circle cx="39.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/>' +
+      '<path d="M23 39 Q32 46.5 41 39" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
+    // 朝、元気いっぱいの顔（目キラキラ・口大きめ）
+    cheer: () =>
+      slimeBlush(0.6) +
+      '<circle cx="23" cy="29" r="5.8" fill="#17334a"/><circle cx="41" cy="29" r="5.8" fill="#17334a"/>' +
+      '<circle cx="25" cy="26.8" r="1.9" fill="#ffffff"/><circle cx="43" cy="26.8" r="1.9" fill="#ffffff"/>' +
+      '<circle cx="21" cy="31.5" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="39" cy="31.5" r="0.9" fill="#ffffff" opacity="0.85"/>' +
+      '<path d="M22 38 Q32 48 42 38 Q32 44 22 38 Z" fill="#17334a"/>' +
+      '<path d="M10 12 L11.5 15.5 L15 17 L11.5 18.5 L10 22 L8.5 18.5 L5 17 L8.5 15.5 Z" fill="#ffe27a"/>',
+    // 夜、落ち着いた顔（半月目でにっこり）
+    calm: () =>
+      slimeBlush(0.4) +
+      '<path d="M17.5 30 Q23 25.5 28.5 30" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+      '<path d="M35.5 30 Q41 25.5 46.5 30" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+      '<path d="M25 40 Q32 44.5 39 40" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>',
+    // 達成できた時の、誇らしい顔（きゅっと目を閉じてにっこり＋キラキラ）
+    proud: () =>
+      slimeBlush(0.65) +
+      '<path d="M17 31 Q23 25 29 31" stroke="#17334a" stroke-width="2.8" fill="none" stroke-linecap="round"/>' +
+      '<path d="M35 31 Q41 25 47 31" stroke="#17334a" stroke-width="2.8" fill="none" stroke-linecap="round"/>' +
+      '<path d="M21 38 Q32 47.5 43 38 Q32 45 21 38 Z" fill="#17334a"/>' +
+      '<path d="M50 12 L51.3 15.2 L54.5 16.5 L51.3 17.8 L50 21 L48.7 17.8 L45.5 16.5 L48.7 15.2 Z" fill="#ffe27a"/>' +
+      '<path d="M12 8 L12.8 10 L14.8 10.8 L12.8 11.6 L12 13.6 L11.2 11.6 L9.2 10.8 L11.2 10 Z" fill="#ffe27a"/>',
+    // 落ち込みやすい人向けの、やさしく寄りそう顔
+    gentle: () =>
+      slimeBlush(0.6) +
+      '<path d="M18 31 Q23 28.5 28 31" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M36 31 Q41 28.5 46 31" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M25 40 Q32 43.5 39 40" stroke="#17334a" stroke-width="2.2" fill="none" stroke-linecap="round"/>',
+    // 「まず1つ書いてみよう」など、問いかけている顔
+    think: () =>
+      slimeBlush(0.35) +
+      '<circle cx="23" cy="30" r="5" fill="#17334a"/>' +
+      '<path d="M36 30 Q41 26.5 46 29" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="24.4" cy="28.3" r="1.4" fill="#ffffff"/>' +
+      '<path d="M25 40.5 Q30 38.5 34 40" stroke="#17334a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' +
+      '<text x="47" y="17" font-size="13" font-weight="800" fill="#7a8bab">?</text>'
+  };
+  function mascotSVG(mood){
+    const face = (FACES[mood] || FACES.happy)();
+    return '<svg class="mascot-body" width="42" height="38" viewBox="0 0 64 56">'
+      + '<path d="'+SLIME_BODY+'" fill="url(#slimeGrad)" stroke="#1f7fce" stroke-width="1.5"/>'
+      + SLIME_HIGHLIGHT + face + '</svg>';
+  }
+  function setMascotFace(mood){
+    document.getElementById('mascot-inline').innerHTML = mascotSVG(mood);
+  }
+
   // ---- スライムのヒント(吹き出し) ----
   const TIP_POOL = [
     // ふつうのヒント（ポップ・友達口調）
-    "小さい仕事を1つ終えたら、それだけでもう勝ちだよ！",
-    "迷ったら、いちばん簡単なやつからでOK。",
-    "9個ぜんぶ埋まらなくても、今日はここまでで上出来！",
-    "終わったタスクは消さずに残しておくと、あとで見て嬉しくなるよ。",
-    "詰め込みすぎたら、1個だけ明日にまわそう。それでいい。",
-    "やる気が出ない日は、いちばん小さいことだけやってみて。",
-    "毎日同じ時間に開くクセをつけると、グッと続けやすくなるよ。",
-    "全部終わらなくても、進んだ分はちゃんと前進だから。",
-    "大きい仕事は3つくらいに分けると、一気にラクになるよ。",
-    "今の気分でできそうなものから選んでOK、それでいい。",
-    "ちょっと休憩してから、また1個いこう。",
+    { text:"小さい仕事を1つ終えたら、それだけでもう勝ちだよ！", mood:"happy" },
+    { text:"迷ったら、いちばん簡単なやつからでOK。", mood:"happy" },
+    { text:"9個ぜんぶ埋まらなくても、今日はここまでで上出来！", mood:"happy" },
+    { text:"終わったタスクは消さずに残しておくと、あとで見て嬉しくなるよ。", mood:"happy" },
+    { text:"詰め込みすぎたら、1個だけ明日にまわそう。それでいい。", mood:"calm" },
+    { text:"やる気が出ない日は、いちばん小さいことだけやってみて。", mood:"gentle" },
+    { text:"毎日同じ時間に開くクセをつけると、グッと続けやすくなるよ。", mood:"happy" },
+    { text:"全部終わらなくても、進んだ分はちゃんと前進だから。", mood:"gentle" },
+    { text:"大きい仕事は3つくらいに分けると、一気にラクになるよ。", mood:"think" },
+    { text:"今の気分でできそうなものから選んでOK、それでいい。", mood:"happy" },
+    { text:"ちょっと休憩してから、また1個いこう。", mood:"calm" },
     // 挫折しやすい人・落ち込みやすい人向け（自己肯定感を守るヒント）
-    "できなかった日があっても、それは『失敗』じゃなくて『そういう日』ってだけ。",
-    "自分に厳しくしすぎなくて大丈夫。親友に言うみたいに、自分にも優しくしてあげて。",
-    "『いつもできない』はウソ。今日できなかっただけ。それだけの話。",
-    "習慣は1回サボったくらいじゃ崩れないよ。すぐ戻ればちゃんと続く。",
-    "落ち込んでる時こそ、超簡単なこと1個だけやってみて。それで十分リセットできる。",
-    "完璧に戻そうとしなくていい。ちょっとだけ動けたら、それでもう合格。",
-    "できなかった自分を責めるより、次の1個に目を向けよう。そのほうがずっと続くよ。",
-    "誰だって波はある。今日が低い日でも、また積み上がっていくから大丈夫。"
+    { text:"できなかった日があっても、それは『失敗』じゃなくて『そういう日』ってだけ。", mood:"gentle" },
+    { text:"自分に厳しくしすぎなくて大丈夫。親友に言うみたいに、自分にも優しくしてあげて。", mood:"gentle" },
+    { text:"『いつもできない』はウソ。今日できなかっただけ。それだけの話。", mood:"gentle" },
+    { text:"習慣は1回サボったくらいじゃ崩れないよ。すぐ戻ればちゃんと続く。", mood:"gentle" },
+    { text:"落ち込んでる時こそ、超簡単なこと1個だけやってみて。それで十分リセットできる。", mood:"gentle" },
+    { text:"完璧に戻そうとしなくていい。ちょっとだけ動けたら、それでもう合格。", mood:"gentle" },
+    { text:"できなかった自分を責めるより、次の1個に目を向けよう。そのほうがずっと続くよ。", mood:"gentle" },
+    { text:"誰だって波はある。今日が低い日でも、また積み上がっていくから大丈夫。", mood:"gentle" }
   ];
   let lastTipIndex = -1;
 
   function pickTip(){
     // 1. 今の状況を読み取って、優先度の高いヒントを出す
     if(state.bigs.length === 0 || !state.bigs.some(b=>b.title && b.title.trim())){
-      return "今日の大きな仕事、1コだけ書いてみよ！";
+      return { text:"今日の大きな仕事、1コだけ書いてみよ！", mood:"think" };
     }
     const emptyBig = state.bigs.find(b => b.title && b.title.trim() && b.mediums.length === 0);
     if(emptyBig){
-      return "「"+emptyBig.title+"」、中くらいの仕事に分けてみよっか。";
+      return { text:"「"+emptyBig.title+"」、中くらいの仕事に分けてみよっか。", mood:"think" };
     }
     for(const b of state.bigs){
       const emptyMedium = b.mediums.find(m => m.items.length === 0);
       if(emptyMedium){
-        return "「"+emptyMedium.name+"」に小さい仕事、まだないよ。1個足してみて！";
+        return { text:"「"+emptyMedium.name+"」に小さい仕事、まだないよ。1個足してみて！", mood:"think" };
       }
     }
     if(state.dayWasAchieved){
-      return "今日はもう達成ずみ！おつかれさま、よく頑張った！";
+      return { text:"今日はもう達成ずみ！おつかれさま、よく頑張った！", mood:"proud" };
     }
     const inMorning = nowMinutes >= toMinutes(state.morningTime) && nowMinutes < toMinutes(state.morningTime)+RITUAL_WINDOW;
     const inEvening = nowMinutes >= toMinutes(state.eveningTime) && nowMinutes < toMinutes(state.eveningTime)+RITUAL_WINDOW;
     if(inMorning){
-      return "おはよ！今日の大きな仕事を1つ決めて、そこから積み上げていこう。";
+      return { text:"おはよ！今日の大きな仕事を1つ決めて、そこから積み上げていこう。", mood:"cheer" };
     }
     if(inEvening){
-      return "今日の振り返りタイム。どこまで積み上がったか見てみよ。";
+      return { text:"今日の振り返りタイム。どこまで積み上がったか見てみよ。", mood:"calm" };
     }
     // 2. 読み取れる状況が無ければ、ヒントの中からランダムに1つ
     let idx;
@@ -1120,7 +1196,9 @@
   }
 
   function updateHint(){
-    document.getElementById('review-text').textContent = pickTip();
+    const tip = pickTip();
+    document.getElementById('review-text').textContent = tip.text;
+    setMascotFace(tip.mood);
   }
   document.getElementById('mascot-inline').addEventListener('click', updateHint);
   setInterval(updateHint, 25000);
@@ -1785,23 +1863,15 @@
     // 前に許可した内容を覚えていて、確認画面を飛ばしてしまうことがあるため、
     // 毎回かならず確認画面(アクセストークン付き)を出すよう強制する。
     calProvider.setCustomParameters({ prompt: 'consent select_account' });
+    // ポップアップ方式だと、ブラウザのプライバシー設定によっては許可した後も
+    // 鍵(アクセストークン)がうまく戻ってこないことがあるため、
+    // 画面ごとGoogleに移動する方式(リダイレクト)を使う。
+    sessionStorage.setItem('tsumiage_cal_pending', '1');
     showToast('カレンダーの閲覧を許可してください…');
-    fbAuth.signInWithPopup(calProvider).then(result=>{
-      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-      calendarAccessToken = cred && cred.accessToken;
-      if(!calendarAccessToken){
-        console.error('[calendar] no accessToken in credential', cred, result);
-        showToast('カレンダーへのアクセスを取得できませんでした。もう一度お試しください。');
-        return;
-      }
-      fetchTodayCalendarEvents(calendarAccessToken);
-    }).catch(err=>{
-      console.error('[calendar] signInWithPopup failed', err && err.code, err && err.message);
-      if(err && err.code === 'auth/popup-blocked'){
-        showToast('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。');
-      } else {
-        showToast('カレンダーへのアクセスが許可されませんでした。');
-      }
+    fbAuth.signInWithRedirect(calProvider).catch(err=>{
+      sessionStorage.removeItem('tsumiage_cal_pending');
+      console.error('[calendar] signInWithRedirect failed', err && err.code, err && err.message);
+      showToast('カレンダーへのアクセスが許可されませんでした。');
     });
   }
 
