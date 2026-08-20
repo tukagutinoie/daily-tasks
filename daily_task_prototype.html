@@ -3020,20 +3020,19 @@
   // 「ボード」をまだ作っていない古いデータ用：日付ごとの記録の中から、
   // いちばん新しく中身が入っているものを1つだけ見つける（初回だけの引っ越し）。
   function findMostRecentDayWithContent(uid){
-    return fbDb.collection('users').doc(uid).collection('days')
-      .orderBy(firebase.firestore.FieldPath.documentId(), 'desc')
-      .limit(10)
-      .get()
+    // orderBy(documentId()) は複合インデックスを要求されて失敗することがあるので使わない。
+    // 日付キー(YYYY-MM-DD)は文字の大小がそのまま新しい順になるので、取ってから選ぶ。
+    // ここで失敗しても握りつぶさない（握りつぶすと、空の状態でボードを上書きしてしまう）。
+    return fbDb.collection('users').doc(uid).collection('days').get()
       .then(snap=>{
-        let result = null;
+        let best = null;
         snap.forEach(doc=>{
-          if(result) return;
           const d = doc.data();
-          if(Array.isArray(d.bigs) && d.bigs.length) result = { data: d, key: doc.id };
+          if(!Array.isArray(d.bigs) || !d.bigs.length) return;
+          if(!best || doc.id > best.key) best = { data: d, key: doc.id };
         });
-        return result;
-      })
-      .catch(()=> null);
+        return best;
+      });
   }
 
   function saveBoard(){
@@ -3178,7 +3177,11 @@
               render();
               showToast('前の記録を見つけたので、積み上げに戻しました。');
             }
-            saveBoard();
+            return saveBoard();
+          }).catch(()=>{
+            // 読み出しに失敗したときは、何も保存しない。
+            // ここで保存すると、中身が入る前の状態でボードを上書きしてしまう。
+            setSyncStatus('前の記録を読めませんでした。開き直してください');
           });
         }).catch(()=>{
           setSyncStatus('読み込みに失敗しました');
