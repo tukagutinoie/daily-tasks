@@ -1829,7 +1829,6 @@
         ? '「' + (big.title || 'この仕事') + '」を毎日くりかえします。日付が変わると自動で用意されます。'
         : '毎日くりかえしをやめました。');
       render();
-      saveDailyTemplates();
     });
 
     head.addEventListener('click', ()=>{
@@ -2950,15 +2949,18 @@
     syncStatusEl.textContent = text;
   }
 
-  // ---- 端末どうしのリアルタイム同期 ----
-  // 以前は「開いたときに1回だけ読む」方式だったため、Macを開きっぱなしにしていると
-  // スマホで入れた内容が届かず、しかも古い内容で上書きしてしまっていた。
-  // ここでは常時見張る方式(onSnapshot)にして、どの端末で変えても全部に届くようにする。
-  let unsubscribeDay = null;
-  let subscribedDayKey = null;
+  // ---- 端末どうしのリアルタイム同期／ボードは日付をまたいでも消えない ----
+  // 【重大な不具合の修正 2026-08-21】以前は「今日」の記録を日付ごとの
+  // 別ファイル(days/YYYY-MM-DD)として扱っていたため、日付が変わると新しい
+  // 空のファイルに切りかわり、書いていた内容が画面から見えなくなっていた。
+  // （データそのものは消えておらず、前の日のファイルにはそのまま残っていた）
+  // これを直し、ボードは1本だけを日付をまたいでずっと使いつづける方式にする。
+  // 「🔁毎日くりかえす」を付けた大きな仕事だけ、日付が変わるとチェックが外れて
+  // 新しい今日ぶんとして使える状態に戻る。それ以外はいっさい触らない。
+  let unsubscribeProfile = null;
   let applyingRemote = false;   // 受信を反映している最中は保存しない（往復ループ防止）
   let pendingRemote = null;     // 入力中に届いた分は、入力が終わってから反映する
-  let dailyTemplates = [];
+  let boardDateKey = null;      // 直前に見た「今日」の日付。変わったら日付またぎの処理をする
 
   function isEditingNow(){
     const el = document.activeElement;
@@ -2966,12 +2968,12 @@
     return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true;
   }
 
-  function applyDayData(data){
+  function applyBoardData(board){
     applyingRemote = true;
     try{
-      if(typeof data.dayWasAchieved === 'boolean') state.dayWasAchieved = data.dayWasAchieved;
-      if(Array.isArray(data.bigs)){
-        state.bigs = data.bigs.map(b=>({
+      if(typeof board.dayWasAchieved === 'boolean') state.dayWasAchieved = board.dayWasAchieved;
+      if(Array.isArray(board.bigs)){
+        state.bigs = board.bigs.map(b=>({
           id: typeof b.id === 'number' ? b.id : 0,
           title: b.title || '',
           done: !!b.done,
@@ -2991,88 +2993,78 @@
         state.bigs.forEach(b=>{ while(usedIds.has(b.id)){ b.id++; } usedIds.add(b.id); });
         nextBigId = state.bigs.length ? Math.max(...state.bigs.map(b=>b.id)) + 1 : 1;
       }
-      state.blockOrder = Array.isArray(data.blockOrder) ? data.blockOrder : [];
+      state.blockOrder = Array.isArray(board.blockOrder) ? board.blockOrder : [];
       render();
     } finally {
       applyingRemote = false;
     }
   }
 
-  // 「毎日くりかえす」の印がついた大きな仕事を、型として控えておく
-  function collectDailyTemplates(){
-    return state.bigs.filter(b=> b.repeatDaily).map(b=>({
-      title: b.title || '',
-      mediums: (b.mediums||[]).map(m=>({
-        name: m.name || '',
-        items: (m.items||[]).map(it=> it.text)
-      }))
-    }));
-  }
-  function saveDailyTemplates(){
-    if(!FIREBASE_READY || !currentUser) return;
-    profileRefForUser(currentUser.uid)
-      .set({ dailyTemplates: collectDailyTemplates() }, {merge:true})
-      .catch(()=>{});
-  }
-
-  // 新しい一日のボードを、型から自動で組み立てる
-  function seedFromTemplates(){
-    if(!dailyTemplates.length) return false;
-    let added = false;
-    dailyTemplates.forEach(t=>{
-      if(state.bigs.length >= MAX_BIG) return;
-      const id = nextBigId++;
-      state.bigs.push({
-        id: id,
-        title: t.title || '',
-        repeatDaily: true,
-        wasAchieved: false,
-        collapsed: false,
-        mediums: (t.mediums||[]).slice(0, MAX_MEDIUM).map(m=>({
-          name: m.name || '',
-          done: false,
-          wasAchieved: false,
-          items: (m.items||[]).slice(0, MAX_SMALL_PER_MEDIUM).map(tx=>({
-            text: tx, done:false, eveningReviewed:false
-          }))
-        }))
+  // 「🔁毎日くりかえす」の大きな仕事だけ、チェックを外して今日ぶんに戻す。
+  // ほかの仕事はいっさい触らない（消さない・並びも変えない）。
+  function resetRepeatingItemsForNewDay(){
+    let touched = false;
+    state.bigs.forEach(b=>{
+      if(!b.repeatDaily) return;
+      if(b.done){ b.done = false; touched = true; }
+      (b.mediums||[]).forEach(m=>{
+        if(m.done){ m.done = false; touched = true; }
+        (m.items||[]).forEach(it=>{
+          if(it.done){ it.done = false; it.eveningReviewed = false; touched = true; }
+        });
       });
-      insertBlockKeyBeforeMemo('big:'+id);
-      added = true;
     });
-    return added;
+    return touched;
   }
 
-  function subscribeToDay(uid){
-    if(unsubscribeDay){ unsubscribeDay(); unsubscribeDay = null; }
-    subscribedDayKey = todayKey();
-    setSyncStatus('読み込み中…');
-    unsubscribeDay = docRefForUser(uid).onSnapshot(snap=>{
-      // 自分がいま書いた内容が返ってきただけのときは、何もしない
-      if(snap.metadata && snap.metadata.hasPendingWrites) return;
+  // 「ボード」をまだ作っていない古いデータ用：日付ごとの記録の中から、
+  // いちばん新しく中身が入っているものを1つだけ見つける（初回だけの引っ越し）。
+  function findMostRecentDayWithContent(uid){
+    return fbDb.collection('users').doc(uid).collection('days')
+      .orderBy(firebase.firestore.FieldPath.documentId(), 'desc')
+      .limit(10)
+      .get()
+      .then(snap=>{
+        let result = null;
+        snap.forEach(doc=>{
+          if(result) return;
+          const d = doc.data();
+          if(Array.isArray(d.bigs) && d.bigs.length) result = { data: d, key: doc.id };
+        });
+        return result;
+      })
+      .catch(()=> null);
+  }
 
-      if(!snap.exists){
-        // その日のボードがまだ無い ＝ 新しい一日
-        applyingRemote = true;
-        try{
-          state.bigs = [];
-          state.blockOrder = state.blockOrder.filter(k=> String(k).indexOf('big:') !== 0);
-          nextBigId = 1;
-          seedFromTemplates();
-          render();
-        } finally { applyingRemote = false; }
-        if(state.bigs.length){
-          setSyncStatus('今日のぶんを用意しました');
-          scheduleSave();
-        } else {
-          setSyncStatus('新しい今日のボードです');
-        }
-        return;
+  function saveBoard(){
+    if(!FIREBASE_READY || !currentUser) return Promise.resolve();
+    return profileRefForUser(currentUser.uid).set({
+      board: {
+        bigs: state.bigs,
+        blockOrder: state.blockOrder,
+        dayWasAchieved: state.dayWasAchieved,
+        dateKey: boardDateKey || todayKey()
       }
+    }, {merge:true});
+  }
 
-      const data = snap.data();
-      if(isEditingNow()){ pendingRemote = data; return; }  // 入力中は割りこまない
-      applyDayData(data);
+  function subscribeToBoard(uid){
+    if(unsubscribeProfile){ unsubscribeProfile(); unsubscribeProfile = null; }
+    unsubscribeProfile = profileRefForUser(uid).onSnapshot(snap=>{
+      if(snap.metadata && snap.metadata.hasPendingWrites) return;   // 自分がいま書いた分の折り返し
+      if(!snap.exists) return;
+      const pd = snap.data();
+
+      if(typeof pd.totalBlocks === 'number' && pd.totalBlocks !== totalBlocks){
+        totalBlocks = pd.totalBlocks;
+        updateCastleCard();
+      }
+      if(pd.dayLog && typeof pd.dayLog === 'object') dayLog = pd.dayLog;
+
+      const board = pd.board;
+      if(!board || !Array.isArray(board.bigs)) return;   // まだボードが無い（移行前）
+      if(isEditingNow()){ pendingRemote = board; return; }   // 入力中は割りこまない
+      applyBoardData(board);
       setSyncStatus('同期ずみ ✓');
     }, ()=>{
       setSyncStatus('同期できていません');
@@ -3084,17 +3076,20 @@
     setTimeout(()=>{
       if(pendingRemote && !isEditingNow()){
         const d = pendingRemote; pendingRemote = null;
-        applyDayData(d);
+        applyBoardData(d);
         setSyncStatus('同期ずみ ✓');
       }
     }, 200);
   });
 
-  // 日付が変わったら、その日のボードに乗りかえる（開きっぱなし対策）
+  // 日付が変わっていないか、ときどき確認する（開きっぱなし対策）
   setInterval(()=>{
     if(!FIREBASE_READY || !currentUser) return;
-    if(subscribedDayKey && subscribedDayKey !== todayKey()){
-      subscribeToDay(currentUser.uid);
+    const tk = todayKey();
+    if(boardDateKey && boardDateKey !== tk){
+      boardDateKey = tk;
+      if(resetRepeatingItemsForNewDay()) render();
+      saveBoard().catch(()=>{});
     }
   }, 30000);
 
@@ -3104,10 +3099,13 @@
     setSyncStatus('保存中…');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(()=>{
-      docRefForUser(currentUser.uid).set(serializeState(), {merge:true})
+      // 本体はこちら。日付をまたいでも消えない1本のボード。
+      saveBoard()
         .then(()=> setSyncStatus('保存ずみ ✓'))
         .catch(()=> setSyncStatus('保存に失敗しました'));
-      saveDailyTemplates();
+      // 「いつ・何をやったか」は、これまでどおり日付ごとにも残しておく
+      // （ふりかえり画面の内訳・グラフ用。ボード本体はもう日付に左右されない）
+      docRefForUser(currentUser.uid).set(serializeState(), {merge:true}).catch(()=>{});
     }, 800);
   }
 
@@ -3149,24 +3147,48 @@
         userName.textContent = user.displayName || user.email || 'ログイン中';
         setSyncStatus('読み込み中…');
 
-        // プロフィール（メモと「毎日くりかえし」の型）を読んでから、
-        // その日のボードを「ずっと見張る」状態にする。
+        // プロフィールを読んで、ボード（積み上げの中身）を用意する。
+        // すでに1本のボードがあればそれを使う。無ければ、これまで日付ごとに
+        // 分かれていた記録の中から、いちばん新しい中身を探して引き継ぐ
+        // （前の版で、日付が変わると画面から消えていた分の救済）。
         profileRefForUser(user.uid).get().then(ps=>{
-          if(ps && ps.exists){
-            const pd = ps.data();
-            if(typeof pd.memo === 'string') state.memo = pd.memo;
-            dailyTemplates = Array.isArray(pd.dailyTemplates) ? pd.dailyTemplates : [];
-            totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
-            dayLog = (pd.dayLog && typeof pd.dayLog === 'object') ? pd.dayLog : {};
-            updateCastleCard();
+          const pd = (ps && ps.exists) ? ps.data() : {};
+          if(typeof pd.memo === 'string') state.memo = pd.memo;
+          totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
+          dayLog = (pd.dayLog && typeof pd.dayLog === 'object') ? pd.dayLog : {};
+          updateCastleCard();
+
+          const tk = todayKey();
+          if(pd.board && Array.isArray(pd.board.bigs)){
+            applyBoardData(pd.board);
+            boardDateKey = pd.board.dateKey || tk;
+            if(boardDateKey !== tk){
+              boardDateKey = tk;
+              if(resetRepeatingItemsForNewDay()) render();
+              saveBoard();
+            }
+            return;
           }
-        }).catch(()=>{}).then(()=>{
-          subscribeToDay(user.uid);
+          // ボードがまだ無い＝旧バージョンからの引っ越し。過去の記録から復元する。
+          return findMostRecentDayWithContent(user.uid).then(found=>{
+            boardDateKey = tk;
+            if(found){
+              applyBoardData(found.data);
+              if(found.key !== tk) resetRepeatingItemsForNewDay();
+              render();
+              showToast('前の記録を見つけたので、積み上げに戻しました。');
+            }
+            saveBoard();
+          });
+        }).catch(()=>{
+          setSyncStatus('読み込みに失敗しました');
+        }).then(()=>{
+          subscribeToBoard(user.uid);
           if(calCardEl && calCardEl.classList.contains('open')) loadCalendarNow(false);
         });
       } else {
-        if(unsubscribeDay){ unsubscribeDay(); unsubscribeDay = null; }
-        subscribedDayKey = null;
+        if(unsubscribeProfile){ unsubscribeProfile(); unsubscribeProfile = null; }
+        boardDateKey = null;
         userChip.style.display = 'none';
         loginBtn.style.display = 'inline-block';
         setSyncStatus('');
