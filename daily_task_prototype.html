@@ -2539,6 +2539,8 @@
 
   // ---- Googleカレンダーの予定を「見る」だけ（つみあげ側からは何も書き込まない） ----
   let calendarAccessToken = null;
+  // カレンダーの一覧を、いつの日付で読み込んだか。開きっぱなしで日付が変わったときの読み直しに使う。
+  let calLoadedDateKey = null;
 
   // カレンダーを見る許可は、Firebaseを通さずGoogle公式の仕組み
   // (Google Identity Services)から直接もらう。こうするとやり取りが
@@ -2667,6 +2669,7 @@
       .then(data=>{
         if(!data) return;
         renderCalendarEvents(data.items || []);
+        calLoadedDateKey = todayKey();
         setCalStatus('');
       })
       .catch(()=>{
@@ -3089,6 +3092,12 @@
       boardDateKey = tk;
       if(resetRepeatingItemsForNewDay()) render();
       saveBoard().catch(()=>{});
+    }
+    // 日付が変わったら、カレンダーの一覧も読み直す。
+    // 開きっぱなしにしていると、昨日読んだ一覧がそのまま残ってしまうため。
+    if(calLoadedDateKey && calLoadedDateKey !== tk
+       && calCardEl && calCardEl.classList.contains('open')){
+      loadCalendarNow(false);
     }
   }, 30000);
 
