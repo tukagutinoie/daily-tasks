@@ -18,13 +18,13 @@
     --line:#ecebf3;
 
     --purple:#6d5dfa;
-    --pink:#ff5ca8;
-    --grad:linear-gradient(120deg, var(--purple) 0%, var(--pink) 100%);
+    --blue:#3f86ff;
+    --grad:linear-gradient(120deg, var(--blue) 0%, var(--purple) 100%);
 
     --mid:#4c7cff;
     --mid-bg:#eef2ff;
-    --small:#ff6fa8;
-    --small-bg:#fff0f6;
+    --small:#8b5cf6;
+    --small-bg:#f2efff;
 
     --dark-bg:#161022;
     --ring-track:#efeef6;
@@ -189,7 +189,7 @@
     position:relative;
     font-size:16px;
     font-weight:800;
-    background:linear-gradient(120deg, #fff8e1 0%, #ffd76a 45%, #fff1c2 100%);
+    background:linear-gradient(120deg, #e4efff 0%, #9db4ff 45%, #d5c9ff 100%);
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
@@ -203,77 +203,6 @@
     margin-top:4px;
   }
 
-  .review-banner{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:12px 16px;
-    margin-bottom:18px;
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    row-gap:8px;
-    gap:11px;
-    font-size:13.5px;
-    color:var(--text);
-  }
-  .mascot-inline{
-    flex:none;
-    cursor:pointer;
-    width:50px; height:46px;
-  }
-  .mascot-body{ display:block; overflow:visible; }
-  /* ぷるんと潰れて伸びる動き。影も連動させると生きてる感じが出る */
-  .mascot-squash{
-    transform-origin:32px 52px;
-    animation:mascot-squash 2.9s cubic-bezier(.45,0,.35,1) infinite;
-  }
-  .mascot-shadow{
-    transform-origin:32px 56px;
-    animation:mascot-shadow 2.9s cubic-bezier(.45,0,.35,1) infinite;
-  }
-  @keyframes mascot-squash{
-    0%,100%{ transform:translateY(0) scale(1,1); }
-    26%   { transform:translateY(-5px) scale(0.95,1.06); }
-    50%   { transform:translateY(0) scale(1.06,0.94); }
-    68%   { transform:translateY(-2px) scale(0.99,1.02); }
-    84%   { transform:translateY(0) scale(1.01,0.99); }
-  }
-  @keyframes mascot-shadow{
-    0%,100%{ transform:scale(1); opacity:.16; }
-    26%   { transform:scale(0.82); opacity:.09; }
-    50%   { transform:scale(1.08); opacity:.22; }
-  }
-  @media (prefers-reduced-motion: reduce){
-    .mascot-squash, .mascot-shadow{ animation:none; }
-  }
-  .hint-bubble{
-    position:relative;
-    flex:1;
-    min-width:0;
-    background:var(--mid-bg);
-    border-radius:12px;
-    padding:9px 13px;
-    font-size:13px;
-    font-weight:600;
-    line-height:1.5;
-    color:var(--text);
-    transition:opacity .2s ease;
-    /* かならず1行。文が長くても高さが変わらず、画面が上下に動かない */
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .hint-bubble::before{
-    content:'';
-    position:absolute;
-    left:-6px;
-    top:50%;
-    transform:translateY(-50%);
-    width:0;height:0;
-    border:6px solid transparent;
-    border-right-color:var(--mid-bg);
-  }
 
   /* ---------- Rings ---------- */
   .ring{display:block;}
@@ -404,7 +333,7 @@
   }
   .mid-card:hover{transform:translateY(-1px);}
   .mid-card.achieved{
-    background:linear-gradient(120deg, #eef2ff 0%, #fff0f6 100%);
+    background:linear-gradient(120deg, #eef2ff 0%, #f2efff 100%);
     border-color:#e0d9ff;
   }
   .mid-head{
@@ -993,6 +922,24 @@
     box-shadow:var(--shadow);
     margin-bottom:18px;
     padding:13px 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .facts-ico{ flex:none; width:54px; height:54px; }
+  .facts-ico svg{ display:block; overflow:visible; }
+  .facts-main{ flex:1; min-width:0; }
+  /* ゆっくりした呼吸だけ。動きすぎるとうるさい */
+  .chara-body{ transform-origin:36px 64px; animation:charaBreath 3.6s ease-in-out infinite; }
+  .chara-shadow{ transform-origin:36px 66px; animation:charaShadow 3.6s ease-in-out infinite; }
+  @keyframes charaBreath{
+    0%,100%{ transform:scale(1,1); }
+    50%    { transform:scale(1.035,0.972); }
+  }
+  @keyframes charaShadow{
+    0%,100%{ transform:scale(1,1); opacity:1; }
+    50%    { transform:scale(1.09,1); opacity:.85; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .chara-body, .chara-shadow{ animation:none; }
   }
   .fact-stall{
     display:flex; align-items:center; gap:9px;
@@ -1048,7 +995,7 @@
     cursor:pointer;
     user-select:none;
     /* もとのボタンと同じグラデーション。少しだけ薄めの色にしている */
-    background:linear-gradient(120deg, #8f83fb 0%, #ff8fc4 100%);
+    background:linear-gradient(120deg, #6ba0ff 0%, #8f83fb 100%);
     color:#fff;
   }
   .cal-ico{flex:none; font-size:15px;}
@@ -1185,7 +1132,8 @@
     .plus-btn{ width:44px; height:44px; }
     .repeat-btn{ font-size:17px; padding:6px; }
     .review-btn, .cal-btn{ padding:16px; font-size:15px; }
-    .facts-card{ padding:11px 12px; }
+    .facts-card{ padding:11px 12px; gap:10px; }
+    .facts-ico{ width:48px; height:48px; }
     .fact-row{ flex-wrap:wrap; row-gap:7px; margin:11px 3px 2px; }
     .cal-head{ padding:13px 13px; gap:7px; }
     .cal-title{ font-size:13.5px; }
@@ -1199,7 +1147,6 @@
 
     /* 余白を詰めて、1画面に多く入るように */
     .mid-card{ padding:12px 10px; }
-    .review-banner{ padding:11px 12px; font-size:14px; }
     .modal-overlay{ padding:12px 8px; }
     .modal-box{ padding:18px 14px; border-radius:16px; }
     .bulk-actions{ flex-direction:column; }
@@ -1211,13 +1158,22 @@
 <svg width="0" height="0" style="position:absolute;">
   <defs>
     <linearGradient id="bigGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6d5dfa"/>
-      <stop offset="100%" stop-color="#ff5ca8"/>
+      <stop offset="0%" stop-color="#3f86ff"/>
+      <stop offset="100%" stop-color="#7c5cfc"/>
     </linearGradient>
-    <linearGradient id="slimeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#8fdcff"/>
-      <stop offset="100%" stop-color="#2f9be8"/>
+    <linearGradient id="dogB" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffd9a4"/>
+      <stop offset="52%" stop-color="#f7bb70"/>
+      <stop offset="100%" stop-color="#e79c46"/>
     </linearGradient>
+    <linearGradient id="dogC" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fffdf8"/>
+      <stop offset="100%" stop-color="#ffeed6"/>
+    </linearGradient>
+    <radialGradient id="dogSh" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#a8752f" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#a8752f" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 </svg>
 
@@ -1249,11 +1205,6 @@
     </div>
   </div>
 
-  <div class="review-banner" id="review-banner">
-    <div class="mascot-inline" id="mascot-inline" title="ヒントを見る"></div>
-    <div class="hint-bubble" id="review-text"></div>
-  </div>
-
 
   <div class="cal-card" id="cal-card">
     <div class="cal-head" id="cal-head">
@@ -1269,10 +1220,13 @@
 
 
   <div class="facts-card" id="facts-card">
-    <div class="fact-stall" id="fact-stall"></div>
-    <div class="fact-row">
-      <div class="fact-week" id="fact-week"></div>
-      <div class="fact-streak" id="fact-streak"></div>
+    <div class="facts-ico" id="facts-ico"></div>
+    <div class="facts-main">
+      <div class="fact-stall" id="fact-stall"></div>
+      <div class="fact-row">
+        <div class="fact-week" id="fact-week"></div>
+        <div class="fact-streak" id="fact-streak"></div>
+      </div>
     </div>
   </div>
 
@@ -1413,79 +1367,6 @@
   const nowMinutes = now.getHours()*60 + now.getMinutes();
 
 
-  // ---- スライムの顔(表情パターン) ----
-  // 同じ体の形をベースに、目・眉・口・まわりの飾りだけ変えて
-  // コメントの内容にあわせて表情を出し分ける。
-  const SLIME_BODY = 'M32 4 C50 4 58 22 58 34 C58 46 46 52 32 52 C18 52 6 46 6 34 C6 22 14 4 32 4 Z';
-  const SLIME_HIGHLIGHT = '<ellipse cx="19" cy="16" rx="7.5" ry="5" fill="#ffffff" opacity="0.6"/>';
-  function slimeBlush(op){
-    op = (op===undefined) ? 0.55 : op;
-    return '<ellipse cx="16" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="'+op+'"/>'
-      + '<ellipse cx="48" cy="33" rx="4.5" ry="3" fill="#ff96b4" opacity="'+op+'"/>';
-  }
-  const FACES = {
-    // ふだんの、にこっと目を開いた顔
-    happy: () =>
-      slimeBlush() +
-      '<circle cx="23" cy="30" r="5.2" fill="#17334a"/><circle cx="41" cy="30" r="5.2" fill="#17334a"/>' +
-      '<circle cx="24.6" cy="28.2" r="1.5" fill="#ffffff"/><circle cx="42.6" cy="28.2" r="1.5" fill="#ffffff"/>' +
-      '<circle cx="21.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/><circle cx="39.5" cy="31.8" r="0.7" fill="#ffffff" opacity="0.8"/>' +
-      '<path d="M23 39 Q32 46.5 41 39" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
-    // 朝、元気いっぱいの顔（目キラキラ・口大きめ）
-    cheer: () =>
-      slimeBlush(0.6) +
-      '<circle cx="23" cy="29" r="5.8" fill="#17334a"/><circle cx="41" cy="29" r="5.8" fill="#17334a"/>' +
-      '<circle cx="25" cy="26.8" r="1.9" fill="#ffffff"/><circle cx="43" cy="26.8" r="1.9" fill="#ffffff"/>' +
-      '<circle cx="21" cy="31.5" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="39" cy="31.5" r="0.9" fill="#ffffff" opacity="0.85"/>' +
-      '<path d="M22 38 Q32 48 42 38 Q32 44 22 38 Z" fill="#17334a"/>' +
-      '<path d="M10 12 L11.5 15.5 L15 17 L11.5 18.5 L10 22 L8.5 18.5 L5 17 L8.5 15.5 Z" fill="#ffe27a"/>',
-    // 夜、落ち着いた顔（半月目でにっこり）
-    calm: () =>
-      slimeBlush(0.4) +
-      '<path d="M17.5 30 Q23 25.5 28.5 30" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
-      '<path d="M35.5 30 Q41 25.5 46.5 30" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
-      '<path d="M25 40 Q32 44.5 39 40" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>',
-    // 達成できた時の、誇らしい顔（きゅっと目を閉じてにっこり＋キラキラ）
-    proud: () =>
-      slimeBlush(0.65) +
-      '<path d="M17 31 Q23 25 29 31" stroke="#17334a" stroke-width="2.8" fill="none" stroke-linecap="round"/>' +
-      '<path d="M35 31 Q41 25 47 31" stroke="#17334a" stroke-width="2.8" fill="none" stroke-linecap="round"/>' +
-      '<path d="M21 38 Q32 47.5 43 38 Q32 45 21 38 Z" fill="#17334a"/>' +
-      '<path d="M50 12 L51.3 15.2 L54.5 16.5 L51.3 17.8 L50 21 L48.7 17.8 L45.5 16.5 L48.7 15.2 Z" fill="#ffe27a"/>' +
-      '<path d="M12 8 L12.8 10 L14.8 10.8 L12.8 11.6 L12 13.6 L11.2 11.6 L9.2 10.8 L11.2 10 Z" fill="#ffe27a"/>',
-    // 落ち込みやすい人向けの、やさしく寄りそう顔
-    gentle: () =>
-      slimeBlush(0.6) +
-      '<path d="M18 31 Q23 28.5 28 31" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
-      '<path d="M36 31 Q41 28.5 46 31" stroke="#17334a" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
-      '<path d="M25 40 Q32 43.5 39 40" stroke="#17334a" stroke-width="2.2" fill="none" stroke-linecap="round"/>',
-    // 「まず1つ書いてみよう」など、問いかけている顔
-    think: () =>
-      slimeBlush(0.35) +
-      '<circle cx="23" cy="30" r="5" fill="#17334a"/>' +
-      '<path d="M36 30 Q41 26.5 46 29" stroke="#17334a" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
-      '<circle cx="24.4" cy="28.3" r="1.4" fill="#ffffff"/>' +
-      '<path d="M25 40.5 Q30 38.5 34 40" stroke="#17334a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' +
-      '<text x="47" y="17" font-size="13" font-weight="800" fill="#7a8bab">?</text>'
-  };
-  function mascotSVG(mood){
-    const face = (FACES[mood] || FACES.happy)();
-    return '<svg class="mascot-body" width="50" height="46" viewBox="0 0 64 62">'
-      + '<ellipse class="mascot-shadow" cx="32" cy="56" rx="17" ry="3.6" fill="#1f7fce" opacity="0.16"/>'
-      + '<g class="mascot-squash">'
-      + '<path d="'+SLIME_BODY+'" fill="url(#slimeGrad)" stroke="#1f7fce" stroke-width="1.5"/>'
-      // 内側の照り返しと、上のつやで立体感を出す
-      + '<path d="M32 5 C49 5 57 22 57 34 C57 40 53 45 47 47 C51 42 52 36 52 31 C52 21 45 8 32 7 Z" fill="#ffffff" opacity="0.20"/>'
-      + SLIME_HIGHLIGHT
-      + '<ellipse cx="25" cy="11" rx="3.2" ry="2.1" fill="#ffffff" opacity="0.8"/>'
-      + '<ellipse cx="44" cy="45" rx="6" ry="2.4" fill="#0d6bb5" opacity="0.13"/>'
-      + face + '</g></svg>';
-  }
-  function setMascotFace(mood){
-    document.getElementById('mascot-inline').innerHTML = mascotSVG(mood);
-  }
-
-  // ---- スライムのヒント(吹き出し) ----
   // 1年のうちどこまで来たかを、12個の月で表す（過ぎた月は満ちる）
   function renderYearProgress(){
     const el = document.getElementById('year-progress');
@@ -1515,65 +1396,13 @@
     }
     el.innerHTML = '<svg viewBox="0 0 '+W+' '+(R*2+2)+'" width="100%" height="13" preserveAspectRatio="xMinYMid meet">'
       + '<defs><linearGradient id="ypG" x1="0" y1="0" x2="1" y2="0">'
-      + '<stop offset="0%" stop-color="#6d5dfa"/><stop offset="100%" stop-color="#ff5ca8"/></linearGradient>'
+      + '<stop offset="0%" stop-color="#3f86ff"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient>'
       + '<clipPath id="ypClip"><rect x="0" y="'+clipY+'" width="'+W+'" height="'+(2*R)+'"/></clipPath></defs>'
       + s + '</svg>'
       + '<div class="yp-text">' + y + '年を ' + pct + '% ・ 残り ' + (total - passed) + '日</div>';
   }
   renderYearProgress();
 
-  const TIP_POOL = [
-    { text:"小さいの1つでも、もう前進。", mood:"happy" },
-    { text:"迷ったら簡単なやつからでOK。", mood:"happy" },
-    { text:"今日はここまでで上出来。", mood:"happy" },
-    { text:"1個だけ明日にまわしてもいい。", mood:"calm" },
-    { text:"やる気ゼロの日は最小の1個だけ。", mood:"gentle" },
-    { text:"毎日開くクセがいちばん効く。", mood:"happy" },
-    { text:"進んだ分は、ちゃんと前進。", mood:"gentle" },
-    { text:"大きい仕事は3つに割ると軽い。", mood:"think" },
-    { text:"休んでから、また1個いこう。", mood:"calm" },
-    { text:"できない日は「そういう日」。", mood:"gentle" },
-    { text:"自分にも優しくしていい。", mood:"gentle" },
-    { text:"1回サボっても習慣は崩れない。", mood:"gentle" },
-    { text:"完璧に戻さなくて大丈夫。", mood:"gentle" },
-    { text:"責めるより、次の1個へ。", mood:"gentle" },
-    { text:"波はある。また積み上がる。", mood:"gentle" }
-  ];
-
-  let lastTipIndex = -1;
-
-  function pickTip(){
-    // 1. 今の状況を読み取って、優先度の高いヒントを出す
-    if(state.bigs.length === 0 || !state.bigs.some(b=>b.title && b.title.trim())){
-      return { text:"大きな仕事を1つ書いてみよ！", mood:"think" };
-    }
-    const emptyBig = state.bigs.find(b => b.title && b.title.trim() && b.mediums.length === 0);
-    if(emptyBig){
-      return { text:"「"+emptyBig.title+"」を分けてみよっか。", mood:"think" };
-    }
-    for(const b of state.bigs){
-      const emptyMedium = b.mediums.find(m => m.items.length === 0);
-      if(emptyMedium){
-        return { text:"「"+emptyMedium.name+"」に1個足してみて！", mood:"think" };
-      }
-    }
-    if(state.dayWasAchieved){
-      return { text:"今日はもう達成ずみ！おつかれさま！", mood:"proud" };
-    }
-    // 2. 読み取れる状況が無ければ、ヒントの中からランダムに1つ
-    let idx;
-    do{ idx = Math.floor(Math.random()*TIP_POOL.length); } while(idx === lastTipIndex && TIP_POOL.length > 1);
-    lastTipIndex = idx;
-    return TIP_POOL[idx];
-  }
-
-  function updateHint(){
-    const tip = pickTip();
-    document.getElementById('review-text').textContent = tip.text;
-    setMascotFace(tip.mood);
-  }
-  document.getElementById('mascot-inline').addEventListener('click', updateHint);
-  setInterval(updateHint, 25000);
 
   function showToast(msg){
     const t = document.getElementById('toast');
@@ -1777,7 +1606,6 @@
     titleInput.addEventListener('input', (e)=>{
       big.title = e.target.value;
       growTitle();
-      updateHint();
       scheduleSave();
     });
     // ▲▼で並べ替え。ドラッグが分かりにくい端末でも確実に動かせる。
@@ -1990,7 +1818,7 @@
       if(achieved) finishedMids.push(mCard); else openMids.push(mCard);
 
       if(achieved && !medium.wasAchieved){
-        burstConfetti(mCard, 14, ['#6d5dfa','#ff5ca8','#4c7cff']);
+        burstConfetti(mCard, 14, ['#4c7cff','#6d5dfa','#8b5cf6']);
       }
       medium.wasAchieved = achieved;
     });
@@ -2052,7 +1880,7 @@
       : (achieved ? '完了' : '中くらいの仕事なし');
 
     if(achieved && !big.wasAchieved){
-      burstConfetti(card, 20, ['#6d5dfa','#ff5ca8','#4c7cff']);
+      burstConfetti(card, 20, ['#4c7cff','#6d5dfa','#8b5cf6']);
       // 達成になった瞬間に1つ。受信を反映しているだけのときは数えない。
       if(!applyingRemote){ markBigMoved(big); addBlocks(1); }
     }
@@ -2109,7 +1937,7 @@
     const banner = document.getElementById('achieve-banner');
     if(dayAchieved && !state.dayWasAchieved){
       banner.classList.add('show');
-      burstConfetti(document.getElementById('app'), 36, ['#6d5dfa','#ff5ca8','#4c7cff']);
+      burstConfetti(document.getElementById('app'), 36, ['#4c7cff','#6d5dfa','#8b5cf6']);
     }
     if(dayAchieved){
       document.getElementById('achieve-sub').textContent =
@@ -2133,7 +1961,6 @@
     }
 
     updateFactsCard();
-    updateHint();
     scheduleSave();
   }
 
@@ -2822,11 +2649,69 @@
     return one.length > 22 ? one.slice(0, 21) + '…' : one;
   }
 
+
+  // ---- 柴犬 ----
+  // 言葉は持たせない。ランダムな励ましを回すと、絵が何であれ1週間で飽きるため。
+  // 表情だけが、いまの状態で変わる：
+  //   worry = 止まっている仕事がある／happy = 出しているものが全部終わった／calm = ふだん
+  function dogEyes(mood){
+    if(mood === 'happy'){
+      return '<path d="M25.2 27.6 C27 24.6 30.6 24.6 32.4 27.6" stroke="#332c26" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+           + '<path d="M39.6 27.6 C41.4 24.6 45 24.6 46.8 27.6" stroke="#332c26" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    }
+    if(mood === 'worry'){
+      return '<ellipse cx="28.8" cy="27.6" rx="2.6" ry="3.1" fill="#332c26"/><ellipse cx="43.2" cy="27.6" rx="2.6" ry="3.1" fill="#332c26"/>'
+           + '<circle cx="29.7" cy="26.5" r=".95" fill="#fff"/><circle cx="44.1" cy="26.5" r=".95" fill="#fff"/>'
+           + '<path d="M24.6 21.6 C26.8 20.4 29.4 20.8 31 22.2" stroke="#6b5a49" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+           + '<path d="M47.4 21.6 C45.2 20.4 42.6 20.8 41 22.2" stroke="#6b5a49" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+    }
+    return '<ellipse cx="28.8" cy="26.8" rx="2.6" ry="3.2" fill="#332c26"/><ellipse cx="43.2" cy="26.8" rx="2.6" ry="3.2" fill="#332c26"/>'
+         + '<circle cx="29.8" cy="25.6" r="1" fill="#fff"/><circle cx="44.2" cy="25.6" r="1" fill="#fff"/>';
+  }
+
+  function dogSVG(mood){
+    return '<svg viewBox="0 0 72 72" width="100%" height="100%">'
+      + '<ellipse class="chara-shadow" cx="36" cy="66.5" rx="18.5" ry="4.2" fill="url(#dogSh)"/>'
+      + '<g class="chara-body">'
+      // 体
+      + '<path d="M36 29 C47.4 29 54.6 39.4 54.6 50 C54.6 59.4 46.4 64.5 36 64.5 C25.6 64.5 17.4 59.4 17.4 50 C17.4 39.4 24.6 29 36 29 Z" fill="url(#dogB)"/>'
+      + '<path d="M36 39.5 C41.2 39.5 44.8 46.6 44.8 53 C44.8 59.8 40.8 64 36 64 C31.2 64 27.2 59.8 27.2 53 C27.2 46.6 30.8 39.5 36 39.5 Z" fill="url(#dogC)" opacity=".95"/>'
+      // 耳（角を丸めて、頭からなめらかに立ち上げる）
+      + '<path d="M19.8 17.4 C17.2 10.4 20.2 6.6 24.8 8.8 C28.6 10.6 31.2 14.2 32.6 17.8 C27.8 16.6 23.2 16.5 19.8 17.4 Z" fill="url(#dogB)"/>'
+      + '<path d="M52.2 17.4 C54.8 10.4 51.8 6.6 47.2 8.8 C43.4 10.6 40.8 14.2 39.4 17.8 C44.2 16.6 48.8 16.5 52.2 17.4 Z" fill="url(#dogB)"/>'
+      + '<path d="M22.4 15.6 C21.2 11.8 22.6 9.8 25 11 C27.2 12.1 28.8 14.2 29.8 16.4 C27.2 15.8 24.6 15.4 22.4 15.6 Z" fill="#e7a37c" opacity=".8"/>'
+      + '<path d="M49.6 15.6 C50.8 11.8 49.4 9.8 47 11 C44.8 12.1 43.2 14.2 42.2 16.4 C44.8 15.8 47.4 15.4 49.6 15.6 Z" fill="#e7a37c" opacity=".8"/>'
+      // 頭
+      + '<path d="M36 7.5 C47.6 7.5 55.4 16 55.4 26 C55.4 36 47.4 42.6 36 42.6 C24.6 42.6 16.6 36 16.6 26 C16.6 16 24.4 7.5 36 7.5 Z" fill="url(#dogB)"/>'
+      // 顔まわりの白
+      + '<path d="M36 21.4 C44.6 21.4 50 27 50 32.8 C50 38.8 43.6 43 36 43 C28.4 43 22 38.8 22 32.8 C22 27 27.4 21.4 36 21.4 Z" fill="url(#dogC)"/>'
+      + '<ellipse cx="24.4" cy="19.6" rx="4.4" ry="3.4" fill="url(#dogC)" opacity=".9"/>'
+      + '<ellipse cx="47.6" cy="19.6" rx="4.4" ry="3.4" fill="url(#dogC)" opacity=".9"/>'
+      + dogEyes(mood)
+      // 鼻と口
+      + '<path d="M36 31.4 C38.3 31.4 39.1 33.1 37.9 34.4 C37 35.3 35 35.3 34.1 34.4 C32.9 33.1 33.7 31.4 36 31.4 Z" fill="#3a332d"/>'
+      + '<path d="M36 34.8 L36 36.8" stroke="#3a332d" stroke-width="1.3" stroke-linecap="round"/>'
+      + '<path d="M36 36.8 C34.4 39 31.2 38.7 30.2 36.5" stroke="#3a332d" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
+      + '<path d="M36 36.8 C37.6 39 40.8 38.7 41.8 36.5" stroke="#3a332d" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
+      + '<ellipse cx="24.6" cy="31.4" rx="3.6" ry="2.3" fill="#ff9db4" opacity=".38"/>'
+      + '<ellipse cx="47.4" cy="31.4" rx="3.6" ry="2.3" fill="#ff9db4" opacity=".38"/>'
+      + '</g></svg>';
+  }
+
+  let dogMoodNow = null;
+  function setDogMood(mood){
+    if(dogMoodNow === mood) return;   // 同じ顔なら描き直さない（動きが途切れるので）
+    dogMoodNow = mood;
+    const el = document.getElementById('facts-ico');
+    if(el) el.innerHTML = dogSVG(mood);
+  }
+
   function updateFactsCard(){
     const stallEl = document.getElementById('fact-stall');
     if(!stallEl) return;
 
     const st = stalledBigs();
+    setDogMood(st.length ? 'worry' : (state.dayWasAchieved ? 'happy' : 'calm'));
     stallEl.innerHTML = '<span class="fs-ico"></span><span class="fs-txt"></span><span class="fs-more"></span>';
     const icoEl  = stallEl.querySelector('.fs-ico');
     const txtEl  = stallEl.querySelector('.fs-txt');
@@ -3134,7 +3019,6 @@
     // 見えているものを今日のものへ書き直す
     renderYearProgress();
     updateFactsCard();       // 止まっている日数・今週／先週・連続日数
-    updateHint();
 
     // 昨日読んだ予定が残らないように、カレンダーも読み直す
     if(calLoadedDateKey && calLoadedDateKey !== tk
