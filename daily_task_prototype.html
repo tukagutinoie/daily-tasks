@@ -164,7 +164,7 @@
     margin-bottom:0;
   }
   .achieve-banner.show{
-    max-height:110px;
+    max-height:200px;
     opacity:1;
     margin-bottom:18px;
   }
@@ -983,56 +983,54 @@
     transition:box-shadow .2s ease, transform .15s ease;
   }
   .cal-btn:hover{box-shadow:0 16px 32px rgba(109,93,250,0.36); transform:translateY(-1px);}
-  /* ---------- つみあげの城（レベルつき・開閉できる） ---------- */
-  .castle-card{
+
+  /* ---------- いまの状態を映す帯 ---------- */
+  /* 点数や位はやめた。自分でチェックを押して増やした数字は、見ても新しいことが分からない。
+     ここに出すのは、記録から出てくるものだけ。 */
+  .facts-card{
     background:var(--card);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
     margin-bottom:18px;
-    overflow:hidden;
+    padding:13px 14px;
   }
-  .castle-head{
-    display:flex; align-items:center; gap:12px;
-    padding:13px 16px; cursor:pointer; user-select:none;
+  .fact-stall{
+    display:flex; align-items:center; gap:9px;
+    border-radius:var(--radius-sm);
+    padding:12px 13px;
+    font-size:13.5px; font-weight:700; line-height:1.5;
+    background:#fff5e9; color:#8a5a17;
+    cursor:pointer;
+    transition:background .2s ease;
   }
-  .lv-badge{
-    flex:none; width:46px; height:46px; border-radius:14px;
-    background:linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%);
-    color:#fff; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; line-height:1;
-    box-shadow:0 6px 16px rgba(109,93,250,.34);
+  .fact-stall:hover{ background:#ffefdc; }
+  .fact-stall.calm{
+    background:var(--card-soft); color:var(--sub);
+    font-weight:600; cursor:default;
   }
-  .lv-lab{font-size:8.5px; font-weight:800; letter-spacing:.12em; opacity:.9;}
-  .lv-num{font-size:19px; font-weight:800; margin-top:1px; font-variant-numeric:tabular-nums;}
-  .lv-text{flex:1; min-width:0;}
-  .lv-rank{font-size:14px; font-weight:800; color:var(--text); line-height:1.3;}
-  .xp-bar{
-    height:5px; border-radius:99px; background:var(--ring-track);
-    margin:5px 0 4px; overflow:hidden;
+  .fact-stall.calm:hover{ background:var(--card-soft); }
+  .fact-stall .fs-ico{ flex:none; font-size:14px; line-height:1.2; }
+  .fact-stall .fs-txt{ flex:1; min-width:0; }
+  .fact-stall .fs-txt b{ color:#7a4a08; font-variant-numeric:tabular-nums; }
+  .fact-stall .fs-more{
+    flex:none; font-size:11px; font-weight:800; opacity:.75;
+    white-space:nowrap;
   }
-  .xp-fill{
-    height:100%; width:0%; border-radius:99px;
-    background:linear-gradient(90deg, var(--purple) 0%, var(--pink) 100%);
-    transition:width .45s cubic-bezier(.4,0,.2,1);
+  .fact-row{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:10px; margin:12px 4px 2px;
+    font-size:13px; font-variant-numeric:tabular-nums;
   }
-  .lv-stage{
-    font-size:11px; color:var(--sub); font-weight:700;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  .fact-week{ font-weight:800; color:var(--text); }
+  .fact-week .fw-last{ color:var(--sub); font-weight:700; }
+  .fact-streak{ font-weight:800; color:var(--text); white-space:nowrap; }
+  .fact-streak .fs-off{ color:var(--sub); font-weight:700; }
+  .big-flash{
+    animation:bigFlash 1.5s ease;
   }
-  .lv-pts{
-    flex:none; font-size:13px; font-weight:800; color:var(--text);
-    font-variant-numeric:tabular-nums;
-  }
-  .castle-body{
-    display:none; height:0;
-    transition:height .3s ease;
-  }
-  .castle-card.open .castle-body{
-    display:block; height:auto;
-    padding:0 12px 12px;
-  }
-  .castle-card.open .castle-body svg{
-    display:block; width:100%; height:auto; border-radius:14px;
+  @keyframes bigFlash{
+    0%,100%{ box-shadow:var(--shadow); }
+    22%,62%{ box-shadow:0 0 0 3px rgba(255,168,64,.6), var(--shadow); }
   }
 
   .cal-card{
@@ -1076,13 +1074,6 @@
     text-overflow:ellipsis;
   }
   .cal-arrow{flex:none; color:rgba(255,255,255,0.95); transition:transform .25s ease;}
-  .acc-arrow{
-    flex:none; color:var(--sub);
-    background:var(--bg); border-radius:50%;
-    padding:5px; width:26px; height:26px; box-sizing:content-box;
-    transition:transform .28s cubic-bezier(.4,0,.2,1), background .2s ease;
-  }
-  .castle-card.open .acc-arrow{transform:rotate(90deg);}
   .cal-card.open .cal-arrow{transform:rotate(90deg);}
   .cal-body{display:none; padding:12px 18px 14px;}
   .cal-card.open .cal-body{display:block;}
@@ -1194,9 +1185,8 @@
     .plus-btn{ width:44px; height:44px; }
     .repeat-btn{ font-size:17px; padding:6px; }
     .review-btn, .cal-btn{ padding:16px; font-size:15px; }
-    .castle-head{ padding:12px 13px; gap:10px; }
-    .lv-badge{ width:44px; height:44px; }
-    .castle-card.open .castle-body{ padding:0 9px 9px; }
+    .facts-card{ padding:11px 12px; }
+    .fact-row{ flex-wrap:wrap; row-gap:7px; margin:11px 3px 2px; }
     .cal-head{ padding:13px 13px; gap:7px; }
     .cal-title{ font-size:13.5px; }
     .cal-status{ font-size:10px; max-width:42%; }
@@ -1254,8 +1244,8 @@
 
   <div class="achieve-banner" id="achieve-banner">
     <div class="inner">
-      <div class="headline">今日の目標を達成しました</div>
-      <span class="sub">お疲れさまでした。積み上げ、確認できています。</span>
+      <div class="headline">出している仕事、ぜんぶ終わりました 🏯</div>
+      <span class="sub" id="achieve-sub">お疲れさまでした。</span>
     </div>
   </div>
 
@@ -1277,18 +1267,13 @@
     </div>
   </div>
 
-  <div class="castle-card" id="castle-card">
-    <div class="castle-head" id="castle-head">
-      <div class="lv-badge"><span class="lv-lab">LV</span><span class="lv-num" id="lv-num">1</span></div>
-      <div class="lv-text">
-        <div class="lv-rank" id="lv-rank">見習い大工</div>
-        <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
-        <div class="lv-stage" id="lv-stage">建てはじめ</div>
-      </div>
-      <div class="lv-pts" id="lv-pts">0 / 100</div>
-      <svg class="acc-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+  <div class="facts-card" id="facts-card">
+    <div class="fact-stall" id="fact-stall"></div>
+    <div class="fact-row">
+      <div class="fact-week" id="fact-week"></div>
+      <div class="fact-streak" id="fact-streak"></div>
     </div>
-    <div class="castle-body" id="castle-body"></div>
   </div>
 
   <div class="blocks" id="blocks"></div>
@@ -1408,7 +1393,17 @@
   const dateEl = document.getElementById('today-date');
   const days = ['日','月','火','水','木','金','土'];
   const now = new Date();
-  dateEl.textContent = now.getFullYear()+"年"+(now.getMonth()+1)+"月"+now.getDate()+"日（"+days[now.getDay()]+"）";
+
+  // 日付・曜日・時刻を出す。開きっぱなしにしていると止まってしまうので、
+  // 一度書いて終わりにせず、30秒ごとに書き直す。
+  function updateDatePill(){
+    const d = new Date();
+    dateEl.textContent =
+      d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日（"+days[d.getDay()]+"） "
+      + d.getHours()+":"+String(d.getMinutes()).padStart(2,'0');
+  }
+  updateDatePill();
+  setInterval(updateDatePill, 30000);
 
   // ---- 朝・夜の儀式の時間設定 ----
   function toMinutes(hhmm){
@@ -1853,8 +1848,6 @@
     card.appendChild(body);
     wrap.appendChild(card);
 
-    let totalDone = 0, totalPlanned = 0;
-
     const openMids = [], finishedMids = [];
     big.mediums.forEach((medium, mIdx)=>{
       const doneItems = medium.items.filter(i=>i.done).length;
@@ -1862,9 +1855,6 @@
       // 中くらいの仕事は、チェックを直接つけて完了にできる（小さい仕事が無くてもよい）
       const manualDone = medium.done === true;
       const achieved = manualDone || (total > 0 && doneItems === total);
-      // 小さい仕事が無い中くらいの仕事は「1件」として数える
-      totalDone += achieved ? (total > 0 ? total : 1) : doneItems;
-      totalPlanned += total > 0 ? total : 1;
       const percent = achieved ? 100 : (total > 0 ? (doneItems/total*100) : 0);
       const countText = total > 0
         ? (doneItems + '/' + total + ' 完了' + (achieved ? '　達成' : ''))
@@ -1909,7 +1899,7 @@
       const midCheckEl = mCard.querySelector('.mid-check');
       midCheckEl.addEventListener('click', ()=>{
         medium.done = !(medium.done === true);
-        if(medium.done) addBlocks(1);   // 中くらいの仕事＝1点
+        if(medium.done){ markBigMoved(big); addBlocks(1); }
         render();
       });
 
@@ -1938,7 +1928,7 @@
         const checkEl = li.querySelector('.check');
         checkEl.addEventListener('click', ()=>{
           item.done = !item.done;
-          if(item.done){ item.eveningReviewed = false; addBlocks(1); }   // 小さい仕事＝1点
+          if(item.done){ item.eveningReviewed = false; markBigMoved(big); addBlocks(1); }
           checkEl.classList.add('pop');
           setTimeout(()=> checkEl.classList.remove('pop'), 180);
           render();
@@ -2049,6 +2039,9 @@
 
     // 大きな仕事は、中くらいの仕事が全部終わったら自動で達成になる。
     // （big.done は以前のデータとの互換のために見るだけ）
+    // 数え方は bigProgress に1本化してある（帯の「進んでいません」と食い違わせない）
+    const prog = bigProgress(big);
+    const totalDone = prog.done, totalPlanned = prog.planned;
     const manualBigDone = big.done === true;
     const percent = manualBigDone ? 100 : (totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0);
     const achieved = manualBigDone || (totalPlanned > 0 && totalDone === totalPlanned);
@@ -2060,8 +2053,8 @@
 
     if(achieved && !big.wasAchieved){
       burstConfetti(card, 20, ['#6d5dfa','#ff5ca8','#4c7cff']);
-      // 達成になった瞬間に1点。受信を反映しているだけのときは数えない。
-      if(!applyingRemote) addBlocks(1);
+      // 達成になった瞬間に1つ。受信を反映しているだけのときは数えない。
+      if(!applyingRemote){ markBigMoved(big); addBlocks(1); }
     }
     big.wasAchieved = achieved;
 
@@ -2075,6 +2068,7 @@
 
     let anyBigWithItems = false;
     let allAchieved = true;
+    let bigWithItemsCount = 0;
 
     const finishedBigs = [];
     state.blockOrder.forEach(key=>{
@@ -2091,6 +2085,7 @@
       else blocksEl.appendChild(result.el);
       if(result.hasItems){
         anyBigWithItems = true;
+        bigWithItemsCount++;
         if(!result.achieved) allAchieved = false;
       }
     });
@@ -2117,6 +2112,9 @@
       burstConfetti(document.getElementById('app'), 36, ['#6d5dfa','#ff5ca8','#4c7cff']);
     }
     if(dayAchieved){
+      document.getElementById('achieve-sub').textContent =
+        '大きな仕事 ' + bigWithItemsCount + '件、小さい仕事までぜんぶ完了です。'
+        + '新しく足すか、今日はここまでに。';
       banner.classList.add('show');
     } else {
       banner.classList.remove('show');
@@ -2134,6 +2132,7 @@
       bigFullMsg.style.display = 'none';
     }
 
+    updateFactsCard();
     updateHint();
     scheduleSave();
   }
@@ -2151,7 +2150,7 @@
       return;
     }
     const id = nextBigId++;
-    state.bigs.push({id, title:val, wasAchieved:false, collapsed:false, mediums:[]});
+    state.bigs.push({id, title:val, wasAchieved:false, collapsed:false, mediums:[], lastActiveAt: Date.now()});
     insertBlockKeyBeforeMemo('big:'+id);
     input.value = '';
     render();
@@ -2291,6 +2290,7 @@
         title: b.title,
         wasAchieved: false,
         collapsed: false,
+        lastActiveAt: Date.now(),
         mediums: b.mediums.map(m=>({
           name: m.name,
           done: false,
@@ -2346,8 +2346,13 @@
       label: (d.getMonth()+1)+'/'+d.getDate()
     };
   }
-  // 保存されている各日のデータから、その日の点数を計算する
-  // （小さい仕事1点・中くらい2点・大きい5点。実際に残っている記録から出す）
+  // ボードが日付ごとに分かれていた頃（2026-08-21より前）の記録から、その日の数を出す
+  const BOARD_BECAME_PERMANENT = '2026-08-21';
+  function countOfDay(key, data){
+    if(dayLog[key] !== undefined) return dayLog[key];      // 押した瞬間に数えた本物
+    if(key >= BOARD_BECAME_PERMANENT) return 0;            // 記録が無い日は数えられない
+    return pointsOfDay(data);                              // 昔の、日ごとに分かれていた記録
+  }
   function pointsOfDay(data){
     let pts = 0;
     (data && data.bigs ? data.bigs : []).forEach(b=>{
@@ -2374,7 +2379,7 @@
     for(let d = 0; d < days; d++){
       const date = new Date(y, 0, 1 + d);
       const key = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
-      const v = Math.max(log[key] || 0, dayLog[key] || 0);
+      const v = log[key] !== undefined ? log[key] : (dayLog[key] || 0);
       total += v;
       if(v > 0){ active++; run++; if(run > best) best = run; }
       else if(date <= now){ run = 0; }
@@ -2384,7 +2389,7 @@
         : (v >= 15 ? '#6d5dfa' : v >= 8 ? '#8f83fb' : v >= 4 ? '#bab2fd' : v > 0 ? '#ded9ff' : '#ebe8f3');
       s += '<rect x="' + (col*(cell+gap)).toFixed(1) + '" y="' + (row*(cell+gap)).toFixed(1)
         + '" width="' + cell + '" height="' + cell + '" rx="2" fill="' + fill + '"><title>'
-        + key + '　' + v + '点</title></rect>';
+        + key + '　' + v + '個</title></rect>';
     }
     el.innerHTML = '<div class="heat-scroll"><svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">' + s + '</svg></div>'
       + '<div class="heat-legend"><span>少ない</span>'
@@ -2465,19 +2470,19 @@
       snap.forEach(doc=>{
         const d = doc.data();
         store[doc.id] = d;
-        log[doc.id] = pointsOfDay(d);
+        log[doc.id] = countOfDay(doc.id, d);
       });
+      // 日ごとの記録にしか残っていない日も拾う
+      Object.keys(dayLog).forEach(k=>{ if(log[k] === undefined) log[k] = dayLog[k]; });
 
       const h = renderYearHeat(log);
-      const lv = levelOf(totalBlocks);
       document.getElementById('year-stats').innerHTML =
           '<div class="yr-stats">'
-        + '<div class="yr-stat"><span>' + h.year + '年の合計</span><b>' + h.total + ' 点</b></div>'
+        + '<div class="yr-stat"><span>' + h.year + '年に終わった数</span><b>' + h.total + ' 個</b></div>'
         + '<div class="yr-stat"><span>積み上げた日</span><b>' + h.active + ' 日</b></div>'
         + '<div class="yr-stat"><span>最長つづき</span><b>' + h.best + ' 日</b></div>'
-        + '<div class="yr-stat"><span>完成した城</span><b>' + Math.floor(totalBlocks / CASTLE_TOTAL) + ' 城</b></div>'
-        + '<div class="yr-stat"><span>いまのレベル</span><b>LV ' + lv + '</b></div>'
-        + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 点</b></div>'
+        + '<div class="yr-stat"><span>いま連続</span><b>' + currentStreak() + ' 日</b></div>'
+        + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 個</b></div>'
         + '</div>';
 
       listEl.innerHTML = '';
@@ -2513,7 +2518,7 @@
           + '<svg class="wr-arrow" viewBox="0 0 24 24" width="11" height="11" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         row.querySelector('.wr-date').textContent = d.label;
         row.querySelector('.wr-title').textContent = titles;
-        row.querySelector('.wr-stat').textContent = (log[d.key] || 0) + '点';
+        row.querySelector('.wr-stat').textContent = (log[d.key] || 0) + '個';
         box.appendChild(row);
 
         const det = buildDayDetail(data);
@@ -2707,137 +2712,11 @@
     client.requestAccessToken();
   }
 
-  // ---- つみあげの城：チェックするたびに天守閣が建ち上がる ----
-  // チェック1つ＝1点（大・中・小どれも同じ）。100点で城がひとつ完成。
-  const CASTLE_TOTAL = 100;
-  const LV_STEP = 20;              // 20点ごとに1レベル
+
+  // これまでに終わった数の合計（ふりかえり画面の「通算」だけに使う）
   let totalBlocks = 0;
 
-  function levelOf(pts){ return Math.floor(pts / LV_STEP) + 1; }
-  function rankOf(lv){
-    if(lv >= 50) return '天下人';
-    if(lv >= 35) return '国主';
-    if(lv >= 20) return '城主';
-    if(lv >= 10) return '棟梁';
-    if(lv >= 5)  return '石工';
-    return '見習い大工';
-  }
-  function castleStage(inCastle){
-    if(inCastle >= CASTLE_TOTAL) return '完成';
-    if(inCastle >= 85) return '四層';
-    if(inCastle >= 60) return '三層';
-    if(inCastle >= 35) return '一層・二層';
-    if(inCastle >= 15) return '石垣';
-    return '建てはじめ';
-  }
-
-  // 横長の絵。枠の幅いっぱいに空と雲海が広がり、中央に天守閣が建つ。
-  function castleArtSVG(progress, uid){
-    const W = 360, H = 252, DX = 70, DY = -8;
-    const p = Math.max(0, Math.min(1, progress));
-    const done = p >= 1;
-    const id = (s)=> s + '_' + uid;
-
-    function roof(x1, x2, y, ext, h){
-      const L = x1 - ext, R = x2 + ext, cx = (x1 + x2) / 2, w = x2 - x1;
-      return 'M' + L + ',' + y
-        + ' Q' + (L + ext*0.32) + ',' + (y + 3.5) + ' ' + (x1 - ext*0.18) + ',' + (y - h*0.28)
-        + ' Q' + (cx - w*0.30) + ',' + (y - h*0.95) + ' ' + cx + ',' + (y - h)
-        + ' Q' + (cx + w*0.30) + ',' + (y - h*0.95) + ' ' + (x2 + ext*0.18) + ',' + (y - h*0.28)
-        + ' Q' + (R - ext*0.32) + ',' + (y + 3.5) + ' ' + R + ',' + y
-        + ' Q' + cx + ',' + (y + h*0.32) + ' ' + L + ',' + y + ' Z';
-    }
-    function wall(x1, x2, yt, yb){
-      return '<rect x="'+x1+'" y="'+yt+'" width="'+(x2-x1)+'" height="'+(yb-yt)
-        + '" rx="1.5" fill="url(#'+id('wallG')+')" stroke="#c8c2d8" stroke-width="0.7"/>';
-    }
-    function wins(x1, x2, y, n, wd, ht){
-      let s = ''; const step = (x2-x1)/(n+1);
-      for(let i=1;i<=n;i++){
-        s += '<rect x="'+(x1+step*i-wd/2)+'" y="'+y+'" width="'+wd+'" height="'+ht
-          + '" rx="1" fill="#3b4358" opacity="0.88"/>';
-      }
-      return s;
-    }
-
-    let keep =
-        '<path d="M14,258 C26,236 34,221 44,210 L176,210 C186,221 194,236 206,258 Z" '
-      + 'fill="url(#'+id('stoneG')+')" stroke="#59617a" stroke-width="0.8"/>'
-      + '<path d="M31,232 L189,232 M22,245 L198,245" stroke="#727a8e" stroke-width="0.7" opacity="0.5"/>';
-    [[48,172,178,210,17,21,5],[62,158,150,177,15,19,4],[76,144,123,149,13,17,3],[90,130,98,122,12,16,2]].forEach(t=>{
-      keep += wall(t[0],t[1],t[2],t[3]) + wins(t[0],t[1],t[2]+8,t[6],7,9)
-        + '<path d="'+roof(t[0],t[1],t[2],t[4],t[5])+'" fill="url(#'+id('roofG')+')"/>';
-    });
-    keep += wall(98,122,76,97)
-      + '<rect x="94" y="88" width="32" height="2.6" rx="1" fill="#b98b4a"/>'
-      + wins(98,122,80,2,6,8)
-      + '<path d="'+roof(98,122,76,11,15)+'" fill="url(#'+id('roofG')+')"/>'
-      + '<g'+(done?' filter="url(#'+id('shine')+')"':'')+'>'
-      + '<path d="M103,62 q-3,-5 1,-7 q4,-2 4,3 q0,3 -2,4 Z" fill="url(#'+id('goldG')+')"/>'
-      + '<path d="M117,62 q3,-5 -1,-7 q-4,-2 -4,3 q0,3 2,4 Z" fill="url(#'+id('goldG')+')"/>'
-      + '<path d="M110,63 L110,57" stroke="#c9a24a" stroke-width="1.4" stroke-linecap="round"/></g>';
-    const castle = '<g transform="translate('+DX+','+DY+')">' + keep + '</g>';
-
-    const PET = [[24,52,15,1.0],[70,26,60,.85],[118,64,-25,.95],[168,30,40,1.0],[214,58,10,.9],
-                 [262,34,-35,.8],[312,64,25,.95],[44,120,-15,.85],[330,120,45,.9],[16,182,20,.95],
-                 [344,186,-40,.8],[96,150,30,.8],[280,150,-20,.85],[196,196,50,.9],[130,214,-10,.8]];
-    const petals = PET.map(a=>'<path d="M0,0 C3,-4.2 8,-3 8,1 C8,4.6 3,5 0,0 Z" transform="translate('
-      +a[0]+','+a[1]+') rotate('+a[2]+') scale('+a[3]+')" fill="url(#'+id('petalG')+')" opacity="0.8"/>').join('');
-
-    const cloudsBack = '<g opacity="0.92">'
-      + '<ellipse cx="46" cy="228" rx="70" ry="14" fill="#ffffff"/>'
-      + '<ellipse cx="180" cy="236" rx="104" ry="16" fill="#fdfbff"/>'
-      + '<ellipse cx="316" cy="228" rx="68" ry="13" fill="#f4f1ff"/></g>';
-    const cloudsFront = '<g opacity="0.96">'
-      + '<ellipse cx="86" cy="246" rx="96" ry="13" fill="#ffffff"/>'
-      + '<ellipse cx="278" cy="248" rx="100" ry="13" fill="#fffdff"/></g>';
-
-    let rays='', sparks='', glow='';
-    if(done){
-      glow = '<ellipse cx="180" cy="112" rx="150" ry="120" fill="url(#'+id('glowG')+')" opacity="0.6"/>';
-      let r='<g opacity="0.45">';
-      for(let a=-80;a<=80;a+=11){
-        r += '<path d="M180,52 L174,-90 L186,-90 Z" transform="rotate('+a+' 180 52)" fill="url(#'+id('rayG')+')"/>';
-      }
-      rays = r+'</g>';
-      const S=[[180,36,1.7],[152,52,1.1],[210,50,1.3],[180,14,1.0],[126,30,.9],[236,26,1.0],[100,66,.8],[262,70,.9]];
-      sparks = S.map(a=>'<path d="M0,-6 L1.4,-1.4 L6,0 L1.4,1.4 L0,6 L-1.4,1.4 L-6,0 L-1.4,-1.4 Z" transform="translate('
-        +a[0]+','+a[1]+') scale('+a[2]+')" fill="#fff4c9"/>').join('');
-    }
-
-    const defs =
-        '<linearGradient id="'+id('skyG')+'" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0%" stop-color="#cfe1ff"/><stop offset="55%" stop-color="#ffe8f2"/><stop offset="100%" stop-color="#fff6fb"/></linearGradient>'
-      + '<linearGradient id="'+id('roofG')+'" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0%" stop-color="#4c5c7e"/><stop offset="100%" stop-color="#252f47"/></linearGradient>'
-      + '<linearGradient id="'+id('wallG')+'" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eeeaf7"/></linearGradient>'
-      + '<linearGradient id="'+id('stoneG')+'" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0%" stop-color="#8f97a9"/><stop offset="100%" stop-color="#5c657a"/></linearGradient>'
-      + '<linearGradient id="'+id('goldG')+'" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0%" stop-color="#ffe9a3"/><stop offset="100%" stop-color="#d59c26"/></linearGradient>'
-      + '<linearGradient id="'+id('petalG')+'" x1="0" y1="0" x2="1" y2="1">'
-      + '<stop offset="0%" stop-color="#ffd6e6"/><stop offset="100%" stop-color="#ff9ec4"/></linearGradient>'
-      + '<radialGradient id="'+id('glowG')+'"><stop offset="0%" stop-color="#fff3c4" stop-opacity="0.95"/>'
-      + '<stop offset="100%" stop-color="#fff3c4" stop-opacity="0"/></radialGradient>'
-      + '<linearGradient id="'+id('rayG')+'" x1="0" y1="1" x2="0" y2="0">'
-      + '<stop offset="0%" stop-color="#ffe9a0" stop-opacity="0.85"/><stop offset="100%" stop-color="#ffe9a0" stop-opacity="0"/></linearGradient>'
-      + '<filter id="'+id('shine')+'" x="-120%" y="-120%" width="340%" height="340%">'
-      + '<feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-      + '<clipPath id="'+id('clip')+'"><rect x="0" y="'+(H-H*p)+'" width="'+W+'" height="'+(H*p)+'"/></clipPath>';
-
-    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="100%" preserveAspectRatio="xMidYMax meet">'
-      + '<defs>'+defs+'</defs>'
-      + '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+id('skyG')+')"/>'
-      + '<circle cx="300" cy="40" r="16" fill="#fffdf0" opacity="0.9"/>'
-      + glow + rays + cloudsBack
-      + '<g opacity="0.14">'+castle+'</g>'
-      + '<g clip-path="url(#'+id('clip')+')">'+castle+'</g>'
-      + cloudsFront + petals + sparks
-      + '</svg>';
-  }
-
-  // 日ごとの点数。1年ぶんのふりかえりに使う
+  // 日ごとに終わった数。1年ぶんのふりかえりと、連続日数に使う
   let dayLog = {};
   function recordDayPoints(n){
     const k = todayKey();
@@ -2849,56 +2728,206 @@
     });
   }
 
-  const CASTLE_OPEN_KEY = 'tsumiage_castle_open';
-
-  function updateCastleCard(){
-    const body = document.getElementById('castle-body');
-    if(!body) return;
-    const inC = (totalBlocks > 0 && totalBlocks % CASTLE_TOTAL === 0) ? CASTLE_TOTAL : totalBlocks % CASTLE_TOTAL;
-    const castles = Math.floor(totalBlocks / CASTLE_TOTAL);
-    const lv = levelOf(totalBlocks);
-    body.innerHTML = castleArtSVG(inC / CASTLE_TOTAL, 'main');
-    document.getElementById('lv-num').textContent = lv;
-    document.getElementById('lv-rank').textContent = rankOf(lv);
-    document.getElementById('lv-stage').textContent =
-      castleStage(inC) + (castles > 0 ? ' ・ ' + castles + '城 完成' : '');
-    document.getElementById('lv-pts').textContent = inC + ' / ' + CASTLE_TOTAL;
-    document.getElementById('xp-fill').style.width = ((totalBlocks % LV_STEP) / LV_STEP * 100) + '%';
-  }
-
+  // 何かが1つ終わったときに呼ばれる
   function addBlocks(n){
     if(!n || n < 0) return;
-    const beforeCastles = Math.floor(totalBlocks / CASTLE_TOTAL);
-    const beforeLv = levelOf(totalBlocks);
     totalBlocks += n;
     recordDayPoints(n);
-    updateCastleCard();
+    updateFactsCard();
     if(FIREBASE_READY && currentUser){
       profileRefForUser(currentUser.uid)
         .set({ totalBlocks: totalBlocks }, {merge:true})
         .catch(()=>{});
     }
-    if(Math.floor(totalBlocks / CASTLE_TOTAL) > beforeCastles){
-      showToast('天守閣が完成しました！🏯 次の城を建てはじめます。');
-    } else if(levelOf(totalBlocks) > beforeLv){
-      const lv = levelOf(totalBlocks);
-      showToast('レベル ' + lv + ' になりました！　' + rankOf(lv));
+  }
+
+  // 何日つづけて積み上げているか。
+  // 今日がまだ0点でも、昨日まで続いていれば途切れた扱いにしない（1日の途中だから）。
+  function currentStreak(){
+    const keyOf = (d)=> d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const d = new Date();
+    if(!(dayLog[keyOf(d)] > 0)) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while(dayLog[keyOf(d)] > 0 && n < 4000){ n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+
+
+  // ---- いまの状態を映す帯 ----
+  // 出すのは、記録から出てくるものだけ。
+  //  ・どの大きな仕事が、何日 進んでいないか
+  //  ・今週と先週で、終わった数がどう違うか
+  //  ・何日つづけて積み上げているか
+  // レベル・位・城はやめた。自分でチェックを押して増やした数字は、
+  // 見ても新しいことが何も分からないので、見なくなる。
+
+  const STALL_DAYS = 2;   // これ以上なにも終わっていない大きな仕事を「進んでいない」とみなす
+
+  function dateKeyOf(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  // 大きな仕事の進み具合。数え方はここ1本に寄せる（renderBigBlock もこれを使う）。
+  function bigProgress(big){
+    let done = 0, planned = 0;
+    (big.mediums||[]).forEach(m=>{
+      const items = m.items || [];
+      const doneItems = items.filter(i=>i.done).length;
+      const total = items.length;
+      // 中くらいの仕事は、小さい仕事が無くてもチェックだけで完了にできる
+      const achieved = m.done === true || (total > 0 && doneItems === total);
+      done    += achieved ? (total > 0 ? total : 1) : doneItems;
+      planned += total > 0 ? total : 1;
+    });
+    return { done, planned, achieved: big.done === true || (planned > 0 && done === planned) };
+  }
+
+  // 最後に何かが終わった日から、何日たったか
+  function daysSinceMs(ms){
+    const a = new Date(ms); a.setHours(0,0,0,0);
+    const b = new Date();   b.setHours(0,0,0,0);
+    return Math.round((b - a) / 86400000);
+  }
+
+  // 何かが終わったら、その大きな仕事に「動いた」と記録しておく
+  function markBigMoved(big){
+    if(big) big.lastActiveAt = Date.now();
+  }
+
+  function stalledBigs(){
+    return state.bigs
+      .filter(b=> b.title && b.title.trim())
+      .filter(b=> typeof b.lastActiveAt === 'number')
+      .filter(b=> !bigProgress(b).achieved)
+      .map(b=> ({ big: b, days: daysSinceMs(b.lastActiveAt) }))
+      .filter(x=> x.days >= STALL_DAYS)
+      .sort((a,b)=> b.days - a.days);
+  }
+
+  // 週は月曜はじまり。0が今週、1が先週、-1が来週のあたま。
+  function weekStart(offsetWeeks){
+    const d = new Date(); d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - offsetWeeks * 7);
+    return d;
+  }
+  function countInRange(from, to){
+    let n = 0;
+    const d = new Date(from);
+    while(d < to){ n += (dayLog[dateKeyOf(d)] || 0); d.setDate(d.getDate() + 1); }
+    return n;
+  }
+
+  function shortTitle(t){
+    const one = String(t || '').replace(/\s+/g, ' ').trim();
+    return one.length > 22 ? one.slice(0, 21) + '…' : one;
+  }
+
+  function updateFactsCard(){
+    const stallEl = document.getElementById('fact-stall');
+    if(!stallEl) return;
+
+    const st = stalledBigs();
+    stallEl.innerHTML = '<span class="fs-ico"></span><span class="fs-txt"></span><span class="fs-more"></span>';
+    const icoEl  = stallEl.querySelector('.fs-ico');
+    const txtEl  = stallEl.querySelector('.fs-txt');
+    const moreEl = stallEl.querySelector('.fs-more');
+
+    if(st.length){
+      const top = st[0];
+      stallEl.className = 'fact-stall';
+      icoEl.textContent = '⚠';
+      // 仕事の名前は本人が書いた文字なので、組み立てて入れる（HTMLとして扱わない）
+      txtEl.appendChild(document.createTextNode('「' + shortTitle(top.big.title) + '」は '));
+      const b = document.createElement('b');
+      b.textContent = top.days + '日';
+      txtEl.appendChild(b);
+      txtEl.appendChild(document.createTextNode(' 進んでいません'));
+      moreEl.textContent = st.length > 1 ? 'ほか' + (st.length - 1) + '件' : '';
+      stallEl.onclick = ()=> scrollToBig(top.big.id);
+    } else {
+      stallEl.className = 'fact-stall calm';
+      icoEl.textContent = '✓';
+      txtEl.textContent = state.bigs.some(b=> b.title && b.title.trim())
+        ? '止まっているものは、ありません'
+        : '大きな仕事を書くと、止まっているものがここに出ます';
+      moreEl.textContent = '';
+      stallEl.onclick = null;
+    }
+
+    const thisWeek = countInRange(weekStart(0), weekStart(-1));
+    const lastWeek = countInRange(weekStart(1), weekStart(0));
+    const weekEl = document.getElementById('fact-week');
+    weekEl.innerHTML = '';
+    weekEl.appendChild(document.createTextNode('今週 ' + thisWeek + '個'));
+    const last = document.createElement('span');
+    last.className = 'fw-last';
+    last.textContent = '　／　先週 ' + lastWeek + '個';
+    weekEl.appendChild(last);
+
+    const streak = currentStreak();
+    const streakEl = document.getElementById('fact-streak');
+    streakEl.innerHTML = '';
+    if(streak > 0){
+      streakEl.textContent = '🔥 連続 ' + streak + '日';
+    } else {
+      const off = document.createElement('span');
+      off.className = 'fs-off';
+      off.textContent = '連続 0日';
+      streakEl.appendChild(off);
     }
   }
 
-  function setCastleOpen(open){
-    const card = document.getElementById('castle-card');
-    card.classList.toggle('open', open);
-    try{ localStorage.setItem(CASTLE_OPEN_KEY, open ? '1' : '0'); }catch(e){}
+  // 「進んでいません」を押したら、その仕事まで画面を送って光らせる
+  function scrollToBig(id){
+    const el = document.querySelector('#blocks [data-block-key="big:' + id + '"]');
+    if(!el) return;
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    const card = el.querySelector('.big-card') || el;
+    card.classList.add('big-flash');
+    setTimeout(()=> card.classList.remove('big-flash'), 1600);
   }
-  document.getElementById('castle-head').addEventListener('click', ()=>{
-    setCastleOpen(!document.getElementById('castle-card').classList.contains('open'));
-  });
-  try{
-    if(localStorage.getItem(CASTLE_OPEN_KEY) !== '0'){
-      document.getElementById('castle-card').classList.add('open');
-    }
-  }catch(e){ document.getElementById('castle-card').classList.add('open'); }
+
+  // ---- 「最後に進んだ日」を、これまでの記録から割り出す（足りないぶんだけ・1回だけ） ----
+  // days/{YYYY-MM-DD} には、その日に保存した状態が残っている。日をまたいで
+  // 「終わった数」が増えていれば、その日に進んだということ。
+  // 読み出しに失敗したときは、何も書かない（次に開いたときにやり直す）。
+  function dateKeyToMs(k){
+    const p = k.split('-');
+    return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0).getTime();
+  }
+  function backfillLastActive(uid){
+    if(state.bigs.every(b=> typeof b.lastActiveAt === 'number')) return Promise.resolve(false);
+    return fbDb.collection('users').doc(uid).collection('days').get().then(snap=>{
+      const days = [];
+      snap.forEach(doc=>{
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(doc.id)) return;
+        const d = doc.data();
+        if(Array.isArray(d.bigs)) days.push({ key: doc.id, bigs: d.bigs });
+      });
+      days.sort((a,b)=> a.key < b.key ? -1 : 1);
+      const lastMove = {}, prev = {};
+      days.forEach(day=>{
+        day.bigs.forEach(b=>{
+          const k = String(b.id);
+          let n = b.done ? 1 : 0;
+          (b.mediums||[]).forEach(m=>{
+            if(m.done) n++;
+            (m.items||[]).forEach(it=>{ if(it.done) n++; });
+          });
+          if(prev[k] === undefined || n > prev[k]) lastMove[k] = day.key;
+          prev[k] = n;
+        });
+      });
+      let touched = false;
+      state.bigs.forEach(b=>{
+        if(typeof b.lastActiveAt === 'number') return;
+        const k = lastMove[String(b.id)];
+        b.lastActiveAt = k ? dateKeyToMs(k) : Date.now();
+        touched = true;
+      });
+      return touched;
+    });
+  }
 
   const CAL_OPEN_KEY = 'tsumiage_cal_open';
   const calCardEl = document.getElementById('cal-card');
@@ -2907,7 +2936,7 @@
     try{ localStorage.setItem(CAL_OPEN_KEY, open ? '1' : '0'); }catch(e){}
     if(open) loadCalendarNow(!!interactive);
   }
-  updateCastleCard();
+  updateFactsCard();
 
   document.getElementById('cal-head').addEventListener('click', ()=>{
     setCalOpen(!calCardEl.classList.contains('open'), true);
@@ -2976,22 +3005,27 @@
     try{
       if(typeof board.dayWasAchieved === 'boolean') state.dayWasAchieved = board.dayWasAchieved;
       if(Array.isArray(board.bigs)){
-        state.bigs = board.bigs.map(b=>({
-          id: typeof b.id === 'number' ? b.id : 0,
-          title: b.title || '',
-          done: !!b.done,
-          repeatDaily: !!b.repeatDaily,
-          wasAchieved: !!b.wasAchieved,
-          collapsed: !!b.collapsed,
-          mediums: Array.isArray(b.mediums) ? b.mediums.map(m=>({
-            name: m.name || '',
-            done: !!m.done,
-            wasAchieved: !!m.wasAchieved,
-            items: Array.isArray(m.items) ? m.items.map(it=>({
-              text: it.text || '', done: !!it.done, eveningReviewed: !!it.eveningReviewed
+        state.bigs = board.bigs.map(b=>{
+          const nb = {
+            id: typeof b.id === 'number' ? b.id : 0,
+            title: b.title || '',
+            done: !!b.done,
+            repeatDaily: !!b.repeatDaily,
+            wasAchieved: !!b.wasAchieved,
+            collapsed: !!b.collapsed,
+            mediums: Array.isArray(b.mediums) ? b.mediums.map(m=>({
+              name: m.name || '',
+              done: !!m.done,
+              wasAchieved: !!m.wasAchieved,
+              items: Array.isArray(m.items) ? m.items.map(it=>({
+                text: it.text || '', done: !!it.done, eveningReviewed: !!it.eveningReviewed
+              })) : []
             })) : []
-          })) : []
-        }));
+          };
+          // 最後に進んだ日。undefined を入れると保存が弾かれるので、あるときだけ足す
+          if(typeof b.lastActiveAt === 'number') nb.lastActiveAt = b.lastActiveAt;
+          return nb;
+        });
         const usedIds = new Set();
         state.bigs.forEach(b=>{ while(usedIds.has(b.id)){ b.id++; } usedIds.add(b.id); });
         nextBigId = state.bigs.length ? Math.max(...state.bigs.map(b=>b.id)) + 1 : 1;
@@ -3057,11 +3091,9 @@
       if(!snap.exists) return;
       const pd = snap.data();
 
-      if(typeof pd.totalBlocks === 'number' && pd.totalBlocks !== totalBlocks){
-        totalBlocks = pd.totalBlocks;
-        updateCastleCard();
-      }
+      if(typeof pd.totalBlocks === 'number') totalBlocks = pd.totalBlocks;
       if(pd.dayLog && typeof pd.dayLog === 'object') dayLog = pd.dayLog;
+      updateFactsCard();   // 受け取った記録で、帯も書き直す
 
       const board = pd.board;
       if(!board || !Array.isArray(board.bigs)) return;   // まだボードが無い（移行前）
@@ -3084,22 +3116,44 @@
     }, 200);
   });
 
-  // 日付が変わっていないか、ときどき確認する（開きっぱなし対策）
-  setInterval(()=>{
-    if(!FIREBASE_READY || !currentUser) return;
+  // ---- 日付が変わったら、見えているものを今日ぶんに入れかえる ----
+  // 【2026-08-28の修正】以前は30秒ごとのタイマーだけで見張っていて、しかも
+  // 「🔁くりかえし」のチェックを外すことしかしていなかった。そのため Mac を
+  // 開きっぱなし・スリープさせたまま日付をまたぐと、1年の進み・連続日数・
+  // 今日の点数・ヒントが昨日のまま止まって見えていた（スリープ中はタイマーも
+  // 止まるので、ログインしていない間に日付が変わると気づけなかった）。
+  // ※ タスクそのものは今までどおり消さない（2026-08-21の事故の再発防止）。
+  let lastSeenDateKey = todayKey();
+
+  function checkDayRollover(){
     const tk = todayKey();
-    if(boardDateKey && boardDateKey !== tk){
-      boardDateKey = tk;
-      if(resetRepeatingItemsForNewDay()) render();
-      saveBoard().catch(()=>{});
-    }
-    // 日付が変わったら、カレンダーの一覧も読み直す。
-    // 開きっぱなしにしていると、昨日読んだ一覧がそのまま残ってしまうため。
+    updateDatePill();
+    if(lastSeenDateKey === tk) return;
+    lastSeenDateKey = tk;
+
+    // 見えているものを今日のものへ書き直す
+    renderYearProgress();
+    updateFactsCard();       // 止まっている日数・今週／先週・連続日数
+    updateHint();
+
+    // 昨日読んだ予定が残らないように、カレンダーも読み直す
     if(calLoadedDateKey && calLoadedDateKey !== tk
        && calCardEl && calCardEl.classList.contains('open')){
       loadCalendarNow(false);
     }
-  }, 30000);
+
+    if(!FIREBASE_READY || !currentUser) return;
+    if(!boardDateKey || boardDateKey === tk) return;
+    boardDateKey = tk;
+    resetRepeatingItemsForNewDay();   // 🔁を付けたものだけチェックを外す
+    render();
+    saveBoard().catch(()=>{});
+  }
+
+  setInterval(checkDayRollover, 30000);
+  // スリープから戻ったとき・アプリに切りかえたときは、30秒待たずにすぐ見直す
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkDayRollover(); });
+  window.addEventListener('focus', checkDayRollover);
 
   function scheduleSave(){
     if(!FIREBASE_READY || !currentUser) return;
@@ -3164,7 +3218,7 @@
           if(typeof pd.memo === 'string') state.memo = pd.memo;
           totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
           dayLog = (pd.dayLog && typeof pd.dayLog === 'object') ? pd.dayLog : {};
-          updateCastleCard();
+          updateFactsCard();
 
           const tk = todayKey();
           if(pd.board && Array.isArray(pd.board.bigs)){
@@ -3175,7 +3229,10 @@
               if(resetRepeatingItemsForNewDay()) render();
               saveBoard();
             }
-            return;
+            // 古いデータには「最後に進んだ日」が入っていないので、記録から割り出す
+            return backfillLastActive(user.uid)
+              .then(touched=>{ if(touched){ updateFactsCard(); return saveBoard(); } })
+              .catch(()=>{});   // 読めなければ何も書かない。次に開いたときにやり直す
           }
           // ボードがまだ無い＝旧バージョンからの引っ越し。過去の記録から復元する。
           return findMostRecentDayWithContent(user.uid).then(found=>{
@@ -3186,7 +3243,9 @@
               render();
               showToast('前の記録を見つけたので、積み上げに戻しました。');
             }
-            return saveBoard();
+            return backfillLastActive(user.uid)
+              .catch(()=>false)
+              .then(()=>{ updateFactsCard(); return saveBoard(); });
           }).catch(()=>{
             // 読み出しに失敗したときは、何も保存しない。
             // ここで保存すると、中身が入る前の状態でボードを上書きしてしまう。
