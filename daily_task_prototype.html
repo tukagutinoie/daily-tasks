@@ -817,6 +817,145 @@
     color:var(--mid);
   }
   .week-row.achieved .wr-stat{color:var(--purple);}
+
+  /* ---------- ふりかえり：タブ・ブログ・10年日記 ---------- */
+  .rv-tabs{
+    display:flex; gap:4px; padding:4px;
+    background:var(--bg); border-radius:14px; margin:2px 0 16px;
+  }
+  .rv-tab{
+    flex:1; text-align:center; padding:9px 6px;
+    font-size:12.5px; font-weight:800; color:var(--sub);
+    border-radius:11px; cursor:pointer; user-select:none;
+    transition:background .22s ease, color .22s ease, box-shadow .22s ease;
+  }
+  .rv-tab.on{
+    background:var(--card); color:var(--text);
+    box-shadow:0 1px 2px rgba(30,20,50,.06), 0 4px 12px rgba(40,20,70,.07);
+  }
+  .rv-pane{display:none;}
+  .rv-pane.on{display:block; animation:rvIn .26s cubic-bezier(.2,0,.2,1);}
+  @keyframes rvIn{ from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;} }
+
+  /* 前後に送るバー */
+  .nav-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin:0 0 14px;
+  }
+  .nav-bar .nb-mid{ text-align:center; line-height:1.25; }
+  .nav-bar .nb-main{ font-size:17px; font-weight:800; letter-spacing:.01em; }
+  .nav-bar .nb-sub{ font-size:11px; font-weight:700; color:var(--sub); margin-top:2px;
+    font-variant-numeric:tabular-nums; }
+  .nav-btn{
+    flex:none; width:34px; height:34px; border-radius:50%;
+    background:var(--bg); color:var(--sub);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; user-select:none; border:none;
+    transition:background .18s ease, color .18s ease, transform .18s ease;
+  }
+  .nav-btn:hover{ background:#eeecf7; color:var(--text); }
+  .nav-btn:active{ transform:scale(.92); }
+  .nav-btn[disabled]{ opacity:.32; pointer-events:none; }
+  .nav-today{
+    flex:none; font-size:11px; font-weight:800; color:var(--purple);
+    background:#efedff; border:none; border-radius:99px; padding:6px 11px; cursor:pointer;
+  }
+
+  /* タグ */
+  .tag{
+    display:inline-flex; align-items:center; gap:4px;
+    border-radius:99px; padding:3px 9px;
+    font-size:11px; font-weight:800; white-space:nowrap; line-height:1.25;
+    max-width:100%; overflow:hidden;
+  }
+  .tag .tg-n{ opacity:.62; font-variant-numeric:tabular-nums; }
+  .tag .tg-t{ overflow:hidden; text-overflow:ellipsis; }
+  .tagrow{ display:flex; gap:5px; flex-wrap:wrap; margin:0 1px 14px; }
+
+  .mix-bar{
+    height:7px; border-radius:99px; overflow:hidden;
+    display:flex; margin:0 1px 12px; background:var(--ring-track);
+  }
+  .mix-bar i{ display:block; height:100%; }
+
+  /* ブログの記事 */
+  .post{ border-top:1px solid var(--line); padding:13px 2px 4px; }
+  .post:first-child{ border-top:none; }
+  .post-day{ display:flex; align-items:baseline; gap:9px; margin-bottom:7px; cursor:pointer; }
+  .post-day b{ font-size:13.5px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .post-day span{ font-size:11px; font-weight:800; color:var(--sub); font-variant-numeric:tabular-nums; }
+  .post-day .pd-go{ margin-left:auto; font-size:10.5px; font-weight:800; color:var(--purple); opacity:.75; }
+  .post-line{ display:flex; gap:8px; align-items:flex-start; margin:5px 0; }
+  .post-line .pl-txt{
+    font-size:12.5px; font-weight:700; color:#3d3560; line-height:1.6; padding-top:2px;
+    overflow-wrap:anywhere;
+  }
+  .post-note{
+    font-size:12.5px; font-weight:600; color:var(--text); line-height:1.7;
+    background:var(--card-soft); border-radius:12px; padding:9px 12px; margin-top:9px;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .post-note::before{ content:'✎ '; color:var(--blue); font-weight:800; }
+
+  /* 10年日記 */
+  .yr-card{
+    border:1px solid var(--line); border-radius:16px;
+    padding:12px 14px; margin-bottom:9px; background:var(--card-soft);
+    transition:box-shadow .22s ease, border-color .22s ease;
+  }
+  .yr-card.now{ background:var(--card); border-color:#cfd9ff; box-shadow:0 5px 18px rgba(70,60,160,.09); }
+  .yr-card.void{ opacity:.72; }
+  .yr-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .yr-y{ font-size:13.5px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.03em; }
+  .yr-card.now .yr-y{ color:var(--purple); }
+  .yr-n{ font-size:11.5px; font-weight:800; color:var(--sub); font-variant-numeric:tabular-nums; }
+  .yr-none{ font-size:11.5px; font-weight:700; color:#c3bed4; margin-top:5px; }
+  .yr-lines{ margin-top:7px; }
+  .yr-note{
+    font-size:13px; font-weight:600; line-height:1.8; color:var(--text);
+    margin-top:9px; padding-top:9px; border-top:1px dashed #e2def0;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .yr-note::before{ content:'✎ '; color:var(--blue); font-weight:800; }
+  /* 書く枠。長文でも余裕を持って伸びる */
+  .note-edit{
+    width:100%; margin-top:9px; padding:11px 13px;
+    border:1px solid #ddd8ee; border-radius:13px;
+    background:var(--card); color:var(--text);
+    font-family:inherit; font-size:13.5px; font-weight:600; line-height:1.85;
+    min-height:96px; resize:vertical; outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+    overflow-wrap:anywhere;
+  }
+  .note-edit::placeholder{ color:#b8b2c8; font-weight:600; }
+  .note-edit:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(63,134,255,.13); }
+  .note-foot{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:6px; font-size:10.5px; font-weight:700; color:var(--sub);
+  }
+  .note-open{
+    margin-top:9px; font-size:12px; font-weight:800; color:var(--purple);
+    background:#efedff; border:none; border-radius:11px; padding:8px 12px; cursor:pointer;
+    transition:background .18s ease;
+  }
+  .note-open:hover{ background:#e6e2ff; }
+
+  .yr-future{
+    display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+    padding:12px 4px 4px; margin-top:2px;
+    border-top:1px dashed #e2def0;
+  }
+  .yf-lab{ font-size:11px; font-weight:800; color:var(--sub); margin-right:2px; }
+  .yf-chip{
+    font-size:11.5px; font-weight:800; color:#bdb7cf;
+    border:1px dashed #ddd8ee; border-radius:99px; padding:4px 11px;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .rv-empty{
+    text-align:center; padding:26px 14px;
+    font-size:12.5px; font-weight:700; color:var(--sub); line-height:1.8;
+  }
   .week-summary{
     background:var(--mid-bg);
     border-radius:13px;
@@ -1138,6 +1277,9 @@
     .cal-head{ padding:13px 13px; gap:7px; }
     .cal-title{ font-size:13.5px; }
     .cal-status{ font-size:10px; max-width:42%; }
+    .rv-tab{ font-size:11.5px; padding:9px 3px; }
+    .nav-bar .nb-main{ font-size:15.5px; }
+    .yr-card{ padding:11px 12px; }
     .modal-close, .bulk-btn{ padding:15px; font-size:15px; }
 
     /* iOSで入力時に画面が勝手に拡大されないよう、入力欄は16px以上にする */
@@ -1249,12 +1391,21 @@
 <div class="modal-overlay" id="week-modal">
   <div class="modal-box">
     <h2>ふりかえり</h2>
-    <div class="modal-sub">チェックを入れた日に色がつきます。1年でどれだけ積み上げたかが一目で分かります。</div>
-    <div id="year-heat"></div>
-    <div id="year-stats"></div>
-    <div class="rv-sub">直近14日</div>
-    <div id="week-summary-area"></div>
-    <div id="week-list"></div>
+
+    <div class="rv-tabs">
+      <div class="rv-tab on" data-pane="diary">今日のページ</div>
+      <div class="rv-tab" data-pane="blog">月で読む</div>
+      <div class="rv-tab" data-pane="year">1年</div>
+    </div>
+
+    <div class="rv-pane on" id="pane-diary"></div>
+    <div class="rv-pane" id="pane-blog"></div>
+    <div class="rv-pane" id="pane-year">
+      <div class="modal-sub">チェックを入れた日に色がつきます。1年でどれだけ積み上げたかが一目で分かります。</div>
+      <div id="year-heat"></div>
+      <div id="year-stats"></div>
+    </div>
+
     <button class="modal-close" id="week-modal-close">閉じる</button>
   </div>
 </div>
@@ -1727,7 +1878,7 @@
       const midCheckEl = mCard.querySelector('.mid-check');
       midCheckEl.addEventListener('click', ()=>{
         medium.done = !(medium.done === true);
-        if(medium.done){ markBigMoved(big); addBlocks(1); }
+        if(medium.done){ markBigMoved(big); addBlocks(1); recordDone('mid', big.title, medium.name, ''); }
         render();
       });
 
@@ -1756,7 +1907,7 @@
         const checkEl = li.querySelector('.check');
         checkEl.addEventListener('click', ()=>{
           item.done = !item.done;
-          if(item.done){ item.eveningReviewed = false; markBigMoved(big); addBlocks(1); }
+          if(item.done){ item.eveningReviewed = false; markBigMoved(big); addBlocks(1); recordDone('small', big.title, medium.name, item.text); }
           checkEl.classList.add('pop');
           setTimeout(()=> checkEl.classList.remove('pop'), 180);
           render();
@@ -1882,7 +2033,7 @@
     if(achieved && !big.wasAchieved){
       burstConfetti(card, 20, ['#4c7cff','#6d5dfa','#8b5cf6']);
       // 達成になった瞬間に1つ。受信を反映しているだけのときは数えない。
-      if(!applyingRemote){ markBigMoved(big); addBlocks(1); }
+      if(!applyingRemote){ markBigMoved(big); addBlocks(1); recordDone('big', big.title, '', ''); }
     }
     big.wasAchieved = achieved;
 
@@ -2165,32 +2316,6 @@
   function closeWeekModal(){
     document.getElementById('week-modal').classList.remove('show');
   }
-  function dateKeyOffset(offsetDays){
-    const d = new Date();
-    d.setDate(d.getDate() - offsetDays);
-    return {
-      key: d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),
-      label: (d.getMonth()+1)+'/'+d.getDate()
-    };
-  }
-  // ボードが日付ごとに分かれていた頃（2026-08-21より前）の記録から、その日の数を出す
-  const BOARD_BECAME_PERMANENT = '2026-08-21';
-  function countOfDay(key, data){
-    if(dayLog[key] !== undefined) return dayLog[key];      // 押した瞬間に数えた本物
-    if(key >= BOARD_BECAME_PERMANENT) return 0;            // 記録が無い日は数えられない
-    return pointsOfDay(data);                              // 昔の、日ごとに分かれていた記録
-  }
-  function pointsOfDay(data){
-    let pts = 0;
-    (data && data.bigs ? data.bigs : []).forEach(b=>{
-      if(b.done) pts += 1;
-      (b.mediums||[]).forEach(m=>{
-        if(m.done) pts += 1;
-        (m.items||[]).forEach(it=>{ if(it.done) pts += 1; });
-      });
-    });
-    return pts;
-  }
 
   // 1年ぶんの積み上げを、日ごとのマスで見せる
   function renderYearHeat(log){
@@ -2228,144 +2353,507 @@
 
   // その日「終わったもの」だけを、大→中→小で見せる。
   // 未完了まで入れると量が膨大になって読めなくなるため、完了分だけを残す。
-  function buildDayDetail(data){
-    const wrap = document.createElement('div');
-    wrap.className = 'wr-detail';
-    const bigs = Array.isArray(data.bigs) ? data.bigs : [];
-    let any = false;
+  // ---- ふりかえり ----
+  // 同じ記録を2つの入口で読む。
+  //   「今日のページ」＝ 1つの日付を、年で縦に並べる（10年日記）
+  //   「月で読む」    ＝ 1か月を、日ごとの記事として読む（ブログ）
+  // タグは、大きな仕事の名前がそのまま入る。本人がタグ付けする作業は無い。
 
-    bigs.forEach(b=>{
-      const mids = [];
-      (b.mediums||[]).forEach(m=>{
-        const doneItems = (m.items||[]).filter(it=> it.done);
-        if(m.done || doneItems.length) mids.push({ m: m, items: doneItems });
-      });
-      if(!b.done && !mids.length) return;   // この大きな仕事は、この日なにも終わっていない
-      any = true;
+  let archive = null;    // { 'YYYY-MM-DD': {count, done:[], note} }
+  let rvPane  = 'diary';
+  let diaryMD = null;    // いま開いている日付 {m, d}
+  let blogYM  = null;    // いま開いている月 {y, m}
 
-      let cnt = 0;
-      mids.forEach(x=> cnt += x.items.length);
+  const WDAY = ['日','月','火','水','木','金','土'];
+  function dkey(y, m, d){
+    return y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+  }
 
-      const bg = document.createElement('div');
-      bg.className = 'wd-big';
-      bg.innerHTML = '<div class="wd-big-t"><b></b><span></span></div>';
-      bg.querySelector('b').textContent = (b.done ? '✓ ' : '') + (b.title || '（無題）');
-      bg.querySelector('span').textContent = cnt ? (cnt + '件') : '';
+  // タグの色。名前から決めるので、同じ仕事はいつも同じ色になる
+  const TAG_TONES = [
+    ['#e8f0ff','#2f6ae0','#4f8bf0'], ['#efeaff','#6244d8','#7f66ec'],
+    ['#e6f5f1','#1d8a70','#2fae90'], ['#fdeef4','#c2467e','#e06a9d'],
+    ['#fff3e4','#a8631b','#d18b36'], ['#e9f3ff','#1f6fa8','#3f93cc'],
+    ['#f2effd','#7a4fd0','#9a72e6'], ['#eaf5ec','#3a7d4e','#57a06c']
+  ];
+  function tagTone(name){
+    const t = String(name || '');
+    let h = 0;
+    for(let i=0;i<t.length;i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+    return TAG_TONES[h % TAG_TONES.length];
+  }
+  function tagChip(name, n){
+    const tone = tagTone(name);
+    const el = document.createElement('span');
+    el.className = 'tag';
+    el.style.background = tone[0];
+    el.style.color = tone[1];
+    const t = document.createElement('span');
+    t.className = 'tg-t';
+    t.textContent = name || '名前なし';
+    el.appendChild(t);
+    if(n !== undefined && n !== null){
+      const c = document.createElement('span');
+      c.className = 'tg-n';
+      c.textContent = n;
+      el.appendChild(c);
+    }
+    return el;
+  }
 
-      mids.forEach(x=>{
-        const md = document.createElement('div');
-        md.className = 'wd-mid';
-        const mt = document.createElement('div');
-        mt.className = 'wd-mid-t';
-        mt.textContent = (x.m.done ? '✓ ' : '') + (x.m.name || '（無題）');
-        md.appendChild(mt);
-        x.items.forEach(it=>{
-          const li = document.createElement('div');
-          li.className = 'wd-item';
-          li.textContent = '✓ ' + (it.text || '');
-          md.appendChild(li);
-        });
-        bg.appendChild(md);
-      });
-      wrap.appendChild(bg);
+  function groupByTag(done){
+    const g = {}, order = [];
+    (done || []).forEach(e=>{
+      const t = e.big || '名前なし';
+      if(!g[t]){ g[t] = []; order.push(t); }
+      g[t].push(e);
     });
+    order.sort((a,b)=> g[b].length - g[a].length);
+    return order.map(t=> ({ tag: t, items: g[t] }));
+  }
+  function lineTextOf(e){
+    if(e.kind === 'big') return '「' + (e.big || 'この仕事') + '」が完了';
+    if(e.kind === 'mid') return (e.med || '中くらいの仕事') + ' が完了';
+    return e.text || '名前なし';
+  }
 
-    if(!any) wrap.innerHTML = '<div class="wd-empty">この日は終わったものがありません。</div>';
+  function loadArchive(uid){
+    return fbDb.collection('users').doc(uid).collection('days').get().then(snap=>{
+      const out = {};
+      snap.forEach(doc=>{
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(doc.id)) return;
+        const d = doc.data() || {};
+        out[doc.id] = {
+          count: (typeof d.count === 'number') ? d.count : (dayLog[doc.id] || 0),
+          done:  Array.isArray(d.done) ? d.done.slice() : [],
+          note:  (typeof d.note === 'string') ? d.note : ''
+        };
+      });
+      // 日ごとの数だけ残っている日も拾う
+      Object.keys(dayLog).forEach(k=>{
+        if(!out[k]) out[k] = { count: dayLog[k], done: [], note: '' };
+      });
+      return out;
+    });
+  }
+
+  // ---- 一言の保存（長さの制限はしない。長文でも入る） ----
+  const noteTimers = {};
+  function saveNote(key, text, statusEl){
+    if(!FIREBASE_READY || !currentUser) return;
+    if(!archive[key]) archive[key] = { count: dayLog[key] || 0, done: [], note: '' };
+    archive[key].note = text;
+    if(statusEl) statusEl.textContent = '保存中…';
+    clearTimeout(noteTimers[key]);
+    noteTimers[key] = setTimeout(()=>{
+      fbDb.collection('users').doc(currentUser.uid).collection('days').doc(key)
+        .set({ note: text }, {merge:true})
+        .then(()=>{ if(statusEl) statusEl.textContent = '保存ずみ ✓'; })
+        .catch(()=>{ if(statusEl) statusEl.textContent = '保存できませんでした'; });
+    }, 900);
+  }
+
+  function makeNoteEditor(key, initial){
+    const wrap = document.createElement('div');
+    const ta = document.createElement('textarea');
+    ta.className = 'note-edit';
+    ta.placeholder = 'この日のことを書く（長くてもかまいません）';
+    ta.value = initial || '';
+    const foot = document.createElement('div');
+    foot.className = 'note-foot';
+    const status = document.createElement('span');
+    const count  = document.createElement('span');
+    const setCount = ()=>{ count.textContent = ta.value.length ? ta.value.length + '字' : ''; };
+    setCount();
+    foot.appendChild(status); foot.appendChild(count);
+    // 書いた分だけ枠が伸びる
+    const grow = ()=>{ ta.style.height = 'auto'; ta.style.height = Math.max(96, ta.scrollHeight) + 'px'; };
+    ta.addEventListener('input', ()=>{ grow(); setCount(); saveNote(key, ta.value, status); });
+    wrap._grow = grow;
+    wrap.appendChild(ta); wrap.appendChild(foot);
+    requestAnimationFrame(grow);
     return wrap;
   }
 
-  function openWeekModal(){
-    const modal = document.getElementById('week-modal');
-    const listEl = document.getElementById('week-list');
-    const summaryEl = document.getElementById('week-summary-area');
-    modal.classList.add('show');
+  // ---- 今日のページ（10年日記） ----
+  function renderDiary(){
+    const pane = document.getElementById('pane-diary');
+    pane.innerHTML = '';
+    if(!archive){ pane.innerHTML = '<div class="rv-empty">読み込み中…</div>'; return; }
 
-    if(!FIREBASE_READY || !currentUser){
-      renderYearHeat({});
-      document.getElementById('year-stats').innerHTML = '';
-      listEl.innerHTML = '';
-      summaryEl.innerHTML = '<div class="week-summary">ログインすると、これまでの記録が見られます。</div>';
+    const now = new Date();
+    if(!diaryMD) diaryMD = { m: now.getMonth()+1, d: now.getDate() };
+
+    // 前後に送るバー
+    const nav = document.createElement('div');
+    nav.className = 'nav-bar';
+    const prev = document.createElement('button'); prev.className = 'nav-btn'; prev.textContent = '‹';
+    const next = document.createElement('button'); next.className = 'nav-btn'; next.textContent = '›';
+    const mid = document.createElement('div'); mid.className = 'nb-mid';
+    const isToday = (diaryMD.m === now.getMonth()+1 && diaryMD.d === now.getDate());
+    mid.innerHTML = '<div class="nb-main"></div><div class="nb-sub"></div>';
+    mid.querySelector('.nb-main').textContent = diaryMD.m + '月' + diaryMD.d + '日';
+    mid.querySelector('.nb-sub').textContent = isToday ? '今日のページ' : '';
+    const shift = (n)=>{
+      const d = new Date(now.getFullYear(), diaryMD.m - 1, diaryMD.d + n);
+      diaryMD = { m: d.getMonth()+1, d: d.getDate() };
+      renderDiary();
+    };
+    prev.addEventListener('click', ()=> shift(-1));
+    next.addEventListener('click', ()=> shift(1));
+    nav.appendChild(prev); nav.appendChild(mid); nav.appendChild(next);
+    pane.appendChild(nav);
+
+    if(!isToday){
+      const back = document.createElement('button');
+      back.className = 'nav-today';
+      back.textContent = '今日へ';
+      back.style.margin = '0 0 12px';
+      back.addEventListener('click', ()=>{ diaryMD = null; renderDiary(); });
+      pane.appendChild(back);
+    }
+
+    // 何年ぶんを並べるか。
+    // 今年をいちばん上に置いて、そこから過去へ下る。
+    // まだ来ていない年は、下に細くまとめる（上に空の枠が並ぶと、中身が押し出されるため）
+    const yearsWithData = Object.keys(archive).map(k=> +k.slice(0,4)).filter(y=> y > 2000);
+    const cur = now.getFullYear();
+    const startYear = yearsWithData.length ? Math.min.apply(null, yearsWithData) : cur;
+    const topYear = Math.max(cur, Math.min(startYear + 9, cur + 4));
+    const growers = [];
+
+    for(let y = cur; y >= startYear; y--){
+      const key = dkey(y, diaryMD.m, diaryMD.d);
+      const rec = archive[key];
+      const has = !!(rec && (rec.count > 0 || rec.done.length || rec.note));
+      const card = document.createElement('div');
+      card.className = 'yr-card' + (y === cur ? ' now' : '') + (has ? '' : ' void');
+
+      const head = document.createElement('div');
+      head.className = 'yr-head';
+      const yy = document.createElement('span'); yy.className = 'yr-y'; yy.textContent = y;
+      head.appendChild(yy);
+      if(has && rec.count){
+        const nn = document.createElement('span'); nn.className = 'yr-n';
+        nn.textContent = rec.count + '件';
+        head.appendChild(nn);
+      }
+      card.appendChild(head);
+
+      if(has){
+        const groups = groupByTag(rec.done);
+        if(groups.length){
+          const tr = document.createElement('div');
+          tr.className = 'tagrow';
+          tr.style.margin = '8px 1px 2px';
+          groups.forEach(g=> tr.appendChild(tagChip(g.tag, g.items.length)));
+          card.appendChild(tr);
+
+          const lines = document.createElement('div');
+          lines.className = 'yr-lines';
+          let shown = 0;
+          groups.forEach(g=>{
+            g.items.forEach(e=>{
+              if(shown >= 6) return;
+              shown++;
+              const ln = document.createElement('div');
+              ln.className = 'post-line';
+              const t = document.createElement('span');
+              t.className = 'pl-txt';
+              t.textContent = '・' + lineTextOf(e);
+              ln.appendChild(t);
+              lines.appendChild(ln);
+            });
+          });
+          const total = rec.done.length;
+          if(total > shown){
+            const more = document.createElement('div');
+            more.className = 'yr-none';
+            more.textContent = 'ほか ' + (total - shown) + '件';
+            lines.appendChild(more);
+          }
+          card.appendChild(lines);
+        } else if(rec.count){
+          const only = document.createElement('div');
+          only.className = 'yr-none';
+          only.textContent = 'この日は、件数だけ残っています';
+          card.appendChild(only);
+        }
+      } else if(y > cur){
+        const e = document.createElement('div'); e.className = 'yr-none'; e.textContent = 'まだ';
+        card.appendChild(e);
+      } else {
+        const e = document.createElement('div'); e.className = 'yr-none'; e.textContent = '記録なし';
+        card.appendChild(e);
+      }
+
+      // 一言。今年はいつでも書ける。過去の年は、あとから書き足せる
+      if(y <= cur){
+        if(y === cur){
+          const ed = makeNoteEditor(key, rec ? rec.note : '');
+          growers.push(ed);
+          card.appendChild(ed);
+        } else if(rec && rec.note){
+          const nt = document.createElement('div');
+          nt.className = 'yr-note';
+          nt.textContent = rec.note;
+          card.appendChild(nt);
+          nt.style.cursor = 'pointer';
+          nt.addEventListener('click', ()=>{
+            const ed = makeNoteEditor(key, rec.note);
+            nt.replaceWith(ed);
+            if(ed._grow) ed._grow();
+          });
+        } else if(has){
+          const btn = document.createElement('button');
+          btn.className = 'note-open';
+          btn.textContent = '✎ この日のことを書く';
+          btn.addEventListener('click', ()=>{
+            const ed = makeNoteEditor(key, '');
+            btn.replaceWith(ed);
+            if(ed._grow){ ed._grow(); }
+            const ta = ed.querySelector('textarea'); if(ta) ta.focus();
+          });
+          card.appendChild(btn);
+        }
+      }
+
+      pane.appendChild(card);
+    }
+
+    // まだ来ていない年。10年ぶんの枠が見えていること自体が、10年日記の見え方
+    if(topYear > cur){
+      const rest = document.createElement('div');
+      rest.className = 'yr-future';
+      const lab = document.createElement('span');
+      lab.className = 'yf-lab';
+      lab.textContent = 'これから';
+      rest.appendChild(lab);
+      for(let y = cur + 1; y <= topYear; y++){
+        const chip = document.createElement('span');
+        chip.className = 'yf-chip';
+        chip.textContent = y;
+        rest.appendChild(chip);
+      }
+      pane.appendChild(rest);
+    }
+
+    // 隠れている間は高さを測れないので、出してから合わせる
+    requestAnimationFrame(()=> growers.forEach(g=>{ if(g._grow) g._grow(); }));
+  }
+
+  // ---- 月で読む（ブログ） ----
+  function renderBlog(){
+    const pane = document.getElementById('pane-blog');
+    pane.innerHTML = '';
+    if(!archive){ pane.innerHTML = '<div class="rv-empty">読み込み中…</div>'; return; }
+
+    const now = new Date();
+    if(!blogYM) blogYM = { y: now.getFullYear(), m: now.getMonth()+1 };
+
+    // 記録のある月だけを並べる。空の月を1つずつ通らせない
+    const keys = Object.keys(archive).filter(k=> archive[k].count > 0 || archive[k].done.length || archive[k].note).sort();
+    const monthSet = {};
+    keys.forEach(k=>{ monthSet[k.slice(0,7)] = true; });
+    monthSet[now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0')] = true;
+    const months = Object.keys(monthSet).sort();
+    const curYM = blogYM.y + '-' + String(blogYM.m).padStart(2,'0');
+    let idx = months.indexOf(curYM);
+    if(idx < 0){ months.push(curYM); months.sort(); idx = months.indexOf(curYM); }
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-bar';
+    const prev = document.createElement('button'); prev.className = 'nav-btn'; prev.textContent = '‹';
+    const next = document.createElement('button'); next.className = 'nav-btn'; next.textContent = '›';
+    const mid  = document.createElement('div'); mid.className = 'nb-mid';
+    nav.appendChild(prev); nav.appendChild(mid); nav.appendChild(next);
+    pane.appendChild(nav);
+
+    // その月の日を集める
+    const dim = new Date(blogYM.y, blogYM.m, 0).getDate();
+    const days = [];
+    let total = 0;
+    for(let d = dim; d >= 1; d--){
+      const k = dkey(blogYM.y, blogYM.m, d);
+      const rec = archive[k];
+      if(!rec) continue;
+      if(!(rec.count > 0 || rec.done.length || rec.note)) continue;
+      days.push({ key: k, d: d, rec: rec });
+      total += rec.count || 0;
+    }
+
+    mid.innerHTML = '<div class="nb-main"></div><div class="nb-sub"></div>';
+    mid.querySelector('.nb-main').textContent = blogYM.y + '年 ' + blogYM.m + '月';
+    mid.querySelector('.nb-sub').textContent = days.length
+      ? (total + '件 ・ ' + days.length + '日')
+      : '記録なし';
+
+    if(idx <= 0) prev.setAttribute('disabled','');
+    if(idx >= months.length - 1) next.setAttribute('disabled','');
+    const goTo = (i)=>{
+      if(i < 0 || i >= months.length) return;
+      blogYM = { y: +months[i].slice(0,4), m: +months[i].slice(5,7) };
+      renderBlog();
+    };
+    prev.addEventListener('click', ()=> goTo(idx - 1));
+    next.addEventListener('click', ()=> goTo(idx + 1));
+
+    // 今月から離れているときは、1タップで戻れるようにする
+    const nowYM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    if(curYM !== nowYM){
+      const back = document.createElement('button');
+      back.className = 'nav-today';
+      back.textContent = '今月へ';
+      back.style.margin = '0 0 12px';
+      back.addEventListener('click', ()=>{ blogYM = null; renderBlog(); });
+      pane.appendChild(back);
+    }
+
+    if(!days.length){
+      const e = document.createElement('div');
+      e.className = 'rv-empty';
+      e.textContent = 'この月の記録はありません。';
+      pane.appendChild(e);
       return;
     }
 
-    listEl.innerHTML = '';
-    summaryEl.innerHTML = '<div class="week-summary">読み込み中…</div>';
+    // その月ぜんぶを、タグごとにまとめる
+    const all = [];
+    days.forEach(x=> x.rec.done.forEach(e=> all.push(e)));
+    const groups = groupByTag(all);
 
-    // 保存されている日をまとめて1回で読む
-    fbDb.collection('users').doc(currentUser.uid).collection('days').get().then(snap=>{
-      const log = {}, store = {};
-      snap.forEach(doc=>{
-        const d = doc.data();
-        store[doc.id] = d;
-        log[doc.id] = countOfDay(doc.id, d);
+    if(groups.length){
+      const bar = document.createElement('div');
+      bar.className = 'mix-bar';
+      groups.forEach(g=>{
+        const i = document.createElement('i');
+        i.style.background = tagTone(g.tag)[2];
+        i.style.width = (g.items.length / all.length * 100) + '%';
+        bar.appendChild(i);
       });
-      // 日ごとの記録にしか残っていない日も拾う
-      Object.keys(dayLog).forEach(k=>{ if(log[k] === undefined) log[k] = dayLog[k]; });
+      pane.appendChild(bar);
 
-      const h = renderYearHeat(log);
-      document.getElementById('year-stats').innerHTML =
-          '<div class="yr-stats">'
-        + '<div class="yr-stat"><span>' + h.year + '年に終わった数</span><b>' + h.total + ' 個</b></div>'
-        + '<div class="yr-stat"><span>積み上げた日</span><b>' + h.active + ' 日</b></div>'
-        + '<div class="yr-stat"><span>最長つづき</span><b>' + h.best + ' 日</b></div>'
-        + '<div class="yr-stat"><span>いま連続</span><b>' + currentStreak() + ' 日</b></div>'
-        + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 個</b></div>'
-        + '</div>';
+      const tr = document.createElement('div');
+      tr.className = 'tagrow';
+      groups.forEach(g=> tr.appendChild(tagChip(g.tag, g.items.length)));
+      pane.appendChild(tr);
+    }
 
-      listEl.innerHTML = '';
-      let recordedCount = 0, achievedCount = 0;
-      for(let i=0;i<14;i++){
-        const d = dateKeyOffset(i);
-        const data = store[d.key] || null;
-        const box = document.createElement('div');
-        box.className = 'wr-box';
-        const row = document.createElement('div');
+    days.forEach(x=>{
+      const post = document.createElement('div');
+      post.className = 'post';
 
-        if(!data){
-          row.className = 'week-row';
-          row.innerHTML = '<div class="wr-date"></div><div class="wr-title" style="color:#c9c5d6;">記録なし</div><div class="wr-stat"></div>';
-          row.querySelector('.wr-date').textContent = d.label;
-          box.appendChild(row);
-          listEl.appendChild(box);
-          continue;
-        }
+      const head = document.createElement('div');
+      head.className = 'post-day';
+      const wd = new Date(blogYM.y, blogYM.m - 1, x.d).getDay();
+      const b = document.createElement('b');
+      b.textContent = blogYM.m + '/' + x.d + '（' + WDAY[wd] + '）';
+      const c = document.createElement('span');
+      c.textContent = (x.rec.count || 0) + '件';
+      const go = document.createElement('span');
+      go.className = 'pd-go';
+      go.textContent = 'この日のページ →';
+      head.appendChild(b); head.appendChild(c); head.appendChild(go);
+      head.addEventListener('click', ()=>{
+        diaryMD = { m: blogYM.m, d: x.d };
+        switchPane('diary');
+      });
+      post.appendChild(head);
 
-        recordedCount++;
-        const bigs = Array.isArray(data.bigs) ? data.bigs : [];
-        let done = 0, planned = 0;
-        bigs.forEach(b=> (b.mediums||[]).forEach(m=> (m.items||[]).forEach(it=>{
-          planned++; if(it.done) done++;
-        })));
-        const achieved = planned > 0 && done === planned;
-        if(achieved) achievedCount++;
-        const titles = bigs.map(b=>b.title).filter(Boolean).join('・') || '（未入力）';
-
-        row.className = 'week-row clickable' + (achieved ? ' achieved' : '');
-        row.innerHTML = '<div class="wr-date"></div><div class="wr-title"></div><div class="wr-stat"></div>'
-          + '<svg class="wr-arrow" viewBox="0 0 24 24" width="11" height="11" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        row.querySelector('.wr-date').textContent = d.label;
-        row.querySelector('.wr-title').textContent = titles;
-        row.querySelector('.wr-stat').textContent = (log[d.key] || 0) + '個';
-        box.appendChild(row);
-
-        const det = buildDayDetail(data);
-        det.style.display = 'none';
-        row.addEventListener('click', ()=>{
-          const willOpen = det.style.display === 'none';
-          det.style.display = willOpen ? 'block' : 'none';
-          row.classList.toggle('open', willOpen);
-        });
-        box.appendChild(det);
-        listEl.appendChild(box);
+      const gs = groupByTag(x.rec.done);
+      gs.forEach(g=>{
+        const ln = document.createElement('div');
+        ln.className = 'post-line';
+        ln.appendChild(tagChip(g.tag));
+        const t = document.createElement('span');
+        t.className = 'pl-txt';
+        t.textContent = g.items.map(lineTextOf).join(' ／ ');
+        ln.appendChild(t);
+        post.appendChild(ln);
+      });
+      if(!gs.length && x.rec.count){
+        const ln = document.createElement('div');
+        ln.className = 'post-line';
+        const t = document.createElement('span');
+        t.className = 'pl-txt';
+        t.style.color = '#a9a3bd';
+        t.textContent = 'この日は、件数だけ残っています';
+        ln.appendChild(t);
+        post.appendChild(ln);
       }
+      if(x.rec.note){
+        const nt = document.createElement('div');
+        nt.className = 'post-note';
+        nt.textContent = x.rec.note;
+        post.appendChild(nt);
+      }
+      pane.appendChild(post);
+    });
+  }
 
-      summaryEl.innerHTML = '<div class="week-summary">' + (recordedCount === 0
-        ? '記録はまだありません。今日から積み上げていこう。'
-        : '直近14日のうち、記録がある日は' + recordedCount + '日。日付を押すと、その日の中身が開きます。') + '</div>';
-    }).catch(()=>{
+  // ---- 1年（いまあるマス目） ----
+  function renderYearPane(){
+    const log = {};
+    if(archive) Object.keys(archive).forEach(k=>{ log[k] = archive[k].count || 0; });
+    const h = renderYearHeat(log);
+    document.getElementById('year-stats').innerHTML =
+        '<div class="yr-stats">'
+      + '<div class="yr-stat"><span>' + h.year + '年に終わった数</span><b>' + h.total + ' 個</b></div>'
+      + '<div class="yr-stat"><span>積み上げた日</span><b>' + h.active + ' 日</b></div>'
+      + '<div class="yr-stat"><span>最長つづき</span><b>' + h.best + ' 日</b></div>'
+      + '<div class="yr-stat"><span>いま連続</span><b>' + currentStreak() + ' 日</b></div>'
+      + '<div class="yr-stat"><span>通算</span><b>' + totalBlocks + ' 個</b></div>'
+      + '</div>';
+  }
+
+  function renderPane(){
+    if(rvPane === 'diary') renderDiary();
+    else if(rvPane === 'blog') renderBlog();
+    else renderYearPane();
+  }
+
+  function switchPane(name){
+    rvPane = name;
+    document.querySelectorAll('.rv-tab').forEach(t=>{
+      t.classList.toggle('on', t.getAttribute('data-pane') === name);
+    });
+    document.querySelectorAll('.rv-pane').forEach(p=>{
+      p.classList.toggle('on', p.id === 'pane-' + name);
+    });
+    renderPane();
+  }
+  document.querySelectorAll('.rv-tab').forEach(t=>{
+    t.addEventListener('click', ()=> switchPane(t.getAttribute('data-pane')));
+  });
+
+  function openWeekModal(){
+    document.getElementById('week-modal').classList.add('show');
+
+    if(!FIREBASE_READY || !currentUser){
+      archive = {};
+      ['diary','blog'].forEach(n=>{
+        document.getElementById('pane-' + n).innerHTML =
+          '<div class="rv-empty">ログインすると、これまでの記録が読めます。</div>';
+      });
       renderYearHeat({});
-      listEl.innerHTML = '';
-      summaryEl.innerHTML = '<div class="week-summary">読み込みに失敗しました。もう一度お試しください。</div>';
+      document.getElementById('year-stats').innerHTML = '';
+      return;
+    }
+
+    if(!archive){
+      document.getElementById('pane-' + rvPane).innerHTML = '<div class="rv-empty">読み込み中…</div>';
+    } else {
+      renderPane();
+    }
+    loadArchive(currentUser.uid).then(a=>{
+      archive = a;
+      renderPane();
+    }).catch(()=>{
+      // 読めなかったときは、何も書かない。前に読めていた分はそのまま出しておく
+      if(!archive){
+        document.getElementById('pane-' + rvPane).innerHTML =
+          '<div class="rv-empty">読み込みに失敗しました。<br>もう一度お試しください。</div>';
+      }
     });
   }
 
@@ -2772,45 +3260,108 @@
     setTimeout(()=> card.classList.remove('big-flash'), 1600);
   }
 
-  // ---- 「最後に進んだ日」を、これまでの記録から割り出す（足りないぶんだけ・1回だけ） ----
-  // days/{YYYY-MM-DD} には、その日に保存した状態が残っている。日をまたいで
-  // 「終わった数」が増えていれば、その日に進んだということ。
-  // 読み出しに失敗したときは、何も書かない（次に開いたときにやり直す）。
+  // ---- これまでの記録から、足りないものを1回だけ埋める ----
+  //  ① 大きな仕事の「最後に進んだ日」
+  //  ② 日ごとの「その日に終わったもの」（記録の作り直しより前のぶん）
+  // 昔の days/{YYYY-MM-DD} には、その日に保存したボードが丸ごと入っている。
+  // 前の日と見比べて、新しくチェックが付いたものが「その日に終わったもの」。
+  // 読み出しに失敗したときは何も書かない（次に開いたときにやり直す）。
   function dateKeyToMs(k){
     const p = k.split('-');
     return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0).getTime();
   }
-  function backfillLastActive(uid){
-    if(state.bigs.every(b=> typeof b.lastActiveAt === 'number')) return Promise.resolve(false);
+
+  // その時点で「終わっている」ものを、ひとつずつ数えられる形にする
+  function doneMapOf(bigs){
+    const map = {};
+    (bigs||[]).forEach(b=>{
+      const bt = b.title || '';
+      if(b.done) map['B|'+b.id] = { kind:'big', big:bt, med:'', text:'' };
+      (b.mediums||[]).forEach(m=>{
+        const mn = m.name || '';
+        if(m.done) map['M|'+b.id+'|'+mn] = { kind:'mid', big:bt, med:mn, text:'' };
+        (m.items||[]).forEach(it=>{
+          if(it.done) map['S|'+b.id+'|'+mn+'|'+(it.text||'')] =
+            { kind:'small', big:bt, med:mn, text:it.text || '' };
+        });
+      });
+    });
+    return map;
+  }
+
+  function backfillHistory(uid){
     return fbDb.collection('users').doc(uid).collection('days').get().then(snap=>{
       const days = [];
       snap.forEach(doc=>{
         if(!/^\d{4}-\d{2}-\d{2}$/.test(doc.id)) return;
-        const d = doc.data();
-        if(Array.isArray(d.bigs)) days.push({ key: doc.id, bigs: d.bigs });
+        days.push({ key: doc.id, data: doc.data() || {} });
       });
       days.sort((a,b)=> a.key < b.key ? -1 : 1);
-      const lastMove = {}, prev = {};
+
+      const lastMove = {}, prevCount = {}, writes = [];
+      let prevDone = {};
+
       days.forEach(day=>{
-        day.bigs.forEach(b=>{
-          const k = String(b.id);
+        // 新しい形式（その日の分だけが入っている日）は、そのままにする
+        if(!Array.isArray(day.data.bigs)) return;
+
+        // ① 大きな仕事ごとに、終わった数が増えた日を覚える
+        day.data.bigs.forEach(b=>{
+          const id = String(b.id);
           let n = b.done ? 1 : 0;
           (b.mediums||[]).forEach(m=>{
             if(m.done) n++;
             (m.items||[]).forEach(it=>{ if(it.done) n++; });
           });
-          if(prev[k] === undefined || n > prev[k]) lastMove[k] = day.key;
-          prev[k] = n;
+          if(prevCount[id] === undefined || n > prevCount[id]) lastMove[id] = day.key;
+          prevCount[id] = n;
         });
+
+        // ② 前の日から増えたぶん＝その日に終わったもの
+        const cur = doneMapOf(day.data.bigs);
+        const added = [];
+        Object.keys(cur).forEach(k=>{ if(!(k in prevDone)) added.push(cur[k]); });
+        prevDone = cur;
+
+        if(day.data.v !== 2 && added.length){
+          added.sort((a,b)=> (a.big+a.med+a.text) < (b.big+b.med+b.text) ? -1 : 1);
+          writes.push({ key: day.key, done: added.slice(0, 200) });
+        }
       });
-      let touched = false;
+
+      // 足りない「最後に進んだ日」を入れる
+      let touchedBoard = false;
       state.bigs.forEach(b=>{
         if(typeof b.lastActiveAt === 'number') return;
         const k = lastMove[String(b.id)];
         b.lastActiveAt = k ? dateKeyToMs(k) : Date.now();
-        touched = true;
+        touchedBoard = true;
       });
-      return touched;
+
+      if(!writes.length) return { touchedBoard: touchedBoard, wrote: 0 };
+
+      // 上書きではなく足すだけ（merge）。もとの bigs もそのまま残る。
+      const batch = fbDb.batch();
+      writes.forEach(w=>{
+        batch.set(
+          fbDb.collection('users').doc(uid).collection('days').doc(w.key),
+          { v: 2, count: Math.max(w.done.length, dayLog[w.key] || 0), done: w.done },
+          { merge: true }
+        );
+      });
+      return batch.commit().then(()=> ({ touchedBoard: touchedBoard, wrote: writes.length }));
+    });
+  }
+
+  // 過去の掘り起こしは一度で終わり。開くたびに全部読み直さない。
+  let historyBackfilled = false;
+  function backfillLastActive(uid){
+    const needBoard = state.bigs.some(b=> typeof b.lastActiveAt !== 'number');
+    if(!needBoard && historyBackfilled) return Promise.resolve(false);
+    return backfillHistory(uid).then(r=>{
+      historyBackfilled = true;
+      profileRefForUser(uid).set({ historyBackfilled: true }, {merge:true}).catch(()=>{});
+      return !!(r && r.touchedBoard);
     });
   }
 
@@ -2852,14 +3403,6 @@
   // ---- メモ欄は日付をまたいで消えないよう、日ごとのデータとは別の場所に保存する ----
   function profileRefForUser(uid){
     return fbDb.collection('users').doc(uid);
-  }
-
-  function serializeState(){
-    return {
-      dayWasAchieved: state.dayWasAchieved,
-      blockOrder: state.blockOrder,
-      bigs: state.bigs
-    };
   }
 
   function setSyncStatus(text){
@@ -3045,14 +3588,35 @@
     setSyncStatus('保存中…');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(()=>{
-      // 本体はこちら。日付をまたいでも消えない1本のボード。
+      // 日付をまたいでも消えない1本のボード。これが本体。
       saveBoard()
         .then(()=> setSyncStatus('保存ずみ ✓'))
         .catch(()=> setSyncStatus('保存に失敗しました'));
-      // 「いつ・何をやったか」は、これまでどおり日付ごとにも残しておく
-      // （ふりかえり画面の内訳・グラフ用。ボード本体はもう日付に左右されない）
-      docRefForUser(currentUser.uid).set(serializeState(), {merge:true}).catch(()=>{});
+      // ここでボードを days/{日付} へ書くのはやめた（下の recordDone の説明を参照）
     }, 800);
+  }
+
+  // ---- その日に終わったものを、日ごとの記録として1件ずつ残す ----
+  // 【2026-08-28の作り直し】これまでは days/{日付} にボードをまるごと保存していた。
+  // 2026-08-21にボードを1本にしてからは、その中身は「その日に終わった分」ではなく
+  // 「その時点までの全部」になっていて、その日に何が終わったのかを取り出せなかった。
+  // （ふりかえりでどの日を開いても今日のボードが出ていたのも、これが原因）
+  // ここからは、終わった瞬間に1件ずつ足していく。
+  //   kind : 'small' 小さい仕事 / 'mid' 中くらいの仕事 / 'big' 大きな仕事
+  //   big  : 大きな仕事の名前。これがそのままタグになる
+  function recordDone(kind, bigTitle, medTitle, text){
+    if(!FIREBASE_READY || !currentUser) return;
+    const FV = firebase.firestore.FieldValue;
+    const entry = {
+      kind: kind,
+      big:  String(bigTitle || '').slice(0, 120),
+      med:  String(medTitle || '').slice(0, 120),
+      text: String(text || '').slice(0, 300),
+      at:   Date.now()
+    };
+    docRefForUser(currentUser.uid)
+      .set({ v: 2, count: FV.increment(1), done: FV.arrayUnion(entry) }, {merge:true})
+      .catch(()=>{});
   }
 
   let memoSaveTimer = null;
@@ -3102,6 +3666,7 @@
           if(typeof pd.memo === 'string') state.memo = pd.memo;
           totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
           dayLog = (pd.dayLog && typeof pd.dayLog === 'object') ? pd.dayLog : {};
+          historyBackfilled = pd.historyBackfilled === true;
           updateFactsCard();
 
           const tk = todayKey();
