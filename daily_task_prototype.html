@@ -10,25 +10,32 @@
 <!-- 枠(タイトルバー)の色は指定しない＝Macのシステム標準の色になる -->
 <style>
   :root{
-    --bg:#f7f6fb;
+    /* サンセット（地）× オーシャン（差し色） */
+    --bg:#f4f2f7;
     --card:#ffffff;
-    --card-soft:#fbfaff;
-    --text:#1a1523;
-    --sub:#8b869a;
-    --line:#ecebf3;
+    --card-soft:#fbf9fd;
+    --text:#231f2b;
+    --sub:#8f8a9c;
+    --line:#eae7f2;
 
-    --purple:#6d5dfa;
-    --blue:#3f86ff;
+    /* 差し色。時計の帯・読むボタン・1年の点・🔥の数字に使う */
+    --blue:#6ecdf2;
+    --purple:#2f8fd8;
     --grad:linear-gradient(120deg, var(--blue) 0%, var(--purple) 100%);
 
-    --mid:#4c7cff;
-    --mid-bg:#eef2ff;
-    --small:#8b5cf6;
-    --small-bg:#f2efff;
+    --mid:#3f9ad8;
+    --mid-bg:#edf7fd;
+    --small:#5f8fdb;
+    --small-bg:#eef4fc;
+
+    /* 温度（放っている日数）。冷 → 温 → 熱 で濃くなる */
+    --cool1:#dde2ee; --cool2:#c6cddd;
+    --warm1:#ffc97a; --warm2:#f79a3e;
+    --hot1:#ff7e9c;  --hot2:#f0355f;
 
     --dark-bg:#161022;
-    --ring-track:#efeef6;
-    --radius:22px;
+    --ring-track:#ececf2;
+    --radius:18px;
     --radius-sm:16px;
     --shadow:0 1px 2px rgba(30,20,50,0.05), 0 14px 30px rgba(40,20,70,0.07);
     --shadow-hover:0 2px 4px rgba(30,20,50,0.07), 0 20px 40px rgba(40,20,70,0.11);
@@ -37,10 +44,9 @@
   body{
     margin:0;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-    background:
-      radial-gradient(1100px 420px at 12% -10%, #e6f2ff 0%, rgba(230,242,255,0) 60%),
-      radial-gradient(900px 360px at 105% 0%, #e8faf0 0%, rgba(232,250,240,0) 55%),
-      #ffffff;
+    /* サンセット：桃 → 藤 → 水色 */
+    background:linear-gradient(168deg, #fff7f3 0%, #f5f2fc 52%, #eef6ff 100%);
+    background-attachment:fixed;
     color:var(--text);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
@@ -78,7 +84,7 @@
     background:var(--grad);
     border-radius:999px;
     padding:6px 14px;
-    box-shadow:0 8px 18px rgba(109,93,250,0.28);
+    box-shadow:0 8px 18px rgba(47,143,216,0.30);
   }
   h1.title{
     font-size:30px;
@@ -105,7 +111,7 @@
     color:#fff;
     background:var(--grad);
     cursor:pointer;
-    box-shadow:0 6px 14px rgba(109,93,250,0.25);
+    box-shadow:0 6px 14px rgba(47,143,216,0.24);
   }
   .login-btn:hover{filter:brightness(1.06);}
   .firebase-off{
@@ -163,7 +169,7 @@
     transition:stroke-dashoffset .5s cubic-bezier(.4,0,.2,1);
   }
   .ring-achieved .ring-fill{
-    filter:drop-shadow(0 0 5px rgba(109,93,250,0.5));
+    filter:drop-shadow(0 0 5px rgba(47,143,216,0.5));
   }
 
   /* ---------- ブロック全体（大きな仕事カード＋メモ、並べ替えできる） ---------- */
@@ -183,22 +189,32 @@
 
   /* ---------- 大きな仕事カード（複数・開閉できる） ---------- */
   .big-card{
-    background:var(--card);
+    background:linear-gradient(160deg, #ffffff 0%, #fdfbff 100%);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:0 22px;
+    padding:0 22px 0 26px;
     position:relative;
     overflow:hidden;
     transition:box-shadow .25s ease;
   }
+  /* 左の縁が温度。何日さわっていないかで色が変わる */
   .big-card::before{
     content:'';
-    position:absolute;
-    left:18px; right:18px; top:0;
-    height:5px;
-    border-radius:0 0 5px 5px;
-    background:var(--grad);
+    position:absolute; left:0; top:0; bottom:0; width:6px;
+    background:linear-gradient(180deg, var(--cool1) 0%, var(--cool2) 100%);
+    transition:background .3s ease;
   }
+  .big-card.heat-warm::before{ background:linear-gradient(180deg, var(--warm1) 0%, var(--warm2) 100%); }
+  .big-card.heat-hot::before{  background:linear-gradient(180deg, var(--hot1) 0%, var(--hot2) 100%); }
+  /* 何日さわっていないかの丸 */
+  .big-age{
+    flex:none; font-size:10.5px; font-weight:800; white-space:nowrap;
+    padding:4px 9px; border-radius:99px;
+    background:var(--line); color:var(--sub);
+    font-variant-numeric:tabular-nums;
+  }
+  .big-card.heat-warm .big-age{ background:rgba(247,154,62,.16); color:#d9812c; }
+  .big-card.heat-hot .big-age{  background:rgba(240,53,95,.13);  color:var(--hot2); }
   .big-card:hover{box-shadow:var(--shadow-hover);}
   .big-head{
     display:flex;
@@ -562,7 +578,7 @@
     left:18px; right:18px; top:0;
     height:5px;
     border-radius:0 0 5px 5px;
-    background:linear-gradient(120deg, #4c7cff 0%, #6d5dfa 100%);
+    background:linear-gradient(120deg, #6ecdf2 0%, #2f8fd8 100%);
   }
   .memo-card:hover{box-shadow:var(--shadow-hover);}
   .memo-toggle{
@@ -634,9 +650,10 @@
     width:100%;
     padding:13px;
     border-radius:15px;
-    border:1.5px solid var(--line);
-    background:#fff;
-    color:var(--text);
+    border:none;
+    background:var(--grad);
+    color:#fff;
+    box-shadow:0 8px 20px rgba(47,143,216,.24);
     font-size:13.5px;
     font-weight:800;
     cursor:pointer;
@@ -1030,14 +1047,14 @@
     font-size:14.5px;
     font-weight:800;
     cursor:pointer;
-    box-shadow:0 12px 26px rgba(109,93,250,0.28);
+    box-shadow:0 12px 26px rgba(47,143,216,0.26);
     display:flex;
     align-items:center;
     justify-content:center;
     gap:8px;
     transition:box-shadow .2s ease, transform .15s ease;
   }
-  .cal-btn:hover{box-shadow:0 16px 32px rgba(109,93,250,0.36); transform:translateY(-1px);}
+  .cal-btn:hover{box-shadow:0 16px 32px rgba(47,143,216,0.32); transform:translateY(-1px);}
 
   /* ---------- いまの状態を映す帯 ---------- */
   /* 点数や位はやめた。自分でチェックを押して増やした数字は、見ても新しいことが分からない。
@@ -1121,7 +1138,7 @@
     cursor:pointer;
     user-select:none;
     /* もとのボタンと同じグラデーション。少しだけ薄めの色にしている */
-    background:linear-gradient(120deg, #6ba0ff 0%, #8f83fb 100%);
+    background:linear-gradient(120deg, #6ecdf2 0%, #2f8fd8 100%);
     color:#fff;
   }
   .cal-ico{flex:none; font-size:15px;}
@@ -1287,8 +1304,20 @@
 <svg width="0" height="0" style="position:absolute;">
   <defs>
     <linearGradient id="bigGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3f86ff"/>
-      <stop offset="100%" stop-color="#7c5cfc"/>
+      <stop offset="0%" stop-color="#6ecdf2"/>
+      <stop offset="100%" stop-color="#2f8fd8"/>
+    </linearGradient>
+    <linearGradient id="bigGradWarm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffc97a"/>
+      <stop offset="100%" stop-color="#f79a3e"/>
+    </linearGradient>
+    <linearGradient id="bigGradHot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7e9c"/>
+      <stop offset="100%" stop-color="#f0355f"/>
+    </linearGradient>
+    <linearGradient id="midGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7fd3f2"/>
+      <stop offset="100%" stop-color="#3f9ad8"/>
     </linearGradient>
     <linearGradient id="dogB" x1="20%" y1="0%" x2="80%" y2="100%">
       <stop offset="0%" stop-color="#ffd9a4"/>
@@ -1533,7 +1562,7 @@
     }
     el.innerHTML = '<svg viewBox="0 0 '+W+' '+(R*2+2)+'" width="100%" height="13" preserveAspectRatio="xMinYMid meet">'
       + '<defs><linearGradient id="ypG" x1="0" y1="0" x2="1" y2="0">'
-      + '<stop offset="0%" stop-color="#3f86ff"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient>'
+      + '<stop offset="0%" stop-color="#6ecdf2"/><stop offset="100%" stop-color="#2f8fd8"/></linearGradient>'
       + '<clipPath id="ypClip"><rect x="0" y="'+clipY+'" width="'+W+'" height="'+(2*R)+'"/></clipPath></defs>'
       + s + '</svg>'
       + '<div class="yp-text">' + y + '年を ' + pct + '% ・ 残り ' + (total - passed) + '日</div>';
@@ -1549,13 +1578,14 @@
     t._timer = setTimeout(()=> t.classList.remove('show'), 2200);
   }
 
-  function ringSVG(percent, size, stroke, color, achieved){
+  function ringSVG(percent, size, stroke, color, achieved, textColor){
     const r = (size - stroke) / 2;
     const c = 2 * Math.PI * r;
     const offset = c * (1 - Math.min(percent,100) / 100);
+    const tc = textColor || color;
     const centerText = achieved
-      ? `<text x="50%" y="55%" text-anchor="middle" font-size="${size*0.34}" font-weight="800" fill="${color}">✓</text>`
-      : `<text x="50%" y="55%" text-anchor="middle" font-size="${size*0.22}" font-weight="800" fill="${color}">${Math.round(percent)}%</text>`;
+      ? `<text x="50%" y="55%" text-anchor="middle" font-size="${size*0.34}" font-weight="800" fill="${tc}">✓</text>`
+      : `<text x="50%" y="55%" text-anchor="middle" font-size="${size*0.22}" font-weight="800" fill="${tc}">${Math.round(percent)}%</text>`;
     return `<svg class="ring ${achieved?'ring-achieved':''}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="${stroke}"/>
       <circle class="ring-fill" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
@@ -1711,22 +1741,16 @@
     const head = document.createElement('div');
     head.className = 'big-head';
     head.innerHTML = `
-      ${DRAG_HANDLE_SVG}
       <div class="ring-wrap"></div>
       <div class="big-title-wrap">
         <textarea class="big-title-input" rows="1" placeholder="大きな仕事の名前"></textarea>
         <div class="big-sub"></div>
       </div>
-      <div class="move-btns">
-        <button class="move-btn" data-dir="-1" title="上に動かす">▲</button>
-        <button class="move-btn" data-dir="1" title="下に動かす">▼</button>
-      </div>
+      <span class="big-age" title="最後に何かが終わってから"></span>
       <button class="repeat-btn${big.repeatDaily ? ' on' : ''}" title="毎日くりかえす">🔁</button>
       <button class="trash-btn" title="この大きな仕事を削除"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       ${TOGGLE_ARROW_SVG}
     `;
-    const dragHandle = head.querySelector('.drag-handle');
-    dragHandle.addEventListener('pointerdown', e=> e.stopPropagation());
     const titleInput = head.querySelector('.big-title-input');
     titleInput.value = big.title;
     // 中身の行数に合わせて高さを自動で伸ばす（長い名前も全部見えるように）
@@ -1746,29 +1770,6 @@
       scheduleSave();
     });
     // ▲▼で並べ替え。ドラッグが分かりにくい端末でも確実に動かせる。
-    function moveBig(dir){
-      const keys = state.blockOrder;
-      const me = 'big:' + big.id;
-      const idx = keys.indexOf(me);
-      if(idx === -1) return;
-      let target = -1;
-      if(dir < 0){
-        for(let i=idx-1;i>=0;i--){ if(String(keys[i]).indexOf('big:') === 0){ target = i; break; } }
-      } else {
-        for(let i=idx+1;i<keys.length;i++){ if(String(keys[i]).indexOf('big:') === 0){ target = i; break; } }
-      }
-      if(target === -1){ showToast(dir < 0 ? 'いちばん上です。' : 'いちばん下です。'); return; }
-      keys[idx] = keys[target];
-      keys[target] = me;
-      render();
-    }
-    head.querySelectorAll('.move-btn').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        moveBig(Number(btn.dataset.dir));
-      });
-    });
-
     const trashBtn = head.querySelector('.trash-btn');
     trashBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -1834,7 +1835,7 @@
           <div class="mid-check${manualDone ? ' on' : ''}" title="この中くらいの仕事を完了にする">
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <div class="ring-wrap">${ringSVG(percent, 40, 5, '#4c7cff', achieved)}</div>
+          <div class="ring-wrap">${ringSVG(percent, 40, 5, 'url(#midGrad)', achieved, '#2f8fd8')}</div>
           <div class="mid-title-wrap">
             <input class="mid-title-input" placeholder="中くらいの仕事の名前" value="${escapeAttr(medium.name)}">
             <div class="mid-count">${countText}</div>
@@ -1955,7 +1956,7 @@
       if(achieved) finishedMids.push(mCard); else openMids.push(mCard);
 
       if(achieved && !medium.wasAchieved){
-        burstConfetti(mCard, 14, ['#4c7cff','#6d5dfa','#8b5cf6']);
+        burstConfetti(mCard, 14, ['#6ecdf2','#2f8fd8','#ff9fb6']);
       }
       medium.wasAchieved = achieved;
     });
@@ -2011,13 +2012,23 @@
     const percent = manualBigDone ? 100 : (totalPlanned > 0 ? (totalDone/totalPlanned*100) : 0);
     const achieved = manualBigDone || (totalPlanned > 0 && totalDone === totalPlanned);
 
-    head.querySelector('.ring-wrap').innerHTML = ringSVG(percent, 52, 6, 'url(#bigGrad)', achieved);
+    // 何日さわっていないかで、カードの左の縁・リング・丸の色が変わる
+    const heatDays = (typeof big.lastActiveAt === 'number') ? daysSinceMs(big.lastActiveAt) : 0;
+    const heat = heatDays >= 7 ? 'hot' : (heatDays >= 3 ? 'warm' : 'cool');
+    card.classList.remove('heat-warm','heat-hot');
+    if(heat !== 'cool') card.classList.add('heat-' + heat);
+    const ringId = heat === 'hot' ? 'url(#bigGradHot)' : (heat === 'warm' ? 'url(#bigGradWarm)' : 'url(#bigGrad)');
+    const ringTx = heat === 'hot' ? '#f0355f' : (heat === 'warm' ? '#d9812c' : '#2f8fd8');
+    head.querySelector('.ring-wrap').innerHTML = ringSVG(percent, 52, 6, ringId, achieved, ringTx);
+    const ageEl = head.querySelector('.big-age');
+    ageEl.textContent = typeof big.lastActiveAt !== 'number' ? ''
+      : (heatDays <= 0 ? '今日' : (heatDays === 1 ? '昨日' : heatDays + '日'));
     head.querySelector('.big-sub').textContent = totalPlanned > 0
       ? (totalDone + '/' + totalPlanned + ' 完了' + (achieved ? '　達成' : ''))
       : (achieved ? '完了' : '中くらいの仕事なし');
 
     if(achieved && !big.wasAchieved){
-      burstConfetti(card, 20, ['#4c7cff','#6d5dfa','#8b5cf6']);
+      burstConfetti(card, 20, ['#6ecdf2','#2f8fd8','#ff9fb6']);
       // 達成になった瞬間に1つ。受信を反映しているだけのときは数えない。
       if(!applyingRemote){ markBigMoved(big); addBlocks(1); recordDone('big', big.title, '', ''); }
     }
@@ -2035,16 +2046,14 @@
     let allAchieved = true;
     let bigWithItemsCount = 0;
 
-    // 終わった大きな仕事は、この画面に出さない。
-    // 何をやったかは「これまでやったこと」で読む。ここは残っているものだけ。
-    state.blockOrder.forEach(key=>{
-      if(key === 'memo'){
-        blocksEl.appendChild(renderMemoBlock());
-        return;
-      }
-      const id = Number(key.split(':')[1]);
-      const big = state.bigs.find(b=>b.id===id);
-      if(!big) return;
+    // 並びは、放っている日数の長い順。自動で決まるので、組み替える作業はいらない。
+    // 終わった大きな仕事は、この画面に出さない（何をやったかは「これまでやったこと」で読む）。
+    const ordered = state.bigs.slice().sort((a,b)=>{
+      const da = (typeof a.lastActiveAt === 'number') ? a.lastActiveAt : Date.now();
+      const db = (typeof b.lastActiveAt === 'number') ? b.lastActiveAt : Date.now();
+      return da - db;   // 古いものが上
+    });
+    ordered.forEach(big=>{
       const result = renderBigBlock(big);
       if(result.achieved && result.hasItems){
         anyBigWithItems = true;
@@ -2058,8 +2067,8 @@
         allAchieved = false;
       }
     });
-
-    enableDragReorder(blocksEl, onBlocksReordered);
+    // メモはいちばん下に固定
+    if(state.blockOrder.indexOf('memo') !== -1 || true) blocksEl.appendChild(renderMemoBlock());
     state.dayWasAchieved = anyBigWithItems && allAchieved;
 
     const addBigRow = document.getElementById('add-big-row');
@@ -2301,15 +2310,15 @@
       const gi = startOffset + d, col = Math.floor(gi/7), row = gi % 7;
       const future = date > now;
       const fill = future ? '#f7f6fa'
-        : (v >= 15 ? '#6d5dfa' : v >= 8 ? '#8f83fb' : v >= 4 ? '#bab2fd' : v > 0 ? '#ded9ff' : '#ebe8f3');
+        : (v >= 15 ? '#2f8fd8' : v >= 8 ? '#5aaee2' : v >= 4 ? '#9bcfec' : v > 0 ? '#d5eaf7' : '#ebe8f3');
       s += '<rect x="' + (col*(cell+gap)).toFixed(1) + '" y="' + (row*(cell+gap)).toFixed(1)
         + '" width="' + cell + '" height="' + cell + '" rx="2" fill="' + fill + '"><title>'
         + key + '　' + v + '個</title></rect>';
     }
     el.innerHTML = '<div class="heat-scroll"><svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">' + s + '</svg></div>'
       + '<div class="heat-legend"><span>少ない</span>'
-      + '<i style="background:#ebe8f3"></i><i style="background:#ded9ff"></i><i style="background:#bab2fd"></i>'
-      + '<i style="background:#8f83fb"></i><i style="background:#6d5dfa"></i>'
+      + '<i style="background:#ebe8f3"></i><i style="background:#d5eaf7"></i><i style="background:#9bcfec"></i>'
+      + '<i style="background:#5aaee2"></i><i style="background:#2f8fd8"></i>'
       + '<span>多い</span></div>';
     return { total: total, active: active, best: best, year: y };
   }
