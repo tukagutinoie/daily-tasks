@@ -155,53 +155,6 @@
     font-weight:600;
   }
 
-  /* ---------- Achievement banner (dark hero) ---------- */
-  .achieve-banner{
-    max-height:0;
-    opacity:0;
-    overflow:hidden;
-    transition:max-height .45s ease, opacity .35s ease, margin .45s ease;
-    margin-bottom:0;
-  }
-  .achieve-banner.show{
-    max-height:200px;
-    opacity:1;
-    margin-bottom:18px;
-  }
-  .achieve-banner .inner{
-    background:var(--dark-bg);
-    border-radius:18px;
-    padding:18px 20px;
-    position:relative;
-    overflow:hidden;
-    box-shadow:0 16px 34px rgba(22,16,34,0.35);
-  }
-  .achieve-banner .inner::before{
-    content:'';
-    position:absolute;
-    inset:-40% -10% auto auto;
-    width:220px;height:220px;
-    background:var(--grad);
-    filter:blur(46px);
-    opacity:.55;
-  }
-  .achieve-banner .headline{
-    position:relative;
-    font-size:16px;
-    font-weight:800;
-    background:linear-gradient(120deg, #e4efff 0%, #9db4ff 45%, #d5c9ff 100%);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-  }
-  .achieve-banner .sub{
-    position:relative;
-    display:block;
-    font-size:12.5px;
-    font-weight:500;
-    color:#c9c4dd;
-    margin-top:4px;
-  }
 
 
   /* ---------- Rings ---------- */
@@ -819,6 +772,40 @@
   .week-row.achieved .wr-stat{color:var(--purple);}
 
   /* ---------- ふりかえり：タブ・ブログ・10年日記 ---------- */
+  .rv-head{
+    display:flex; align-items:center; gap:9px; margin:0 0 14px;
+    position:sticky; top:-24px; z-index:3;
+    background:#fff; padding:2px 0 8px;
+  }
+  .rv-head h2{ flex:1; min-width:0; margin:0; }
+  .rv-back{
+    display:none; flex:none; align-items:center;
+    font-size:12.5px; font-weight:800; color:var(--purple);
+    background:#efedff; border:none; border-radius:99px;
+    padding:8px 13px 8px 10px; cursor:pointer;
+    transition:background .18s ease;
+  }
+  .rv-back.on{ display:inline-flex; }
+  .rv-back:hover{ background:#e4dfff; }
+  .rv-close{
+    flex:none; width:32px; height:32px; border-radius:50%;
+    background:var(--bg); color:var(--sub); border:none;
+    font-size:15px; font-weight:800; cursor:pointer; line-height:1;
+    transition:background .18s ease, color .18s ease;
+  }
+  .rv-close:hover{ background:#eeecf7; color:var(--text); }
+
+  .tag.click{ cursor:pointer; transition:filter .16s ease, transform .16s ease; }
+  .tag.click:hover{ filter:brightness(.96); transform:translateY(-1px); }
+  .tag.click:active{ transform:none; }
+
+  .tag-head{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin:0 1px 14px; padding-bottom:12px; border-bottom:1px solid var(--line);
+  }
+  .tag-head .tag{ font-size:13px; padding:6px 13px; }
+  .tag-total{ font-size:12px; font-weight:800; color:var(--sub); font-variant-numeric:tabular-nums; }
+
   .rv-tabs{
     display:flex; gap:4px; padding:4px;
     background:var(--bg); border-radius:14px; margin:2px 0 16px;
@@ -1340,13 +1327,6 @@
     </div>
   </header>
 
-  <div class="achieve-banner" id="achieve-banner">
-    <div class="inner">
-      <div class="headline">出している仕事、ぜんぶ終わりました 🏯</div>
-      <span class="sub" id="achieve-sub">お疲れさまでした。</span>
-    </div>
-  </div>
-
 
   <div class="cal-card" id="cal-card">
     <div class="cal-head" id="cal-head">
@@ -1381,7 +1361,7 @@
   <div class="big-full-msg" id="big-full-msg" style="display:none;"></div>
 
   <footer>
-    <button class="review-btn" id="week-review-btn">📅 ふりかえりを見る</button>
+    <button class="review-btn" id="week-review-btn">📖 これまでやったことを読む</button>
     <button class="review-btn" id="bulk-add-btn">📋 まとめて追加</button>
     <div class="note" id="save-note"></div>
   </footer>
@@ -1390,13 +1370,19 @@
 
 <div class="modal-overlay" id="week-modal">
   <div class="modal-box">
-    <h2>ふりかえり</h2>
-
-    <div class="rv-tabs">
-      <div class="rv-tab on" data-pane="diary">今日のページ</div>
-      <div class="rv-tab" data-pane="blog">月で読む</div>
-      <div class="rv-tab" data-pane="year">1年</div>
+    <div class="rv-head">
+      <button class="rv-back" id="rv-back">‹ 戻る</button>
+      <h2 id="rv-title">これまでやったこと</h2>
+      <button class="rv-close" id="rv-close" title="閉じる">✕</button>
     </div>
+
+    <div class="rv-tabs" id="rv-tabs">
+      <div class="rv-tab on" data-pane="diary">日で読む</div>
+      <div class="rv-tab" data-pane="blog">月で読む</div>
+      <div class="rv-tab" data-pane="year">1年で見る</div>
+    </div>
+
+    <div class="rv-pane" id="pane-tag"></div>
 
     <div class="rv-pane on" id="pane-diary"></div>
     <div class="rv-pane" id="pane-blog"></div>
@@ -2049,7 +2035,8 @@
     let allAchieved = true;
     let bigWithItemsCount = 0;
 
-    const finishedBigs = [];
+    // 終わった大きな仕事は、この画面に出さない。
+    // 何をやったかは「これまでやったこと」で読む。ここは残っているものだけ。
     state.blockOrder.forEach(key=>{
       if(key === 'memo'){
         blocksEl.appendChild(renderMemoBlock());
@@ -2059,46 +2046,21 @@
       const big = state.bigs.find(b=>b.id===id);
       if(!big) return;
       const result = renderBigBlock(big);
-      // 達成した大きな仕事は、いちばん下にまとめる
-      if(result.achieved && result.hasItems) finishedBigs.push(result.el);
-      else blocksEl.appendChild(result.el);
+      if(result.achieved && result.hasItems){
+        anyBigWithItems = true;
+        bigWithItemsCount++;
+        return;   // 出さない
+      }
+      blocksEl.appendChild(result.el);
       if(result.hasItems){
         anyBigWithItems = true;
         bigWithItemsCount++;
-        if(!result.achieved) allAchieved = false;
+        allAchieved = false;
       }
     });
-    if(finishedBigs.length){
-      const bKey = 'bigbar';
-      const bBar = document.createElement('div');
-      bBar.className = 'big-done-bar';
-      bBar.innerHTML = '<span class="done-bar-txt">✓ 終わった大きな仕事 ' + finishedBigs.length + '件</span>'
-        + '<span class="done-bar-act">' + (doneOpen[bKey] ? 'たたむ' : 'ひらく') + '</span>';
-      bBar.addEventListener('click', ()=>{
-        doneOpen[bKey] = !doneOpen[bKey];
-        render();
-      });
-      blocksEl.appendChild(bBar);
-      if(doneOpen[bKey]) finishedBigs.forEach(el=> blocksEl.appendChild(el));
-    }
 
     enableDragReorder(blocksEl, onBlocksReordered);
-
-    const dayAchieved = anyBigWithItems && allAchieved;
-    const banner = document.getElementById('achieve-banner');
-    if(dayAchieved && !state.dayWasAchieved){
-      banner.classList.add('show');
-      burstConfetti(document.getElementById('app'), 36, ['#4c7cff','#6d5dfa','#8b5cf6']);
-    }
-    if(dayAchieved){
-      document.getElementById('achieve-sub').textContent =
-        '大きな仕事 ' + bigWithItemsCount + '件、小さい仕事までぜんぶ完了です。'
-        + '新しく足すか、今日はここまでに。';
-      banner.classList.add('show');
-    } else {
-      banner.classList.remove('show');
-    }
-    state.dayWasAchieved = dayAchieved;
+    state.dayWasAchieved = anyBigWithItems && allAchieved;
 
     const addBigRow = document.getElementById('add-big-row');
     const bigFullMsg = document.getElementById('big-full-msg');
@@ -2310,6 +2272,7 @@
   // ---- 週に一度のふりかえり画面 ----
   document.getElementById('week-review-btn').addEventListener('click', openWeekModal);
   document.getElementById('week-modal-close').addEventListener('click', closeWeekModal);
+  document.getElementById('rv-close').addEventListener('click', closeWeekModal);
   document.getElementById('week-modal').addEventListener('click', (e)=>{
     if(e.target.id === 'week-modal') closeWeekModal();
   });
@@ -2382,10 +2345,14 @@
     for(let i=0;i<t.length;i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
     return TAG_TONES[h % TAG_TONES.length];
   }
-  function tagChip(name, n){
+  function tagChip(name, n, clickable){
     const tone = tagTone(name);
     const el = document.createElement('span');
-    el.className = 'tag';
+    el.className = 'tag' + (clickable === false ? '' : ' click');
+    if(clickable !== false){
+      el.title = '「' + (name || '名前なし') + '」だけを見る';
+      el.addEventListener('click', (ev)=>{ ev.stopPropagation(); openTag(name || '名前なし'); });
+    }
     el.style.background = tone[0];
     el.style.color = tone[1];
     const t = document.createElement('span');
@@ -2806,7 +2773,100 @@
       + '</div>';
   }
 
+  // ---- タグを押したときの一覧 ----
+  // 「受講生サイトを仕上げる 11」を押したら、その11件だけが日付順で並ぶ
+  let rvTag = null, rvTagBack = null;
+
+  function openTag(name){
+    rvTag = name;
+    rvTagBack = rvPane;
+    document.getElementById('rv-tabs').style.display = 'none';
+    document.getElementById('rv-back').classList.add('on');
+    document.querySelectorAll('.rv-pane').forEach(p=> p.classList.toggle('on', p.id === 'pane-tag'));
+    renderTag();
+    const box = document.querySelector('#week-modal .modal-box');
+    if(box) box.scrollTop = 0;
+  }
+  function closeTag(){
+    rvTag = null;
+    document.getElementById('rv-tabs').style.display = '';
+    document.getElementById('rv-back').classList.remove('on');
+    switchPane(rvTagBack || 'blog');
+  }
+  document.getElementById('rv-back').addEventListener('click', closeTag);
+
+  function renderTag(){
+    const pane = document.getElementById('pane-tag');
+    pane.innerHTML = '';
+    if(!archive || !rvTag){ pane.innerHTML = '<div class="rv-empty">読み込み中…</div>'; return; }
+
+    const days = Object.keys(archive).sort().reverse()
+      .map(k=> ({ key: k, rec: archive[k],
+                  hits: (archive[k].done || []).filter(e=> (e.big || '名前なし') === rvTag) }))
+      .filter(x=> x.hits.length);
+    const total = days.reduce((n, x)=> n + x.hits.length, 0);
+
+    const head = document.createElement('div');
+    head.className = 'tag-head';
+    head.appendChild(tagChip(rvTag, undefined, false));
+    const n = document.createElement('span');
+    n.className = 'tag-total';
+    n.textContent = total + '件 ・ ' + days.length + '日';
+    head.appendChild(n);
+    pane.appendChild(head);
+
+    if(!days.length){
+      const e = document.createElement('div');
+      e.className = 'rv-empty';
+      e.textContent = 'この仕事の記録はまだありません。';
+      pane.appendChild(e);
+      return;
+    }
+
+    days.forEach(x=>{
+      const post = document.createElement('div');
+      post.className = 'post';
+      const y = +x.key.slice(0,4), m = +x.key.slice(5,7), d = +x.key.slice(8,10);
+
+      const dh = document.createElement('div');
+      dh.className = 'post-day';
+      const b = document.createElement('b');
+      b.textContent = y + '/' + m + '/' + d + '（' + WDAY[new Date(y, m-1, d).getDay()] + '）';
+      const c = document.createElement('span');
+      c.textContent = x.hits.length + '件';
+      const go = document.createElement('span');
+      go.className = 'pd-go';
+      go.textContent = 'この日のページ →';
+      dh.appendChild(b); dh.appendChild(c); dh.appendChild(go);
+      dh.addEventListener('click', ()=>{
+        diaryMD = { m: m, d: d };
+        closeTag();
+        switchPane('diary');
+      });
+      post.appendChild(dh);
+
+      x.hits.forEach(e=>{
+        const ln = document.createElement('div');
+        ln.className = 'post-line';
+        const t = document.createElement('span');
+        t.className = 'pl-txt';
+        t.textContent = '・' + lineTextOf(e);
+        ln.appendChild(t);
+        post.appendChild(ln);
+      });
+
+      if(x.rec.note){
+        const nt = document.createElement('div');
+        nt.className = 'post-note';
+        nt.textContent = x.rec.note;
+        post.appendChild(nt);
+      }
+      pane.appendChild(post);
+    });
+  }
+
   function renderPane(){
+    if(rvTag){ renderTag(); return; }
     if(rvPane === 'diary') renderDiary();
     else if(rvPane === 'blog') renderBlog();
     else renderYearPane();
