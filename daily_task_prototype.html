@@ -2037,6 +2037,18 @@
     return { el: wrap, achieved, hasItems: totalPlanned > 0, manualDone: manualBigDone };
   }
 
+  // 【2026-09-01の修正】終わった大きな仕事は画面に出さない作りなのに、
+  // 10個の枠だけは使ったままになっていた。そのため何日か使うと
+  // 「大きな仕事を追加」の欄が消え、画面には消せるものが1つも見えない、という
+  // 行き止まりになっていた。枠は「いま画面に出ているもの」だけで数える。
+  function bigIsFinished(big){
+    const p = bigProgress(big);
+    return p.planned > 0 && (big.done === true || p.done === p.planned);
+  }
+  function visibleBigCount(){
+    return state.bigs.filter(b=> !bigIsFinished(b)).length;
+  }
+
   function render(){
     syncBlockOrder();
     const blocksEl = document.getElementById('blocks');
@@ -2073,7 +2085,7 @@
 
     const addBigRow = document.getElementById('add-big-row');
     const bigFullMsg = document.getElementById('big-full-msg');
-    if(state.bigs.length >= MAX_BIG){
+    if(visibleBigCount() >= MAX_BIG){
       addBigRow.style.display = 'none';
       bigFullMsg.textContent = '大きな仕事は' + MAX_BIG + 'つまでです。増やすには先に1つ終わらせるか削除してください。';
       bigFullMsg.style.display = 'block';
@@ -2094,7 +2106,7 @@
     const input = document.getElementById('big-input');
     const val = input.value.trim();
     if(!val){ showToast('仕事の名前を入力してください。'); return; }
-    if(state.bigs.length >= MAX_BIG){
+    if(visibleBigCount() >= MAX_BIG){
       showToast('大きな仕事は' + MAX_BIG + 'つまでです。');
       return;
     }
@@ -2199,7 +2211,7 @@
     });
 
     const warns = parsed.warnings.slice();
-    const willBe = state.bigs.length + parsed.bigs.length;
+    const willBe = visibleBigCount() + parsed.bigs.length;
     if(willBe > MAX_BIG){
       warns.push('「追加」だと大きな仕事が ' + willBe + ' 個になり、上限の ' + MAX_BIG + ' を超えます。超えた分は入りません（「ぜんぶ置きかえる」なら収まります）。');
     }
@@ -2232,7 +2244,7 @@
 
     let added = 0, skipped = 0;
     parsed.bigs.forEach(b=>{
-      if(state.bigs.length >= MAX_BIG){ skipped++; return; }
+      if(visibleBigCount() >= MAX_BIG){ skipped++; return; }
       const id = nextBigId++;
       state.bigs.push({
         id: id,
@@ -2930,6 +2942,10 @@
   let calendarAccessToken = null;
   // カレンダーの一覧を、いつの日付で読み込んだか。開きっぱなしで日付が変わったときの読み直しに使う。
   let calLoadedDateKey = null;
+  // 日付が変わったのに、まだ今日のぶんを読み直せていない
+  let calNeedsRefresh = false;
+  // 日付が変わったせいで読み直しが要るとき（起動直後の未読み込みとは区別する）
+  let calAutoRetry = false;
 
   // カレンダーを見る許可は、Firebaseを通さずGoogle公式の仕組み
   // (Google Identity Services)から直接もらう。こうするとやり取りが
@@ -3013,6 +3029,50 @@
     return '終日';
   }
 
+  function clearCalendarEvents(){
+    const box = document.getElementById('cal-events');
+    if(box){ box.innerHTML = ''; box.style.display = 'none'; }
+  }
+
+  // 【2026-09-01の修正】日付が変わっても、昨日読んだ予定が出したままだった。
+  // Googleの鍵は1時間で切れるので、夜のうちに切れていて、日付が変わったときの
+  // 自動の読み直しが黙って失敗し、画面だけ昨日のまま残っていた（自分で開き直す
+  // しかなかった）。ここでは まず昨日ぶんを消し、鍵があればすぐ読み直す。
+  // 鍵が切れているときは、次にどこかを押した瞬間に取り直す。
+  function refreshCalendarIfStale(interactive){
+    if(!calCardEl || !calCardEl.classList.contains('open')) return;
+    // ログインしていないときは、こちらから勝手に案内を書きかえない
+    if(!interactive && (!FIREBASE_READY || !currentUser)) return;
+    const tk = todayKey();
+    if(calLoadedDateKey && calLoadedDateKey !== tk){
+      clearCalendarEvents();   // 昨日の予定を今日のぶんとして出したままにしない
+      calLoadedDateKey = null;
+      calNeedsRefresh = true;
+      calAutoRetry = true;
+    }
+    if(!calNeedsRefresh) return;
+    if(!calendarAccessToken) calendarAccessToken = loadCalToken();
+    if(calendarAccessToken || interactive){ loadCalendarNow(interactive); return; }
+    // 鍵の取り直しは「自分で触った直後」でないとブラウザに止められる。
+    // だから、次のひと押しに乗せる。
+    setCalStatus('タップして読み込み');
+    // 起動直後は、こちらから勝手に許可を取りに行かない（Googleの窓が急に開くため）。
+    // 日付が変わって読み直しが要るときだけ、次のひと押しに乗せる。
+    if(calAutoRetry) armCalRefreshOnTouch();
+  }
+
+  let calTouchArmed = false;
+  function armCalRefreshOnTouch(){
+    if(calTouchArmed) return;
+    calTouchArmed = true;
+    const once = ()=>{
+      document.removeEventListener('pointerdown', once, true);
+      calTouchArmed = false;
+      refreshCalendarIfStale(true);
+    };
+    document.addEventListener('pointerdown', once, true);
+  }
+
   function renderCalendarEvents(events){
     const box = document.getElementById('cal-events');
     box.style.display = 'block';
@@ -3047,6 +3107,8 @@
         if(!res.ok){
           if(res.status === 401 || res.status === 403){
             clearCalToken();
+            calNeedsRefresh = true;
+            calAutoRetry = true;
             setCalStatus('もう一度タップしてください');
           } else {
             setCalStatus('読み込めませんでした');
@@ -3059,6 +3121,8 @@
         if(!data) return;
         renderCalendarEvents(data.items || []);
         calLoadedDateKey = todayKey();
+        calNeedsRefresh = false;
+        calAutoRetry = false;
         setCalStatus('');
       })
       .catch(()=>{
@@ -3439,7 +3503,7 @@
   function setCalOpen(open, interactive){
     calCardEl.classList.toggle('open', open);
     try{ localStorage.setItem(CAL_OPEN_KEY, open ? '1' : '0'); }catch(e){}
-    if(open) loadCalendarNow(!!interactive);
+    if(open){ calNeedsRefresh = true; refreshCalendarIfStale(!!interactive); }
   }
   updateFactsCard();
 
@@ -3625,6 +3689,8 @@
   function checkDayRollover(){
     const tk = todayKey();
     updateDatePill();
+    // 日付が変わっていなくても、画面が昨日のままなら読み直す
+    refreshCalendarIfStale(false);
     if(lastSeenDateKey === tk) return;
     lastSeenDateKey = tk;
 
@@ -3633,10 +3699,9 @@
     updateFactsCard();       // 止まっている日数・今週／先週・連続日数
 
     // 昨日読んだ予定が残らないように、カレンダーも読み直す
-    if(calLoadedDateKey && calLoadedDateKey !== tk
-       && calCardEl && calCardEl.classList.contains('open')){
-      loadCalendarNow(false);
-    }
+    calNeedsRefresh = true;
+    calAutoRetry = true;
+    refreshCalendarIfStale(false);
 
     if(!FIREBASE_READY || !currentUser) return;
     if(!boardDateKey || boardDateKey === tk) return;
@@ -3773,7 +3838,10 @@
           setSyncStatus('読み込みに失敗しました');
         }).then(()=>{
           subscribeToBoard(user.uid);
-          if(calCardEl && calCardEl.classList.contains('open')) loadCalendarNow(false);
+          if(calCardEl && calCardEl.classList.contains('open')){
+            calNeedsRefresh = true;
+            refreshCalendarIfStale(false);
+          }
         });
       } else {
         if(unsubscribeProfile){ unsubscribeProfile(); unsubscribeProfile = null; }
