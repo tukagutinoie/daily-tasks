@@ -1462,6 +1462,14 @@
   const MAX_MEDIUM = 10;
   const MAX_SMALL_PER_MEDIUM = 20;
 
+  // 【2026-09-01の修正】日本語を打ってEnterを押すと、同じものが2つ入っていた。
+  // 日本語入力では、Enterを1回押すと「変換を確定するEnter」と
+  // 「入力を終えるEnter」の2回ぶんが届く。前者まで拾っていたのが原因。
+  // 変換の最中のEnterは、ここで捨てる。
+  function isEnterKey(e){
+    return e.key === 'Enter' && !e.isComposing && e.keyCode !== 229;
+  }
+
   const DRAG_HANDLE_SVG = `<svg class="drag-handle" viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-label="ドラッグして並べ替え"><circle cx="6" cy="4" r="1.7"/><circle cx="14" cy="4" r="1.7"/><circle cx="6" cy="10" r="1.7"/><circle cx="14" cy="10" r="1.7"/><circle cx="6" cy="16" r="1.7"/><circle cx="14" cy="16" r="1.7"/></svg>`;
   const TOGGLE_ARROW_SVG = `<svg class="toggle-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const MEMO_ICON_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20l4.6-1.1L19.5 8a1.7 1.7 0 000-2.4l-1.1-1.1a1.7 1.7 0 00-2.4 0L5.1 15.4 4 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M13.8 6.7l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
@@ -1762,7 +1770,7 @@
     titleInput.addEventListener('click', e=> e.stopPropagation());
     titleInput.addEventListener('keydown', (e)=>{
       // 改行は入れず、Enterで入力を終える
-      if(e.key === 'Enter'){ e.preventDefault(); titleInput.blur(); }
+      if(isEnterKey(e)){ e.preventDefault(); titleInput.blur(); }
     });
     titleInput.addEventListener('input', (e)=>{
       big.title = e.target.value;
@@ -1889,7 +1897,7 @@
           scheduleSave();
         });
         textEl.addEventListener('keydown', (e)=>{
-          if(e.key === 'Enter'){ e.preventDefault(); textEl.blur(); }
+          if(isEnterKey(e)){ e.preventDefault(); textEl.blur(); }
         });
         const checkEl = li.querySelector('.check');
         checkEl.addEventListener('click', ()=>{
@@ -1950,7 +1958,7 @@
           render();
         }
         btn.addEventListener('click', addSmall);
-        input.addEventListener('keydown', e=>{ if(e.key==='Enter') addSmall(); });
+        input.addEventListener('keydown', e=>{ if(isEnterKey(e)) addSmall(); });
       }
 
       if(achieved) finishedMids.push(mCard); else openMids.push(mCard);
@@ -2000,7 +2008,7 @@
         render();
       }
       btn.addEventListener('click', addMediumHere);
-      input.addEventListener('keydown', e=>{ if(e.key==='Enter') addMediumHere(); });
+      input.addEventListener('keydown', e=>{ if(isEnterKey(e)) addMediumHere(); });
     }
 
     // 大きな仕事は、中くらいの仕事が全部終わったら自動で達成になる。
@@ -2100,7 +2108,7 @@
 
   document.getElementById('big-add-btn').addEventListener('click', addBig);
   document.getElementById('big-input').addEventListener('keydown', e=>{
-    if(e.key==='Enter') addBig();
+    if(isEnterKey(e)) addBig();
   });
   function addBig(){
     const input = document.getElementById('big-input');
