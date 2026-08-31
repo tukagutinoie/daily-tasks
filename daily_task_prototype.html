@@ -249,14 +249,19 @@
     margin-top:2px;
   }
   .big-card.open .toggle-arrow{transform:rotate(90deg);}
+  /* 【2026-09-01の修正】開いたときの高さに 3000px の上限があり、
+     中くらいの仕事・小さい仕事が多い大きな仕事は、下がまるごと
+     切り落とされて見えなかった（スクロールしても出てこない）。
+     上限をやめ、中身の高さそのままで開く形に変える。 */
   .big-body{
-    max-height:0;
+    display:grid;
+    grid-template-rows:0fr;
     opacity:0;
-    overflow:hidden;
-    transition:max-height .35s ease, opacity .3s ease, padding-bottom .35s ease;
+    transition:grid-template-rows .35s ease, opacity .3s ease, padding-bottom .35s ease;
   }
+  .big-body-inner{ min-height:0; overflow:hidden; }
   .big-card.open .big-body{
-    max-height:3000px;
+    grid-template-rows:1fr;
     opacity:1;
     padding-bottom:16px;
   }
@@ -1817,9 +1822,13 @@
     mediumFullMsg.className = 'medium-full-msg';
     mediumFullMsg.style.display = 'none';
     mediumFullMsg.textContent = '中くらいの仕事は' + MAX_MEDIUM + 'つまでです。増やすには先に1つ終わらせるか削除してください。';
-    body.appendChild(mediumsEl);
-    body.appendChild(addMediumRow);
-    body.appendChild(mediumFullMsg);
+    // 中身は1枚にまとめる（高さの上限なしで開けるようにするため）
+    const bodyInner = document.createElement('div');
+    bodyInner.className = 'big-body-inner';
+    bodyInner.appendChild(mediumsEl);
+    bodyInner.appendChild(addMediumRow);
+    bodyInner.appendChild(mediumFullMsg);
+    body.appendChild(bodyInner);
     card.appendChild(body);
     wrap.appendChild(card);
 
