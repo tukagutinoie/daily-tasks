@@ -678,9 +678,10 @@
     width:100%;
     padding:24px 22px;
     box-shadow:0 24px 60px rgba(20,14,30,0.35);
-    /* 中身が多くても途中で切れないよう、枠の中でスクロールさせる */
-    max-height:86vh;
-    overflow-y:auto;
+    /* 【2026-09-01の修正】以前はここでも枠の中をスクロールさせていた。
+       入力欄・下書きの確認・箱・外わくと、スクロールする場所が4つ重なり、
+       長いリストの下や「追加」ボタンまで指が届かなかった。
+       スクロールする場所は外わく1つだけにする。 */
   }
   .heat-scroll{overflow-x:auto; padding:4px 0 2px; margin:14px 0 6px;}
   .heat-scroll svg{display:block;}
@@ -1005,6 +1006,8 @@
     font-family:inherit;
     color:var(--text);
     box-sizing:border-box;
+    overflow:hidden;
+    resize:none;
   }
   #bulk-input:focus{outline:none; border-color:var(--purple);}
   .bulk-preview{
@@ -1017,8 +1020,6 @@
     border-radius:12px;
     padding:10px 12px;
     display:none;
-    max-height:240px;
-    overflow-y:auto;
   }
   .bulk-preview .bulk-warn{color:#b45309; font-weight:800;}
   .bulk-preview .bulk-head{font-weight:800; margin-bottom:4px; display:block;}
@@ -2200,7 +2201,17 @@
     return {bigs:bigs, warnings:warnings};
   }
 
+  // 貼った行数に合わせて、入力欄の高さを伸ばす。
+  // （欄の中を別にスクロールさせないため。スクロールは画面ぜんたいで1つ）
+  function growBulkInput(){
+    const el = document.getElementById('bulk-input');
+    if(!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(170, el.scrollHeight) + 'px';
+  }
+
   function renderBulkPreview(){
+    growBulkInput();
     const box = document.getElementById('bulk-preview');
     const raw = document.getElementById('bulk-input').value;
     if(!raw.trim()){ box.style.display='none'; box.textContent=''; return; }
