@@ -2221,7 +2221,7 @@
     const warns = parsed.warnings.slice();
     const willBe = visibleBigCount() + parsed.bigs.length;
     if(willBe > MAX_BIG){
-      warns.push('「追加」だと大きな仕事が ' + willBe + ' 個になり、上限の ' + MAX_BIG + ' を超えます。超えた分は入りません（「ぜんぶ置きかえる」なら収まります）。');
+      warns.push('「追加」だと大きな仕事が ' + willBe + ' 個になり、上限の ' + MAX_BIG + ' を超えます。入りきらなかったぶんは、この箱に残します（「ぜんぶ置きかえる」なら全部収まります）。');
     }
 
     box.innerHTML = '';
@@ -2239,6 +2239,32 @@
     box.style.display = 'block';
   }
 
+  // 【2026-09-01の追加】上限で入らなかったぶんが、どこにも残らず確認できなかった。
+  // 貼った箱に戻して、そのまま目で見えるようにする。アプリを閉じても消えないよう
+  // 端末にも覚えておく（次に「まとめて追加」を開いたときに戻る）。
+  function bulkTextOf(bigs){
+    const out = [];
+    bigs.forEach(b=>{
+      out.push(b.title);
+      (b.mediums||[]).forEach(m=>{
+        out.push('　' + m.name);
+        (m.items||[]).forEach(t=> out.push('　　' + t));
+      });
+    });
+    return out.join('\n');
+  }
+
+  const BULK_LEFT_KEY = 'tsumiage_bulk_leftover';
+  function saveBulkLeftover(t){
+    try{
+      if(t) localStorage.setItem(BULK_LEFT_KEY, t);
+      else localStorage.removeItem(BULK_LEFT_KEY);
+    }catch(e){}
+  }
+  function loadBulkLeftover(){
+    try{ return localStorage.getItem(BULK_LEFT_KEY) || ''; }catch(e){ return ''; }
+  }
+
   function applyBulk(mode){
     const inputEl = document.getElementById('bulk-input');
     const parsed = parseBulkText(inputEl.value);
@@ -2250,9 +2276,10 @@
       state.blockOrder = state.blockOrder.filter(k=> String(k).indexOf('big:') !== 0);
     }
 
-    let added = 0, skipped = 0;
+    let added = 0;
+    const leftovers = [];
     parsed.bigs.forEach(b=>{
-      if(visibleBigCount() >= MAX_BIG){ skipped++; return; }
+      if(visibleBigCount() >= MAX_BIG){ leftovers.push(b); return; }
       const id = nextBigId++;
       state.bigs.push({
         id: id,
@@ -2271,16 +2298,31 @@
       added++;
     });
 
+    if(leftovers.length){
+      // 入らなかったぶんは消さずに箱へ戻す。何が入らなかったか、そのまま読める。
+      inputEl.value = bulkTextOf(leftovers);
+      saveBulkLeftover(inputEl.value);
+      renderBulkPreview();
+      render();
+      showToast(added + '件を入れました。入らなかった ' + leftovers.length
+        + '件は、この箱に残してあります。');
+      return;   // 箱は閉じない（残りが見えなくなるため）
+    }
+
     inputEl.value = '';
+    saveBulkLeftover('');
     renderBulkPreview();
     closeBulkModal();
     render();
-    showToast(skipped > 0
-      ? (added + '件を取りこみました。上限を超えた ' + skipped + '件は入りませんでした。')
-      : (added + '件の大きな仕事を取りこみました。'));
+    showToast(added + '件の大きな仕事を取りこみました。');
   }
 
   function openBulkModal(){
+    const inputEl = document.getElementById('bulk-input');
+    if(!inputEl.value.trim()){
+      const left = loadBulkLeftover();
+      if(left) inputEl.value = left;   // 前に入りきらなかったぶんを出す
+    }
     document.getElementById('bulk-modal').classList.add('show');
     renderBulkPreview();
   }
