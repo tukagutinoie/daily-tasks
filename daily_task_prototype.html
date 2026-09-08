@@ -4079,118 +4079,209 @@
   // 取れなかったときは、前に取れた分をそのまま出す（数字だけ古くなる）。
   // 場所を変えるには、画面の裏で setWeatherPlace(緯度, 経度, '名前') を呼ぶ。
   // ============================================================
-  // ---- 日付の横の絵：空（時間帯）＋季節の木＋いまの天気 ----
-  // 動きは付けない。うるさくなるので、変わるのは色と絵だけ。
+  // ---- 日付の横の絵：空（時間帯）＋季節の風景＋いまの天気 ----
+  // 動きは付けない。うるさくなるので、変わるのは絵と色だけ。
+  // 季節の風景は日ごとに入れかわる（春夏秋冬×4通り）。
+  // 天気は12種類。数時間先が変わるときは「のち」の小さい絵が出る。
   function tsuScene(o){
-    const uid = 'ts' + Math.random().toString(36).slice(2,8);   // 同じ画面に2つ出しても混ざらないように
+    const uid = 'ts' + Math.random().toString(36).slice(2,8);
     const h = o.hour, m = o.month, code = o.code;
     const night = (h < 5 || h >= 19);
     const dusk  = (h >= 16 && h < 19);
     const dawn  = (h >= 5 && h < 8);
 
-    let sky1, sky2, hill1, hill2, ink;
-    if(night)      { sky1='#20305c'; sky2='#43578c'; ink='#eef2fb'; }
-    else if(dawn)  { sky1='#ffd2ad'; sky2='#d6e9f8'; ink='#4a4458'; }
-    else if(dusk)  { sky1='#ffb579'; sky2='#ffe3c6'; ink='#4a4458'; }
-    else           { sky1='#a9dcf7'; sky2='#e7f5fd'; ink='#4a4458'; }
+    let sky1, sky2;
+    if(night)      { sky1='#20305c'; sky2='#43578c'; }
+    else if(dawn)  { sky1='#ffd2ad'; sky2='#d6e9f8'; }
+    else if(dusk)  { sky1='#ffb579'; sky2='#ffe3c6'; }
+    else           { sky1='#a9dcf7'; sky2='#e7f5fd'; }
 
-    // 季節で、丘と木の色が変わる
-    let canopy, canopy2, trunk, hillA, hillB, petal = '';
-    if(m>=3 && m<=5){        // 春
-      canopy='#ffc9dc'; canopy2='#ffb1cb'; trunk='#a98268'; hillA='#cfe8c4'; hillB='#b7dcab';
-      petal = '<circle cx="52" cy="40" r="1.5" fill="#ffb1cb"/><circle cx="60" cy="47" r="1.3" fill="#ffc9dc"/>'
-            + '<circle cx="44" cy="46" r="1.2" fill="#ffc9dc"/>';
-    } else if(m>=6 && m<=8){ // 夏
-      canopy='#7ecb8a'; canopy2='#57b06c'; trunk='#9b7458'; hillA='#bfe3b4'; hillB='#9ed394';
-    } else if(m>=9 && m<=11){// 秋
-      canopy='#f3b063'; canopy2='#e07f3e'; trunk='#a07352'; hillA='#e7d9b6'; hillB='#d8c395';
-      petal = '<circle cx="53" cy="42" r="1.5" fill="#e07f3e"/><circle cx="43" cy="48" r="1.3" fill="#f3b063"/>';
-    } else {                 // 冬
-      canopy='#dbe6f0'; canopy2='#c3d5e6'; trunk='#8d7f77'; hillA='#eef4fa'; hillB='#dde8f2';
-    }
-    hill1 = hillA; hill2 = hillB;
-
-    // ---- 天気の絵 ----
-    function sun(x,y,r,c){
-      let s = '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'"/>';
-      return s;
-    }
+    // ============ 天気の絵 ============
+    function sun(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+(night?'#f6f2df':'#ffd76b')+'"/>'; }
     function moon(x,y,r){
       return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#f6f2df"/>'
            + '<circle cx="'+(x-r*0.42)+'" cy="'+(y-r*0.3)+'" r="'+(r*0.92)+'" fill="'+sky1+'"/>';
     }
+    function light(x,y,r){ return night ? moon(x,y,r) : sun(x,y,r); }
     function cloud(x,y,s,c,op){
-      return '<g opacity="'+(op||1)+'"><ellipse cx="'+x+'" cy="'+y+'" rx="'+(13*s)+'" ry="'+(7.5*s)+'" fill="'+c+'"/>'
-           + '<ellipse cx="'+(x-8*s)+'" cy="'+(y+2.5*s)+'" rx="'+(9*s)+'" ry="'+(5.5*s)+'" fill="'+c+'"/>'
-           + '<ellipse cx="'+(x+9*s)+'" cy="'+(y+2*s)+'" rx="'+(8*s)+'" ry="'+(5*s)+'" fill="'+c+'"/></g>';
+      return '<g opacity="'+(op===undefined?1:op)+'">'
+        + '<ellipse cx="'+x+'" cy="'+y+'" rx="'+(13*s)+'" ry="'+(7.5*s)+'" fill="'+c+'"/>'
+        + '<ellipse cx="'+(x-8*s)+'" cy="'+(y+2.5*s)+'" rx="'+(9*s)+'" ry="'+(5.5*s)+'" fill="'+c+'"/>'
+        + '<ellipse cx="'+(x+9*s)+'" cy="'+(y+2*s)+'" rx="'+(8*s)+'" ry="'+(5*s)+'" fill="'+c+'"/></g>';
     }
-    function drops(x,y,c){
-      let s='';
-      [[-9,0],[0,3],[9,1]].forEach(function(d){
-        s += '<path d="M'+(x+d[0])+' '+(y+d[1])+' l-1.6 5.2 a1.9 1.9 0 0 0 3.2 0 Z" fill="'+c+'"/>';
+    function drops(x,y,c,n,s){
+      let out='', pos=[[-9,0],[0,3],[9,1],[-4.5,5],[4.5,4]];
+      for(let i=0;i<n;i++){ const d=pos[i];
+        out += '<path d="M'+(x+d[0]*s)+' '+(y+d[1])+' l'+(-1.6*s)+' '+(5.2*s)+' a'+(1.9*s)+' '+(1.9*s)+' 0 0 0 '+(3.2*s)+' 0 Z" fill="'+c+'"/>'; }
+      return out;
+    }
+    function flakes(x,y,c,n){
+      let out='', pos=[[-9,1],[0,4],[9,2],[-4.5,6],[4.5,5]];
+      for(let i=0;i<n;i++){ const d=pos[i];
+        out += '<circle cx="'+(x+d[0])+'" cy="'+(y+d[1]+2)+'" r="1.9" fill="'+c+'"/>'; }
+      return out;
+    }
+    function ice(x,y){   // 氷（着氷性の雨・ひょう）
+      let out='';
+      [[-8,2],[2,4],[9,1]].forEach(function(d){
+        out += '<circle cx="'+(x+d[0])+'" cy="'+(y+d[1]+2)+'" r="2.4" fill="#dff0fb" stroke="#8fc4e6" stroke-width="1"/>';
       });
-      return s;
+      return out;
     }
-    function flakes(x,y,c){
-      let s='';
-      [[-9,1],[0,4],[9,2]].forEach(function(d){
-        s += '<circle cx="'+(x+d[0])+'" cy="'+(y+d[1]+2)+'" r="1.9" fill="'+c+'"/>';
-      });
-      return s;
-    }
-    function bolt(x,y){
-      return '<path d="M'+x+' '+y+' l-5 8 h4 l-3 7 l9 -10 h-4.5 l3 -5 Z" fill="#ffcf4d"/>';
+    function bolt(x,y){ return '<path d="M'+x+' '+y+' l-5 8 h4 l-3 7 l9 -10 h-4.5 l3 -5 Z" fill="#ffcf4d"/>'; }
+
+    // 天気コード → 絵（cx,cy を中心に、大きさ sc で描く）
+    function weatherArt(c, cx, cy, sc){
+      sc = sc || 1;
+      const W = '#ffffff', G = '#e3eaf2', D = '#c9d3de';
+      if(c === 0)  return light(cx, cy, 11*sc);
+      if(c === 1)  return light(cx-6*sc, cy-3*sc, 10*sc) + cloud(cx+6*sc, cy+5*sc, .78*sc, W, .95);
+      if(c === 2)  return light(cx-7*sc, cy-4*sc, 9.5*sc) + cloud(cx+4*sc, cy+4*sc, 1*sc, W, .97);
+      if(c === 3)  return cloud(cx-4*sc, cy, 1*sc, W, .96) + cloud(cx+8*sc, cy+4*sc, .8*sc, G, .96);
+      if(c === 45 || c === 48)
+        return cloud(cx, cy, 1*sc, '#eef2f6', .9)
+          + '<path d="M'+(cx-14*sc)+' '+(cy+13*sc)+' h'+(28*sc)+' M'+(cx-10*sc)+' '+(cy+18*sc)+' h'+(22*sc)+'" stroke="#dbe3ec" stroke-width="'+(2.4*sc)+'" stroke-linecap="round"/>';
+      if(c === 51 || c === 53 || c === 55)             return cloud(cx, cy-2*sc, 1*sc, G, .98) + drops(cx, cy+8*sc, '#a8cfe9', 3, .75*sc);
+      if(c === 56 || c === 57 || c === 66 || c === 67) return cloud(cx, cy-2*sc, 1*sc, D, .98) + ice(cx, cy+8*sc);
+      if(c === 61 || c === 80)                         return cloud(cx, cy-2*sc, 1*sc, '#dfe7ef', .98) + drops(cx, cy+8*sc, '#7fb6e0', 3, 1*sc);
+      if(c === 63 || c === 81)                         return cloud(cx, cy-2*sc, 1*sc, '#d5dfe9', .98) + drops(cx, cy+8*sc, '#5ba3da', 4, 1*sc);
+      if(c === 65 || c === 82)                         return cloud(cx, cy-2*sc, 1.08*sc, '#c4d1de', .98) + drops(cx, cy+8*sc, '#3f8fd0', 5, 1.1*sc);
+      if(c === 71 || c === 85 || c === 77)             return cloud(cx, cy-2*sc, 1*sc, '#eaf1f8', .98) + flakes(cx, cy+8*sc, '#ffffff', 3);
+      if(c === 73)                                     return cloud(cx, cy-2*sc, 1*sc, '#e2ebf4', .98) + flakes(cx, cy+8*sc, '#ffffff', 4);
+      if(c === 75 || c === 86)                         return cloud(cx, cy-2*sc, 1.08*sc, '#d8e4ee', .98) + flakes(cx, cy+8*sc, '#ffffff', 5);
+      if(c === 96 || c === 99)                         return cloud(cx, cy-2*sc, 1*sc, D, .98) + bolt(cx-6*sc, cy+6*sc) + ice(cx+7*sc, cy+8*sc);
+      if(c >= 95)                                      return cloud(cx, cy-2*sc, 1*sc, D, .98) + bolt(cx, cy+7*sc);
+      return cloud(cx, cy, 1*sc, W, .96);
     }
 
-    const CX = 96, CY = 24;                    // 天気の絵を置くところ
-    const light = night ? '#f6f2df' : '#ffd76b';
-    let wx = '';
-    const c = code;
-    if(c === 0){                               // 快晴
-      wx = night ? moon(CX,CY,10) : sun(CX,CY,11,light);
-    } else if(c <= 2){                         // 晴れ〜うすぐもり
-      wx = (night ? moon(CX-7,CY-3,9) : sun(CX-7,CY-3,10,light)) + cloud(CX+5,CY+5,1,'#ffffff',.95);
-    } else if(c === 3){                        // くもり
-      wx = cloud(CX-4,CY,1,'#ffffff',.95) + cloud(CX+8,CY+4,.8,'#e6ecf3',.95);
-    } else if(c === 45 || c === 48){           // 霧
-      wx = cloud(CX,CY,1,'#eef2f6',.9)
-         + '<path d="M'+(CX-14)+' '+(CY+13)+' h28 M'+(CX-10)+' '+(CY+18)+' h22" stroke="#dbe3ec" stroke-width="2.4" stroke-linecap="round"/>';
-    } else if(c >= 71 && c <= 77 || c === 85 || c === 86){   // 雪
-      wx = cloud(CX,CY-2,1,'#e9eff6',.98) + flakes(CX,CY+8,'#ffffff');
-    } else if(c >= 95){                        // 雷
-      wx = cloud(CX,CY-2,1,'#c9d3de',.98) + bolt(CX,CY+7);
-    } else {                                   // 雨（霧雨・にわか雨をふくむ）
-      wx = cloud(CX,CY-2,1,'#dfe7ef',.98) + drops(CX,CY+8,'#7fb6e0');
+    // ============ 季節の風景（日ごとに入れかわる） ============
+    const season = (m>=3 && m<=5) ? 0 : (m>=6 && m<=8) ? 1 : (m>=9 && m<=11) ? 2 : 3;
+    const pick = (typeof o.variant === 'number') ? o.variant : 0;
+
+    const hills = [
+      ['#cfe8c4','#b7dcab'],   // 春
+      ['#bfe3b4','#9ed394'],   // 夏
+      ['#e7d9b6','#d8c395'],   // 秋
+      ['#e2edf8','#cdddec']    // 冬
+    ][season];
+
+    function ground(){
+      return '<path d="M0 50 C22 40 44 46 68 45 C96 44 118 38 148 44 C180 50 204 47 224 50 L224 64 L0 64 Z" fill="'+hills[0]+'" opacity="'+(night?'.35':'.9')+'"/>'
+           + '<path d="M0 57 C30 49 58 56 92 53 C128 50 158 46 224 55 L224 64 L0 64 Z" fill="'+hills[1]+'" opacity="'+(night?'.5':'.95')+'"/>';
     }
+    function water(){    // 海・川の水面
+      return '<path d="M0 50 C24 46 48 52 74 50 C104 48 122 44 224 49 L224 64 L0 64 Z" fill="#7cc4e8" opacity="'+(night?'.45':'.85')+'"/>'
+           + '<path d="M8 56 q6 -2.5 12 0 M30 59 q6 -2.5 12 0 M84 55 q6 -2.5 12 0" stroke="#ffffff" stroke-width="1.5" fill="none" opacity=".7" stroke-linecap="round"/>';
+    }
+    function tree(x, canopy, canopy2, trunk){
+      return '<path d="M'+x+' 57 L'+x+' 44" stroke="'+trunk+'" stroke-width="2.6" stroke-linecap="round"/>'
+        + '<ellipse cx="'+x+'" cy="39" rx="11" ry="8.5" fill="'+canopy+'"/>'
+        + '<ellipse cx="'+(x-5)+'" cy="42" rx="7" ry="5.5" fill="'+canopy2+'" opacity=".85"/>'
+        + '<ellipse cx="'+(x+5.5)+'" cy="41.5" rx="6" ry="5" fill="'+canopy2+'" opacity=".7"/>';
+    }
+
+    const scenes = [
+      [ // ---- 春 ----
+        function(){ return ground() + tree(40,'#ffc9dc','#ffb1cb','#a98268')
+          + '<circle cx="52" cy="41" r="1.5" fill="#ffb1cb"/><circle cx="60" cy="48" r="1.3" fill="#ffc9dc"/><circle cx="45" cy="47" r="1.2" fill="#ffc9dc"/>'; },
+        function(){ let f=''; for(let i=0;i<11;i++){ const x=10+i*11, y=48+((i*5)%7);
+            f += '<circle cx="'+x+'" cy="'+y+'" r="2.6" fill="#ffd95e"/><path d="M'+x+' '+(y+2)+' L'+x+' '+(y+6)+'" stroke="#5da362" stroke-width="1.8" stroke-linecap="round"/>'; }
+          return ground() + f
+            + '<path d="M52 38 q4 -4 8 -1 q-4 1 -8 1 Z" fill="#fff2a8"/><path d="M52 38 q-4 -4 -8 -1 q4 1 8 1 Z" fill="#fff2a8"/>'; },
+        function(){ let g=''; for(let i=0;i<7;i++){ const x=16+i*15;
+            g += '<path d="M'+x+' 58 q1.5 -8 0 -12" stroke="#7fb96a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+               + '<ellipse cx="'+x+'" cy="44" rx="2.4" ry="3.4" fill="#c8a37a"/>'; }
+          return ground() + g; },
+        function(){ return ground()
+          + '<path d="M28 58 L28 20" stroke="#b9b3c6" stroke-width="2" stroke-linecap="round"/>'
+          + '<path d="M30 24 q18 -5 30 3 q-14 5 -30 2 Z" fill="#6ec5f0"/><circle cx="35" cy="26" r="1.4" fill="#fff"/>'
+          + '<path d="M30 36 q16 -4 26 3 q-12 4 -26 2 Z" fill="#ff9db4"/><circle cx="35" cy="38" r="1.3" fill="#fff"/>'; }
+      ],
+      [ // ---- 夏 ----
+        function(){ return water()
+          + '<circle cx="118" cy="52" r="7" fill="none" stroke="#ff8f9c" stroke-width="3.4"/>'
+          + '<path d="M28 50 h20 l-4 -7 h-12 Z" fill="#ffffff" opacity=".9"/><path d="M38 43 L38 36" stroke="#c8bfb2" stroke-width="1.6"/>'; },
+        function(){ return water()
+          + '<path d="M96 44 L58 52" stroke="#c8bfb2" stroke-width="1.6" stroke-linecap="round"/>'
+          + '<path d="M58 52 L58 57" stroke="#c8bfb2" stroke-width="1" stroke-linecap="round"/>'
+          + '<path d="M40 55 q5 -4 10 0 q-5 4 -10 0 Z" fill="#5fa9d8"/><path d="M50 55 l4 -3 v6 Z" fill="#5fa9d8"/>'
+          + '<ellipse cx="70" cy="58" rx="7" ry="2" fill="#fff" opacity=".55"/>'; },
+        function(){ let s=''; [[26,40],[50,44],[74,41]].forEach(function(p){
+            s += '<path d="M'+p[0]+' 58 L'+p[0]+' '+(p[1]+4)+'" stroke="#5aa662" stroke-width="2.2" stroke-linecap="round"/>'
+               + '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="6.5" fill="#ffd23f"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="#8a5a2b"/>'; });
+          return ground() + s; },
+        function(){ return ground()
+          + '<path d="M40 57 L40 40" stroke="#a98a5f" stroke-width="2.6" stroke-linecap="round"/>'
+          + '<path d="M40 40 q-14 -3 -18 4 q10 -3 18 -1 Z" fill="#4fae6a"/><path d="M40 40 q14 -3 18 4 q-10 -3 -18 -1 Z" fill="#5ec079"/>'
+          + '<path d="M40 40 q-6 -12 -14 -13 q8 6 12 14 Z" fill="#3f9c5c"/><path d="M40 40 q6 -12 14 -13 q-8 6 -12 14 Z" fill="#57b56f"/>'; }
+      ],
+      [ // ---- 秋 ----
+        function(){ return ground() + tree(40,'#f3b063','#e07f3e','#a07352')
+          + '<circle cx="54" cy="44" r="1.6" fill="#e07f3e"/><circle cx="62" cy="50" r="1.4" fill="#f3b063"/><circle cx="46" cy="49" r="1.3" fill="#e07f3e"/>'; },
+        function(){ let g=''; for(let i=0;i<5;i++){ const x=18+i*24, top=32+((i*3)%6);
+            g += '<path d="M'+x+' 59 q3 -12 8 -'+(59-top)+'" stroke="#c2ad78" stroke-width="2" fill="none" stroke-linecap="round"/>'
+               + '<ellipse cx="'+(x+9)+'" cy="'+(top-2)+'" rx="7.5" ry="3.4" fill="#f2e8cf" transform="rotate(-34 '+(x+9)+' '+(top-2)+')"/>'
+               + '<ellipse cx="'+(x+9)+'" cy="'+(top-2)+'" rx="4.5" ry="1.8" fill="#e0d0a8" transform="rotate(-34 '+(x+9)+' '+(top-2)+')" opacity=".8"/>'; }
+          return ground() + g; },
+        function(){ let g=''; for(let i=0;i<6;i++){ const x=16+i*20;
+            g += '<path d="M'+x+' 59 C'+x+' 48 '+(x+2)+' 42 '+(x+10)+' 41" stroke="#b79b48" stroke-width="2" fill="none" stroke-linecap="round"/>';
+            for(let k=0;k<4;k++){ g += '<ellipse cx="'+(x+4+k*2.6)+'" cy="'+(41.5+k*0.6)+'" rx="2.6" ry="1.7" fill="#e8c65e" transform="rotate(-14 '+(x+4+k*2.6)+' '+(41.5+k*0.6)+')"/>'; } }
+          return ground() + g; },
+        function(){ return ground()
+          + '<ellipse cx="34" cy="53" rx="9" ry="5.5" fill="#e08b6a"/><rect x="31.5" y="52" width="5" height="6" rx="2" fill="#f4e3cf"/>'
+          + '<ellipse cx="56" cy="55" rx="6.5" ry="4" fill="#d5764f"/><rect x="54" y="54" width="4" height="5" rx="1.8" fill="#f4e3cf"/>'
+          + '<ellipse cx="76" cy="56" rx="4.5" ry="3.6" fill="#b98a5a"/><path d="M72 55 q4 -4 8 0 Z" fill="#8a6238"/>'; }
+      ],
+      [ // ---- 冬 ----
+        function(){ return ground() + tree(40,'#e6eef7','#cddbe8','#8d7f77')
+          + '<circle cx="56" cy="45" r="1.6" fill="#ffffff"/><circle cx="64" cy="52" r="1.4" fill="#ffffff"/>'; },
+        function(){ return ground()
+          + '<circle cx="40" cy="52" r="8" fill="#ffffff"/><circle cx="40" cy="40" r="5.6" fill="#ffffff"/>'
+          + '<circle cx="38" cy="39" r="0.9" fill="#5b6472"/><circle cx="42" cy="39" r="0.9" fill="#5b6472"/>'
+          + '<path d="M40 42 l4 1" stroke="#f08a3c" stroke-width="1.8" stroke-linecap="round"/>'
+          + '<path d="M34 34 h12" stroke="#7c8898" stroke-width="2" stroke-linecap="round"/>'; },
+        function(){ let g=''; for(let i=0;i<8;i++){ const x=14+i*14, len=6+((i*5)%7);
+            g += '<path d="M'+x+' 46 L'+(x-1.6)+' '+(46+len)+' L'+(x+1.6)+' '+(46+len*0.6)+' Z" fill="#eaf6ff" stroke="#8bb8d6" stroke-width="1"/>'; }
+          return ground() + '<path d="M0 46 C40 43 80 48 224 45 L224 64 L0 64 Z" fill="#f4f9ff" opacity=".9"/>' + g; },
+        function(){   // 焚き火
+          return ground()
+          + '<path d="M0 48 C36 45 76 50 224 46 L224 64 L0 64 Z" fill="#f4f9ff" opacity=".85"/>'
+          + '<path d="M28 57 L52 51 M28 51 L52 57" stroke="#a0846a" stroke-width="3.4" stroke-linecap="round"/>'
+          + '<path d="M40 50 q-7 -6 -2 -12 q1 4 4 5 q1 -6 6 -9 q-3 8 3 12 q2 -2 2 -5 q4 6 -1 11 Z" fill="#ff9b3d"/>'
+          + '<path d="M40 50 q-4 -4 -1 -8 q1 3 3 3 q0 -4 3 -6 q-1 5 2 7 q0 -1 1 -3 q2 4 -1 7 Z" fill="#ffd76b"/>'
+          + '<circle cx="66" cy="42" r="1.5" fill="#ffd0a0" opacity=".7"/><circle cx="24" cy="40" r="1.2" fill="#ffd0a0" opacity=".6"/>'; }
+      ]
+    ][season];
+
+    const scene = scenes[pick % scenes.length]();
 
     const stars = night
       ? '<circle cx="24" cy="14" r="1.1" fill="#fff" opacity=".8"/><circle cx="46" cy="9" r="0.9" fill="#fff" opacity=".6"/>'
-        + '<circle cx="66" cy="17" r="1" fill="#fff" opacity=".55"/>'
+        + '<circle cx="66" cy="17" r="1" fill="#fff" opacity=".55"/><circle cx="118" cy="11" r="0.9" fill="#fff" opacity=".5"/>'
       : '';
 
+    // 「のち」…数時間先が変わるときだけ、小さく出す
+    let later = '';
+    if(typeof o.next === 'number'){
+      later = '<path d="M112 20 h8" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>'
+            + '<path d="M118 17.5 l3 2.5 l-3 2.5" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>'
+            + weatherArt(o.next, 130, 20, .55);
+    }
+
     const temp = (o.temp === null || o.temp === undefined) ? '--' : Math.round(o.temp);
-    const hum  = (o.hum === null || o.hum === undefined) ? '--' : Math.round(o.hum);
+    const hum  = (o.hum  === null || o.hum  === undefined) ? '--' : Math.round(o.hum);
 
     return '<svg viewBox="0 0 224 64" width="224" height="64" aria-hidden="true">'
-      + '<defs>'
-      + '<linearGradient id="'+uid+'Sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+sky1+'"/><stop offset="100%" stop-color="'+sky2+'"/></linearGradient>'
-      + '<clipPath id="'+uid+'Clip"><rect x="0" y="0" width="224" height="64" rx="15"/></clipPath>'
-      + '</defs>'
+      + '<defs><linearGradient id="'+uid+'Sky" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="'+sky1+'"/><stop offset="100%" stop-color="'+sky2+'"/></linearGradient>'
+      + '<clipPath id="'+uid+'Clip"><rect x="0" y="0" width="224" height="64" rx="15"/></clipPath></defs>'
       + '<g clip-path="url(#'+uid+'Clip)">'
       + '<rect width="224" height="64" fill="url(#'+uid+'Sky)"/>'
       + stars
-      + wx
-      // 丘
-      + '<path d="M0 50 C22 40 44 46 68 45 C96 44 118 38 148 44 C180 50 204 47 224 50 L224 64 L0 64 Z" fill="'+hill1+'" opacity="'+(night?'.35':'.9')+'"/>'
-      + '<path d="M0 57 C30 49 58 56 92 53 C128 50 158 46 224 55 L224 64 L0 64 Z" fill="'+hill2+'" opacity="'+(night?'.5':'.95')+'"/>'
-      // 季節の木
-      + '<path d="M40 56 L40 44" stroke="'+trunk+'" stroke-width="2.6" stroke-linecap="round"/>'
-      + '<ellipse cx="40" cy="39" rx="11" ry="8.5" fill="'+canopy+'"/>'
-      + '<ellipse cx="35" cy="42" rx="7" ry="5.5" fill="'+canopy2+'" opacity=".85"/>'
-      + '<ellipse cx="45.5" cy="41.5" rx="6" ry="5" fill="'+canopy2+'" opacity=".7"/>'
-      + petal
-      // 数字を置く白い板
-      + '<rect x="140" y="9" width="76" height="46" rx="13" fill="#ffffff" opacity="'+(night?'.86':'.78')+'"/>'
+      + weatherArt(code, 88, 22, 1)
+      + later
+      + scene
+      + '<rect x="140" y="9" width="76" height="46" rx="13" fill="#ffffff" opacity="'+(night?'.9':'.86')+'"/>'
       + '<text x="178" y="32" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="20" font-weight="800" fill="#3b3548">'+temp+'°</text>'
       + '<text x="178" y="46" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="10.5" font-weight="700" fill="#8b849c">湿度 '+hum+'%</text>'
       + '</g></svg>';
@@ -4234,19 +4325,51 @@
     function draw(){
       const w = cached() || {};
       const now = new Date();
-      el.innerHTML = tsuScene({
+      // 季節の風景は日ごとに入れかわる（同じ日のあいだは変わらない）
+      const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+      const opt = {
         hour: now.getHours(),
         month: now.getMonth() + 1,
         code: (typeof w.code === 'number') ? w.code : 3,
         temp: w.temp,
-        hum:  w.hum
-      });
+        hum:  w.hum,
+        variant: doy % 4
+      };
+      if(typeof w.next === 'number') opt.next = w.next;
+      el.innerHTML = tsuScene(opt);
       const p = place();
       el.title = (p.name ? p.name + '　' : '')
         + (typeof w.code === 'number' ? codeText(w.code) + '　' : '')
         + (typeof w.temp === 'number' ? Math.round(w.temp) + '℃　' : '')
         + (typeof w.hum === 'number' ? '湿度' + Math.round(w.hum) + '%　' : '')
+        + (typeof w.next === 'number' ? 'のち' + codeText(w.next) + '　' : '')
         + '（押すと取り直します）';
+    }
+
+    // 天気を「晴れ・くもり・雨・雪・雷・霧」のどれかにまとめる
+    function family(c){
+      if(c <= 1) return 'sun';
+      if(c <= 3) return 'cloud';
+      if(c === 45 || c === 48) return 'fog';
+      if(c >= 95) return 'thunder';
+      if(c >= 71 && c <= 77 || c === 85 || c === 86) return 'snow';
+      return 'rain';
+    }
+    function laterCode(hourly, nowCode){
+      if(!hourly || !hourly.time || !hourly.weather_code) return null;
+      const now = new Date();
+      const key = now.getFullYear() + '-'
+        + String(now.getMonth()+1).padStart(2,'0') + '-'
+        + String(now.getDate()).padStart(2,'0') + 'T'
+        + String(now.getHours()).padStart(2,'0') + ':00';
+      const i = hourly.time.indexOf(key);
+      if(i === -1) return null;
+      for(let k = 2; k <= 4; k++){
+        const c = hourly.weather_code[i + k];
+        if(typeof c !== 'number') break;
+        if(family(c) !== family(nowCode)) return c;
+      }
+      return null;
     }
 
     let fetching = false;
@@ -4257,18 +4380,21 @@
       fetching = true;
       const p = place();
       const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + p.lat + '&longitude=' + p.lon
-        + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FTokyo';
+        + '&current=temperature_2m,relative_humidity_2m,weather_code'
+        + '&hourly=weather_code&forecast_days=2&timezone=Asia%2FTokyo';
       fetch(url)
         .then(function(r){ return r.json(); })
         .then(function(d){
           const c = d && d.current;
           if(!c) return;
-          try{
-            localStorage.setItem(CACHE_KEY, JSON.stringify({
-              temp: c.temperature_2m, hum: c.relative_humidity_2m,
-              code: c.weather_code, at: Date.now()
-            }));
-          }catch(e){}
+          const rec = {
+            temp: c.temperature_2m, hum: c.relative_humidity_2m,
+            code: c.weather_code, at: Date.now()
+          };
+          // 3時間先の天気が「別の種類」に変わるときだけ、「のち」を出す
+          const later = laterCode(d.hourly, c.weather_code);
+          if(later !== null) rec.next = later;
+          try{ localStorage.setItem(CACHE_KEY, JSON.stringify(rec)); }catch(e){}
           draw();
         })
         .catch(function(){ /* 取れなければ前の分をそのまま出す */ })
@@ -4282,6 +4408,47 @@
     setInterval(function(){ draw(); }, 10 * 60 * 1000);          // 時間帯の色を追う
     setInterval(function(){ fetchWeather(false); }, 30 * 60 * 1000);
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) fetchWeather(false); });
+  })();
+
+
+  // ============================================================
+  // 新しい版が上がったら、自分で読み直す
+  // ------------------------------------------------------------
+  // 直したあと ⌘R を押してもらっていたのをやめる。
+  // 自分のURLをときどき取り直して、中身が変わっていたら読み直す。
+  // ただし、入力中や箱を開けている最中は読み直さない（書きかけが消えるため）。
+  // タスクの中身そのものは Firestore が随時とどけるので、ここでは関係ない。
+  // ============================================================
+  (function(){
+    let baseline = null, checking = false, lastCheck = 0;
+    function hash(t){
+      let h = 5381;
+      for(let i = 0; i < t.length; i++){ h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; }
+      return h;
+    }
+    function busy(){
+      if(isEditingNow()) return true;
+      if(document.querySelector('.modal-overlay.show')) return true;
+      return false;
+    }
+    function check(){
+      if(checking) return;
+      if(Date.now() - lastCheck < 60000) return;   // 立て続けには見に行かない
+      lastCheck = Date.now();
+      checking = true;
+      fetch(location.href, { cache: 'reload' })
+        .then(function(r){ return r.text(); })
+        .then(function(t){
+          const h = hash(t);
+          if(baseline === null){ baseline = h; return; }   // いま動いている版を覚えるだけ
+          if(h !== baseline && !busy()) location.reload();
+        })
+        .catch(function(){})
+        .then(function(){ checking = false; });
+    }
+    setTimeout(check, 20000);
+    setInterval(check, 15 * 60 * 1000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) check(); });
   })();
 
   // ---- アプリとしてインストールできるようにする ----
