@@ -4051,6 +4051,294 @@
     });
   }
 
+
+  // ============================================================
+  // 外から中身を読み書きするための窓口（window.tsumiage）
+  // ------------------------------------------------------------
+  // Claude が「これ積み上げに入れといて」を頼まれたときに使う。
+  // これが無いと、画面を1枚ずつ読んで、ボタンを1つずつ押すことになり、
+  // 読むだけで大量の枠（トークン）を使っていた。
+  // ここを通せば、1回の呼び出しで読み書きが終わる。
+  //
+  //   tsumiage.show()                      いまの中身を番号つきの文字で返す
+  //   tsumiage.add('1.2', '小さい仕事')     1=大 / 1.2=中 / 1.2.3=小 の番号で指す
+  //   tsumiage.add(null, '大きな仕事')      番号を null にすると大きな仕事
+  //   tsumiage.edit('1.2.3', '書き直し')
+  //   tsumiage.rm(['1.2.3','1.2.4'])
+  //   tsumiage.check('1.2.1')  /  tsumiage.uncheck('1.2.1')
+  //   tsumiage.move('1', 'up')             up / down / top / bottom / 数字
+  //   tsumiage.repeat('1', true)
+  //   tsumiage.bulk('字下げテキスト', {to:'1'} または {replace:true})
+  //   tsumiage.memo('本文', {append:true})
+  //   tsumiage.undo()                      直前の1回を取り消す
+  //
+  // 画面から呼ぶものではない。押し間違いで壊れることはない。
+  // ============================================================
+  (function(){
+    let undoSnapshot = null;
+
+    function snap(){
+      undoSnapshot = JSON.stringify({bigs: state.bigs, blockOrder: state.blockOrder});
+    }
+    function orderedForBridge(){ return orderedBigs(); }
+
+    function locate(spec){
+      const parts = String(spec).split('.');
+      if(!parts.length || parts.length > 3 || !parts.every(p=> /^\d+$/.test(p) && Number(p) >= 1)){
+        throw new Error('番号の書き方が違います：' + spec + '（1 / 1.2 / 1.2.3）');
+      }
+      const n = parts.map(Number);
+      const bigs = orderedForBridge();
+      const big = bigs[n[0]-1];
+      if(!big) throw new Error(spec + ' の大きな仕事はありません（いま' + bigs.length + '件）');
+      if(n.length === 1) return {kind:'big', big:big, bi:n[0]-1};
+      const med = big.mediums[n[1]-1];
+      if(!med) throw new Error(spec + ' はありません（「' + big.title + '」の中は' + big.mediums.length + '件）');
+      if(n.length === 2) return {kind:'mid', big:big, med:med, mi:n[1]-1};
+      const item = med.items[n[2]-1];
+      if(!item) throw new Error(spec + ' はありません（「' + med.name + '」の小さい仕事は' + med.items.length + '件）');
+      return {kind:'small', big:big, med:med, item:item, mi:n[1]-1, ii:n[2]-1};
+    }
+
+    function asList(x){ return Array.isArray(x) ? x : [x]; }
+
+    function done(msg){
+      render();
+      return (msg ? msg + '\n\n' : '') + api.show();
+    }
+
+    function moveTo(len, cur, to){
+      if(to === 'up') return Math.max(0, cur - 1);
+      if(to === 'down') return Math.min(len - 1, cur + 1);
+      if(to === 'top') return 0;
+      if(to === 'bottom') return len - 1;
+      const n = Number(to);
+      if(!isFinite(n)) throw new Error('動かし先が違います：' + to + '（up / down / top / bottom / 数字）');
+      return Math.max(0, Math.min(n - 1, len - 1));
+    }
+
+    const api = {
+      version: 1,
+
+      show: function(opt){
+        opt = opt || {};
+        const bigs = orderedForBridge();
+        if(!bigs.length) return '（空）';
+        const out = [];
+        bigs.forEach((b, i)=>{
+          const fin = bigIsFinished(b);
+          if(fin && !opt.all) return;
+          const p = bigProgress(b);
+          out.push((i+1) + '. ' + (b.title || '(名前なし)') + '  [' + p.done + '/' + p.planned + ']'
+            + (b.repeatDaily ? ' 🔁' : '') + (fin ? ' ✅完了(画面には出ていません)' : ''));
+          b.mediums.forEach((m, j)=>{
+            const md = m.items.filter(it=> it.done).length;
+            out.push('   ' + (i+1) + '.' + (j+1) + ' ' + (midIsAchieved(m) ? '✓' : '・')
+              + ' ' + (m.name || '(名前なし)') + ' [' + md + '/' + m.items.length + ']');
+            m.items.forEach((it, k)=>{
+              if(it.done && opt.todo) return;
+              out.push('      ' + (i+1) + '.' + (j+1) + '.' + (k+1) + ' '
+                + (it.done ? '✓' : '□') + ' ' + it.text);
+            });
+          });
+        });
+        return out.join('\n');
+      },
+
+      json: function(){
+        return JSON.parse(JSON.stringify({bigs: state.bigs, blockOrder: state.blockOrder, memo: state.memo}));
+      },
+
+      add: function(where, texts){
+        const list = asList(texts).filter(t=> String(t||'').trim());
+        if(!list.length) throw new Error('足す文言がありません。');
+        snap();
+        if(where === null || where === undefined || where === ''){
+          list.forEach(t=>{
+            if(visibleBigCount() >= MAX_BIG) throw new Error('大きな仕事は' + MAX_BIG + '件までです。');
+            const id = nextBigId++;
+            state.bigs.push({id:id, title:String(t), wasAchieved:false, collapsed:false,
+              lastActiveAt: Date.now(), mediums:[]});
+            insertBlockKeyBeforeMemo('big:'+id);
+          });
+          return done(list.length + '件を大きな仕事に足しました。');
+        }
+        const at = locate(where);
+        if(at.kind === 'big'){
+          list.forEach(t=>{
+            if(at.big.mediums.length >= MAX_MEDIUM) throw new Error('中くらいの仕事は' + MAX_MEDIUM + '件までです。');
+            at.big.mediums.push({name:String(t), done:false, wasAchieved:false, items:[]});
+          });
+          return done('「' + at.big.title + '」に' + list.length + '件足しました。');
+        }
+        if(at.kind === 'mid'){
+          list.forEach(t=>{
+            if(at.med.items.length >= MAX_SMALL_PER_MEDIUM) throw new Error('小さい仕事は' + MAX_SMALL_PER_MEDIUM + '件までです。');
+            at.med.items.push({text:String(t), done:false, eveningReviewed:false});
+          });
+          return done('「' + at.med.name + '」に' + list.length + '件足しました。');
+        }
+        throw new Error('小さい仕事の下には足せません。1 か 1.2 を指定してください。');
+      },
+
+      edit: function(where, text){
+        const at = locate(where);
+        snap();
+        const t = String(text);
+        if(at.kind === 'big') at.big.title = t;
+        else if(at.kind === 'mid') at.med.name = t;
+        else at.item.text = t;
+        return done('書きかえました：' + t);
+      },
+
+      rm: function(where){
+        const specs = asList(where).slice().sort((a,b)=>{
+          const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+          for(let i=0;i<Math.max(pa.length,pb.length);i++){
+            const x = pa[i]||0, y = pb[i]||0;
+            if(x !== y) return y - x;   // うしろから消す（番号がずれないように）
+          }
+          return pb.length - pa.length;
+        });
+        snap();
+        const names = [];
+        specs.forEach(spec=>{
+          const at = locate(spec);
+          if(at.kind === 'big'){
+            names.push(at.big.title);
+            state.bigs = state.bigs.filter(b=> b !== at.big);
+            state.blockOrder = state.blockOrder.filter(k=> k !== 'big:' + at.big.id);
+          } else if(at.kind === 'mid'){
+            names.push(at.med.name);
+            at.big.mediums.splice(at.mi, 1);
+          } else {
+            names.push(at.item.text);
+            at.med.items.splice(at.ii, 1);
+          }
+        });
+        return done('消しました：' + names.join('／'));
+      },
+
+      check: function(where, opt){
+        opt = opt || {};
+        const value = opt.value === false ? false : true;
+        snap();
+        const names = [];
+        asList(where).forEach(spec=>{
+          const at = locate(spec);
+          const target = at.kind === 'big' ? at.big : (at.kind === 'mid' ? at.med : at.item);
+          const was = at.kind === 'small' ? !!target.done : target.done === true;
+          if(at.kind === 'small'){ target.done = value; if(!value) target.eveningReviewed = false; }
+          else target.done = value;
+          names.push((value ? '✓ ' : '□ ') + (target.text || target.name || target.title));
+          // 画面で押したときと同じように、点数と記録も入れる（すでに同じ状態なら何もしない）
+          if(value && !was && opt.points !== false){
+            markBigMoved(at.big);
+            addBlocks(1);
+            recordDone(at.kind === 'small' ? 'small' : (at.kind === 'mid' ? 'mid' : 'big'),
+              at.big.title, at.med ? at.med.name : '', at.item ? at.item.text : '');
+          }
+        });
+        return done(names.join('\n'));
+      },
+
+      uncheck: function(where){ return api.check(where, {value:false}); },
+
+      move: function(where, to){
+        const at = locate(where);
+        snap();
+        if(at.kind === 'big'){
+          syncBlockOrder();
+          const keys = state.blockOrder.filter(k=> k.indexOf('big:') === 0);
+          const cur = keys.indexOf('big:' + at.big.id);
+          const dest = moveTo(keys.length, cur, to);
+          keys.splice(dest, 0, keys.splice(cur, 1)[0]);
+          state.blockOrder = keys.concat(['memo']);
+          return done('「' + at.big.title + '」を' + (dest+1) + '番目にしました。');
+        }
+        if(at.kind === 'mid'){
+          const list = at.big.mediums;
+          const dest = moveTo(list.length, at.mi, to);
+          list.splice(dest, 0, list.splice(at.mi, 1)[0]);
+          return done('「' + at.med.name + '」を' + (dest+1) + '番目にしました。');
+        }
+        const list = at.med.items;
+        const dest = moveTo(list.length, at.ii, to);
+        list.splice(dest, 0, list.splice(at.ii, 1)[0]);
+        return done('「' + at.item.text + '」を' + (dest+1) + '番目にしました。');
+      },
+
+      repeat: function(where, on){
+        const at = locate(where, 'big');
+        if(at.kind !== 'big') throw new Error('🔁は大きな仕事だけです。');
+        snap();
+        at.big.repeatDaily = (on === undefined) ? !at.big.repeatDaily : !!on;
+        return done('「' + at.big.title + '」の毎日くりかえし：' + (at.big.repeatDaily ? 'オン' : 'オフ'));
+      },
+
+      bulk: function(text, opt){
+        opt = opt || {};
+        const parsed = parseBulkText(text);
+        if(!parsed.bigs.length) throw new Error('取りこむ内容がありません。');
+        snap();
+        const notes = [];
+        if(opt.to){
+          const at = locate(opt.to);
+          if(at.kind !== 'big') throw new Error('--to は大きな仕事の番号（例：1）を指定してください。');
+          parsed.bigs.forEach(p=>{
+            if(at.big.mediums.length >= MAX_MEDIUM){ notes.push('中くらいの仕事が上限のため、残りは入れていません。'); return; }
+            const items = [];
+            p.mediums.forEach(m=>{ items.push(m.name); m.items.forEach(t=> items.push(t)); });
+            at.big.mediums.push({name:p.title, done:false, wasAchieved:false,
+              items: items.slice(0, MAX_SMALL_PER_MEDIUM).map(t=>({text:t, done:false, eveningReviewed:false}))});
+          });
+        } else {
+          if(opt.replace){
+            state.bigs = [];
+            state.blockOrder = state.blockOrder.filter(k=> k.indexOf('big:') !== 0);
+          }
+          let added = 0, left = 0;
+          parsed.bigs.forEach(b=>{
+            if(visibleBigCount() >= MAX_BIG){ left++; return; }
+            const id = nextBigId++;
+            state.bigs.push({id:id, title:b.title, wasAchieved:false, collapsed:false,
+              lastActiveAt: Date.now(),
+              mediums: b.mediums.map(m=>({name:m.name, done:false, wasAchieved:false,
+                items: m.items.map(t=>({text:t, done:false, eveningReviewed:false}))}))});
+            insertBlockKeyBeforeMemo('big:'+id);
+            added++;
+          });
+          notes.push(added + '件の大きな仕事を入れました。');
+          if(left) notes.push('※ ' + left + '件は上限（大' + MAX_BIG + '件）で入りませんでした。');
+        }
+        parsed.warnings.forEach(w=> notes.push('※ ' + w));
+        return done(notes.join('\n'));
+      },
+
+      memo: function(text, opt){
+        opt = opt || {};
+        if(text === undefined) return state.memo || '（メモは空です）';
+        state.memo = opt.append ? ((state.memo ? state.memo + '\n' : '') + text) : String(text);
+        scheduleMemoSave();
+        render();
+        return 'メモを保存しました（' + state.memo.length + '文字）。\n---\n' + state.memo;
+      },
+
+      undo: function(){
+        if(!undoSnapshot) return '取り消せる操作がありません。';
+        const d = JSON.parse(undoSnapshot);
+        undoSnapshot = null;
+        state.bigs = d.bigs;
+        state.blockOrder = d.blockOrder;
+        return done('直前の操作を取り消しました。');
+      },
+
+      help: 'show / json / add(where,texts) / edit(where,text) / rm(where) / check(where) / uncheck(where) / move(where,to) / repeat(where,on) / bulk(text,{to,replace}) / memo(text,{append}) / undo'
+    };
+
+    window.tsumiage = api;
+  })();
+
   render();
 
   // ---- アプリとしてインストールできるようにする ----
