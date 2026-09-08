@@ -68,6 +68,14 @@
     font-size:10.5px; color:var(--sub); font-weight:700;
     margin-top:5px; letter-spacing:.03em;
   }
+  .header-art{
+    flex:1; min-width:0;
+    display:flex; justify-content:center; align-items:flex-start;
+    cursor:pointer;
+  }
+  .header-art svg{ display:block; max-width:100%; height:auto; }
+  @media (max-width:560px){ .header-art{ display:none; } }
+
   .header-row{
     display:flex;
     align-items:flex-start;
@@ -361,14 +369,6 @@
   .move-btns.tiny .move-btn{ width:20px; height:14px; font-size:7px; border-radius:5px; opacity:.5; }
   .move-btns.tiny .move-btn:hover{ opacity:1; }
 
-  .sort-row{ display:flex; justify-content:flex-end; margin:0 0 8px; }
-  .sort-btn{
-    border:1px solid var(--line); background:#fff; color:var(--sub);
-    font-family:inherit; font-size:11px; padding:5px 10px;
-    border-radius:999px; cursor:pointer;
-    transition:background .15s ease, color .15s ease;
-  }
-  .sort-btn:hover{ background:var(--mid-bg); color:var(--mid); }
 
   .repeat-btn{
     flex:none;
@@ -1279,6 +1279,7 @@
         <div class="date-pill" id="today-date"></div>
         <div class="year-progress" id="year-progress"></div>
       </div>
+      <div class="header-art" id="header-art" title="押すと天気を取り直します"></div>
       <div class="account-box" id="account-box">
         <button class="login-btn" id="login-btn" style="display:none;">Googleでログイン</button>
         <div class="user-chip" id="user-chip" style="display:none;">
@@ -1305,10 +1306,6 @@
     </div>
   </div>
 
-
-  <div class="sort-row" id="sort-row">
-    <button class="sort-btn" id="sort-stall-btn" type="button">放っている日数の長い順に並べる</button>
-  </div>
 
   <div class="blocks" id="blocks"></div>
 
@@ -2101,7 +2098,6 @@
     // 並びは自分で決める（大カードの▲▼で動かす）。順番は blockOrder に覚えておく。
     // 【2026-09-08の修正】ここで「放っている日数の長い順」に毎回並べ替えていたので、
     // ▲▼で動かしても描き直すたびに元へ戻り、並べ替えができなくなっていた。
-    // 放置の長い順に並べたいときは、上のボタンで、そのときだけ並べ直す。
     // 終わった大きな仕事は、この画面に出さない（何をやったかは「これまでやったこと」で読む）。
     const ordered = orderedBigs();
     ordered.forEach(big=>{
@@ -2135,19 +2131,6 @@
 
     scheduleSave();
   }
-
-  // 放置の長い順に、そのときだけ並べ直す（毎回の自動並べ替えはしない）
-  document.getElementById('sort-stall-btn').addEventListener('click', ()=>{
-    syncBlockOrder();
-    const sorted = state.bigs.slice().sort((a,b)=>{
-      const da = (typeof a.lastActiveAt === 'number') ? a.lastActiveAt : Date.now();
-      const db = (typeof b.lastActiveAt === 'number') ? b.lastActiveAt : Date.now();
-      return da - db;   // 古いものが上
-    });
-    state.blockOrder = sorted.map(b=> 'big:'+b.id).concat(['memo']);
-    render();
-    showToast('放っている日数の長い順に並べました。');
-  });
 
   document.getElementById('big-add-btn').addEventListener('click', addBig);
   document.getElementById('big-input').addEventListener('keydown', e=>{
@@ -4089,6 +4072,217 @@
   })();
 
   render();
+
+  // ============================================================
+  // 日付の横の絵：空（時間帯）＋季節の木＋いまの天気
+  // 天気は Open-Meteo（無料・登録も鍵もいらない）から取る。
+  // 取れなかったときは、前に取れた分をそのまま出す（数字だけ古くなる）。
+  // 場所を変えるには、画面の裏で setWeatherPlace(緯度, 経度, '名前') を呼ぶ。
+  // ============================================================
+  // ---- 日付の横の絵：空（時間帯）＋季節の木＋いまの天気 ----
+  // 動きは付けない。うるさくなるので、変わるのは色と絵だけ。
+  function tsuScene(o){
+    const uid = 'ts' + Math.random().toString(36).slice(2,8);   // 同じ画面に2つ出しても混ざらないように
+    const h = o.hour, m = o.month, code = o.code;
+    const night = (h < 5 || h >= 19);
+    const dusk  = (h >= 16 && h < 19);
+    const dawn  = (h >= 5 && h < 8);
+
+    let sky1, sky2, hill1, hill2, ink;
+    if(night)      { sky1='#20305c'; sky2='#43578c'; ink='#eef2fb'; }
+    else if(dawn)  { sky1='#ffd2ad'; sky2='#d6e9f8'; ink='#4a4458'; }
+    else if(dusk)  { sky1='#ffb579'; sky2='#ffe3c6'; ink='#4a4458'; }
+    else           { sky1='#a9dcf7'; sky2='#e7f5fd'; ink='#4a4458'; }
+
+    // 季節で、丘と木の色が変わる
+    let canopy, canopy2, trunk, hillA, hillB, petal = '';
+    if(m>=3 && m<=5){        // 春
+      canopy='#ffc9dc'; canopy2='#ffb1cb'; trunk='#a98268'; hillA='#cfe8c4'; hillB='#b7dcab';
+      petal = '<circle cx="52" cy="40" r="1.5" fill="#ffb1cb"/><circle cx="60" cy="47" r="1.3" fill="#ffc9dc"/>'
+            + '<circle cx="44" cy="46" r="1.2" fill="#ffc9dc"/>';
+    } else if(m>=6 && m<=8){ // 夏
+      canopy='#7ecb8a'; canopy2='#57b06c'; trunk='#9b7458'; hillA='#bfe3b4'; hillB='#9ed394';
+    } else if(m>=9 && m<=11){// 秋
+      canopy='#f3b063'; canopy2='#e07f3e'; trunk='#a07352'; hillA='#e7d9b6'; hillB='#d8c395';
+      petal = '<circle cx="53" cy="42" r="1.5" fill="#e07f3e"/><circle cx="43" cy="48" r="1.3" fill="#f3b063"/>';
+    } else {                 // 冬
+      canopy='#dbe6f0'; canopy2='#c3d5e6'; trunk='#8d7f77'; hillA='#eef4fa'; hillB='#dde8f2';
+    }
+    hill1 = hillA; hill2 = hillB;
+
+    // ---- 天気の絵 ----
+    function sun(x,y,r,c){
+      let s = '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'"/>';
+      return s;
+    }
+    function moon(x,y,r){
+      return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#f6f2df"/>'
+           + '<circle cx="'+(x-r*0.42)+'" cy="'+(y-r*0.3)+'" r="'+(r*0.92)+'" fill="'+sky1+'"/>';
+    }
+    function cloud(x,y,s,c,op){
+      return '<g opacity="'+(op||1)+'"><ellipse cx="'+x+'" cy="'+y+'" rx="'+(13*s)+'" ry="'+(7.5*s)+'" fill="'+c+'"/>'
+           + '<ellipse cx="'+(x-8*s)+'" cy="'+(y+2.5*s)+'" rx="'+(9*s)+'" ry="'+(5.5*s)+'" fill="'+c+'"/>'
+           + '<ellipse cx="'+(x+9*s)+'" cy="'+(y+2*s)+'" rx="'+(8*s)+'" ry="'+(5*s)+'" fill="'+c+'"/></g>';
+    }
+    function drops(x,y,c){
+      let s='';
+      [[-9,0],[0,3],[9,1]].forEach(function(d){
+        s += '<path d="M'+(x+d[0])+' '+(y+d[1])+' l-1.6 5.2 a1.9 1.9 0 0 0 3.2 0 Z" fill="'+c+'"/>';
+      });
+      return s;
+    }
+    function flakes(x,y,c){
+      let s='';
+      [[-9,1],[0,4],[9,2]].forEach(function(d){
+        s += '<circle cx="'+(x+d[0])+'" cy="'+(y+d[1]+2)+'" r="1.9" fill="'+c+'"/>';
+      });
+      return s;
+    }
+    function bolt(x,y){
+      return '<path d="M'+x+' '+y+' l-5 8 h4 l-3 7 l9 -10 h-4.5 l3 -5 Z" fill="#ffcf4d"/>';
+    }
+
+    const CX = 96, CY = 24;                    // 天気の絵を置くところ
+    const light = night ? '#f6f2df' : '#ffd76b';
+    let wx = '';
+    const c = code;
+    if(c === 0){                               // 快晴
+      wx = night ? moon(CX,CY,10) : sun(CX,CY,11,light);
+    } else if(c <= 2){                         // 晴れ〜うすぐもり
+      wx = (night ? moon(CX-7,CY-3,9) : sun(CX-7,CY-3,10,light)) + cloud(CX+5,CY+5,1,'#ffffff',.95);
+    } else if(c === 3){                        // くもり
+      wx = cloud(CX-4,CY,1,'#ffffff',.95) + cloud(CX+8,CY+4,.8,'#e6ecf3',.95);
+    } else if(c === 45 || c === 48){           // 霧
+      wx = cloud(CX,CY,1,'#eef2f6',.9)
+         + '<path d="M'+(CX-14)+' '+(CY+13)+' h28 M'+(CX-10)+' '+(CY+18)+' h22" stroke="#dbe3ec" stroke-width="2.4" stroke-linecap="round"/>';
+    } else if(c >= 71 && c <= 77 || c === 85 || c === 86){   // 雪
+      wx = cloud(CX,CY-2,1,'#e9eff6',.98) + flakes(CX,CY+8,'#ffffff');
+    } else if(c >= 95){                        // 雷
+      wx = cloud(CX,CY-2,1,'#c9d3de',.98) + bolt(CX,CY+7);
+    } else {                                   // 雨（霧雨・にわか雨をふくむ）
+      wx = cloud(CX,CY-2,1,'#dfe7ef',.98) + drops(CX,CY+8,'#7fb6e0');
+    }
+
+    const stars = night
+      ? '<circle cx="24" cy="14" r="1.1" fill="#fff" opacity=".8"/><circle cx="46" cy="9" r="0.9" fill="#fff" opacity=".6"/>'
+        + '<circle cx="66" cy="17" r="1" fill="#fff" opacity=".55"/>'
+      : '';
+
+    const temp = (o.temp === null || o.temp === undefined) ? '--' : Math.round(o.temp);
+    const hum  = (o.hum === null || o.hum === undefined) ? '--' : Math.round(o.hum);
+
+    return '<svg viewBox="0 0 224 64" width="224" height="64" aria-hidden="true">'
+      + '<defs>'
+      + '<linearGradient id="'+uid+'Sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+sky1+'"/><stop offset="100%" stop-color="'+sky2+'"/></linearGradient>'
+      + '<clipPath id="'+uid+'Clip"><rect x="0" y="0" width="224" height="64" rx="15"/></clipPath>'
+      + '</defs>'
+      + '<g clip-path="url(#'+uid+'Clip)">'
+      + '<rect width="224" height="64" fill="url(#'+uid+'Sky)"/>'
+      + stars
+      + wx
+      // 丘
+      + '<path d="M0 50 C22 40 44 46 68 45 C96 44 118 38 148 44 C180 50 204 47 224 50 L224 64 L0 64 Z" fill="'+hill1+'" opacity="'+(night?'.35':'.9')+'"/>'
+      + '<path d="M0 57 C30 49 58 56 92 53 C128 50 158 46 224 55 L224 64 L0 64 Z" fill="'+hill2+'" opacity="'+(night?'.5':'.95')+'"/>'
+      // 季節の木
+      + '<path d="M40 56 L40 44" stroke="'+trunk+'" stroke-width="2.6" stroke-linecap="round"/>'
+      + '<ellipse cx="40" cy="39" rx="11" ry="8.5" fill="'+canopy+'"/>'
+      + '<ellipse cx="35" cy="42" rx="7" ry="5.5" fill="'+canopy2+'" opacity=".85"/>'
+      + '<ellipse cx="45.5" cy="41.5" rx="6" ry="5" fill="'+canopy2+'" opacity=".7"/>'
+      + petal
+      // 数字を置く白い板
+      + '<rect x="140" y="9" width="76" height="46" rx="13" fill="#ffffff" opacity="'+(night?'.86':'.78')+'"/>'
+      + '<text x="178" y="32" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="20" font-weight="800" fill="#3b3548">'+temp+'°</text>'
+      + '<text x="178" y="46" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="10.5" font-weight="700" fill="#8b849c">湿度 '+hum+'%</text>'
+      + '</g></svg>';
+  }
+
+  (function(){
+    const el = document.getElementById('header-art');
+    if(!el) return;
+    const CACHE_KEY = 'tsumiage_weather';
+    const PLACE_KEY = 'tsumiage_weather_place';
+    const DEFAULT_PLACE = { lat: 34.6937, lon: 135.5023, name: '大阪' };
+
+    function place(){
+      try{
+        const v = JSON.parse(localStorage.getItem(PLACE_KEY));
+        if(v && typeof v.lat === 'number' && typeof v.lon === 'number') return v;
+      }catch(e){}
+      return DEFAULT_PLACE;
+    }
+    window.setWeatherPlace = function(lat, lon, name){
+      try{ localStorage.setItem(PLACE_KEY, JSON.stringify({lat:lat, lon:lon, name:name||''})); }catch(e){}
+      fetchWeather(true);
+      return (name||'') + ' の天気にしました。';
+    };
+
+    function cached(){
+      try{ return JSON.parse(localStorage.getItem(CACHE_KEY)); }catch(e){ return null; }
+    }
+
+    function codeText(c){
+      if(c === 0) return '快晴';
+      if(c <= 2) return '晴れ';
+      if(c === 3) return 'くもり';
+      if(c === 45 || c === 48) return '霧';
+      if(c >= 71 && c <= 77 || c === 85 || c === 86) return '雪';
+      if(c >= 95) return '雷雨';
+      if(c >= 51) return '雨';
+      return '';
+    }
+
+    function draw(){
+      const w = cached() || {};
+      const now = new Date();
+      el.innerHTML = tsuScene({
+        hour: now.getHours(),
+        month: now.getMonth() + 1,
+        code: (typeof w.code === 'number') ? w.code : 3,
+        temp: w.temp,
+        hum:  w.hum
+      });
+      const p = place();
+      el.title = (p.name ? p.name + '　' : '')
+        + (typeof w.code === 'number' ? codeText(w.code) + '　' : '')
+        + (typeof w.temp === 'number' ? Math.round(w.temp) + '℃　' : '')
+        + (typeof w.hum === 'number' ? '湿度' + Math.round(w.hum) + '%　' : '')
+        + '（押すと取り直します）';
+    }
+
+    let fetching = false;
+    function fetchWeather(force){
+      const w = cached();
+      if(!force && w && (Date.now() - (w.at || 0)) < 30 * 60 * 1000){ draw(); return; }
+      if(fetching) return;
+      fetching = true;
+      const p = place();
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + p.lat + '&longitude=' + p.lon
+        + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FTokyo';
+      fetch(url)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          const c = d && d.current;
+          if(!c) return;
+          try{
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+              temp: c.temperature_2m, hum: c.relative_humidity_2m,
+              code: c.weather_code, at: Date.now()
+            }));
+          }catch(e){}
+          draw();
+        })
+        .catch(function(){ /* 取れなければ前の分をそのまま出す */ })
+        .then(function(){ fetching = false; });
+    }
+
+    el.addEventListener('click', function(){ fetchWeather(true); });
+
+    draw();                                   // まず前の分を出す（真っ白にしない）
+    fetchWeather(false);
+    setInterval(function(){ draw(); }, 10 * 60 * 1000);          // 時間帯の色を追う
+    setInterval(function(){ fetchWeather(false); }, 30 * 60 * 1000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) fetchWeather(false); });
+  })();
 
   // ---- アプリとしてインストールできるようにする ----
   if('serviceWorker' in navigator){
