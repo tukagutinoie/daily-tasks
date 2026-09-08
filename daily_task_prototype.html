@@ -74,7 +74,13 @@
     cursor:pointer;
   }
   .header-art svg{ display:block; width:100%; max-width:224px; height:auto; }
-  /* 窓が狭いときは、日付とアカウントで埋まるので出さない（スマホぐらいの幅） */
+  /* 窓が狭いときは、日付の下に1段落として大きく出す（横に並べると小さくて読めない） */
+  @media (max-width:700px){
+    .header-row{ flex-wrap:wrap; }
+    .header-art{ order:3; flex:0 0 100%; max-width:none; margin-top:10px; }
+    .header-art svg{ width:auto; max-width:100%; height:88px; }
+  }
+  /* スマホぐらいの幅では出さない */
   @media (max-width:430px){ .header-art{ display:none; } }
 
   .header-row{
