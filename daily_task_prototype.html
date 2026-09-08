@@ -1075,73 +1075,6 @@
   }
   .cal-btn:hover{box-shadow:0 16px 32px rgba(47,143,216,0.32); transform:translateY(-1px);}
 
-  /* ---------- いまの状態を映す帯 ---------- */
-  /* 点数や位はやめた。自分でチェックを押して増やした数字は、見ても新しいことが分からない。
-     ここに出すのは、記録から出てくるものだけ。 */
-  .facts-card{
-    background:var(--card);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    margin-bottom:18px;
-    padding:13px 14px;
-    display:flex; align-items:center; gap:12px;
-  }
-  .facts-ico{ flex:none; width:54px; height:54px; }
-  .facts-ico svg{ display:block; overflow:visible; }
-  .facts-main{ flex:1; min-width:0; }
-  /* ゆっくりした呼吸だけ。動きすぎるとうるさい */
-  .chara-body{ transform-origin:36px 64px; animation:charaBreath 3.6s ease-in-out infinite; }
-  .chara-shadow{ transform-origin:36px 66px; animation:charaShadow 3.6s ease-in-out infinite; }
-  @keyframes charaBreath{
-    0%,100%{ transform:scale(1,1); }
-    50%    { transform:scale(1.035,0.972); }
-  }
-  @keyframes charaShadow{
-    0%,100%{ transform:scale(1,1); opacity:1; }
-    50%    { transform:scale(1.09,1); opacity:.85; }
-  }
-  @media (prefers-reduced-motion: reduce){
-    .chara-body, .chara-shadow{ animation:none; }
-  }
-  .fact-stall{
-    display:flex; align-items:center; gap:9px;
-    border-radius:var(--radius-sm);
-    padding:12px 13px;
-    font-size:13.5px; font-weight:700; line-height:1.5;
-    background:#fff5e9; color:#8a5a17;
-    cursor:pointer;
-    transition:background .2s ease;
-  }
-  .fact-stall:hover{ background:#ffefdc; }
-  .fact-stall.calm{
-    background:var(--card-soft); color:var(--sub);
-    font-weight:600; cursor:default;
-  }
-  .fact-stall.calm:hover{ background:var(--card-soft); }
-  .fact-stall .fs-ico{ flex:none; font-size:14px; line-height:1.2; }
-  .fact-stall .fs-txt{ flex:1; min-width:0; }
-  .fact-stall .fs-txt b{ color:#7a4a08; font-variant-numeric:tabular-nums; }
-  .fact-stall .fs-more{
-    flex:none; font-size:11px; font-weight:800; opacity:.75;
-    white-space:nowrap;
-  }
-  .fact-row{
-    display:flex; align-items:baseline; justify-content:space-between;
-    gap:10px; margin:12px 4px 2px;
-    font-size:13px; font-variant-numeric:tabular-nums;
-  }
-  .fact-week{ font-weight:800; color:var(--text); }
-  .fact-week .fw-last{ color:var(--sub); font-weight:700; }
-  .fact-streak{ font-weight:800; color:var(--text); white-space:nowrap; }
-  .fact-streak .fs-off{ color:var(--sub); font-weight:700; }
-  .big-flash{
-    animation:bigFlash 1.5s ease;
-  }
-  @keyframes bigFlash{
-    0%,100%{ box-shadow:var(--shadow); }
-    22%,62%{ box-shadow:0 0 0 3px rgba(255,168,64,.6), var(--shadow); }
-  }
-
   .cal-card{
     background:var(--card);
     border-radius:var(--radius);
@@ -1294,9 +1227,6 @@
     .plus-btn{ width:44px; height:44px; }
     .repeat-btn{ font-size:17px; padding:6px; }
     .review-btn, .cal-btn{ padding:16px; font-size:15px; }
-    .facts-card{ padding:11px 12px; gap:10px; }
-    .facts-ico{ width:48px; height:48px; }
-    .fact-row{ flex-wrap:wrap; row-gap:7px; margin:11px 3px 2px; }
     .cal-head{ padding:13px 13px; gap:7px; }
     .cal-title{ font-size:13.5px; }
     .cal-status{ font-size:10px; max-width:42%; }
@@ -1338,19 +1268,6 @@
       <stop offset="0%" stop-color="#7fd3f2"/>
       <stop offset="100%" stop-color="#3f9ad8"/>
     </linearGradient>
-    <linearGradient id="dogB" x1="20%" y1="0%" x2="80%" y2="100%">
-      <stop offset="0%" stop-color="#ffd9a4"/>
-      <stop offset="52%" stop-color="#f7bb70"/>
-      <stop offset="100%" stop-color="#e79c46"/>
-    </linearGradient>
-    <linearGradient id="dogC" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#fffdf8"/>
-      <stop offset="100%" stop-color="#ffeed6"/>
-    </linearGradient>
-    <radialGradient id="dogSh" cx="50%" cy="50%">
-      <stop offset="0%" stop-color="#a8752f" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#a8752f" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 </svg>
 
@@ -1388,17 +1305,6 @@
     </div>
   </div>
 
-
-  <div class="facts-card" id="facts-card">
-    <div class="facts-ico" id="facts-ico"></div>
-    <div class="facts-main">
-      <div class="fact-stall" id="fact-stall"></div>
-      <div class="fact-row">
-        <div class="fact-week" id="fact-week"></div>
-        <div class="fact-streak" id="fact-streak"></div>
-      </div>
-    </div>
-  </div>
 
   <div class="sort-row" id="sort-row">
     <button class="sort-btn" id="sort-stall-btn" type="button">放っている日数の長い順に並べる</button>
@@ -2227,7 +2133,6 @@
       bigFullMsg.style.display = 'none';
     }
 
-    updateFactsCard();
     scheduleSave();
   }
 
@@ -3379,7 +3284,6 @@
     if(!n || n < 0) return;
     totalBlocks += n;
     recordDayPoints(n);
-    updateFactsCard();
     if(FIREBASE_READY && currentUser){
       profileRefForUser(currentUser.uid)
         .set({ totalBlocks: totalBlocks }, {merge:true})
@@ -3407,7 +3311,6 @@
   // レベル・位・城はやめた。自分でチェックを押して増やした数字は、
   // 見ても新しいことが何も分からないので、見なくなる。
 
-  const STALL_DAYS = 2;   // これ以上なにも終わっていない大きな仕事を「進んでいない」とみなす
 
   function dateKeyOf(d){
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -3440,156 +3343,6 @@
     if(big) big.lastActiveAt = Date.now();
   }
 
-  function stalledBigs(){
-    return state.bigs
-      .filter(b=> b.title && b.title.trim())
-      .filter(b=> typeof b.lastActiveAt === 'number')
-      .filter(b=> !bigProgress(b).achieved)
-      .map(b=> ({ big: b, days: daysSinceMs(b.lastActiveAt) }))
-      .filter(x=> x.days >= STALL_DAYS)
-      .sort((a,b)=> b.days - a.days);
-  }
-
-  // 週は月曜はじまり。0が今週、1が先週、-1が来週のあたま。
-  function weekStart(offsetWeeks){
-    const d = new Date(); d.setHours(0,0,0,0);
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - offsetWeeks * 7);
-    return d;
-  }
-  function countInRange(from, to){
-    let n = 0;
-    const d = new Date(from);
-    while(d < to){ n += (dayLog[dateKeyOf(d)] || 0); d.setDate(d.getDate() + 1); }
-    return n;
-  }
-
-  function shortTitle(t){
-    const one = String(t || '').replace(/\s+/g, ' ').trim();
-    return one.length > 22 ? one.slice(0, 21) + '…' : one;
-  }
-
-
-  // ---- 柴犬 ----
-  // 言葉は持たせない。ランダムな励ましを回すと、絵が何であれ1週間で飽きるため。
-  // 表情だけが、いまの状態で変わる：
-  //   worry = 止まっている仕事がある／happy = 出しているものが全部終わった／calm = ふだん
-  function dogEyes(mood){
-    if(mood === 'happy'){
-      return '<path d="M25.2 27.6 C27 24.6 30.6 24.6 32.4 27.6" stroke="#332c26" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
-           + '<path d="M39.6 27.6 C41.4 24.6 45 24.6 46.8 27.6" stroke="#332c26" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
-    }
-    if(mood === 'worry'){
-      return '<ellipse cx="28.8" cy="27.6" rx="2.6" ry="3.1" fill="#332c26"/><ellipse cx="43.2" cy="27.6" rx="2.6" ry="3.1" fill="#332c26"/>'
-           + '<circle cx="29.7" cy="26.5" r=".95" fill="#fff"/><circle cx="44.1" cy="26.5" r=".95" fill="#fff"/>'
-           + '<path d="M24.6 21.6 C26.8 20.4 29.4 20.8 31 22.2" stroke="#6b5a49" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
-           + '<path d="M47.4 21.6 C45.2 20.4 42.6 20.8 41 22.2" stroke="#6b5a49" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
-    }
-    return '<ellipse cx="28.8" cy="26.8" rx="2.6" ry="3.2" fill="#332c26"/><ellipse cx="43.2" cy="26.8" rx="2.6" ry="3.2" fill="#332c26"/>'
-         + '<circle cx="29.8" cy="25.6" r="1" fill="#fff"/><circle cx="44.2" cy="25.6" r="1" fill="#fff"/>';
-  }
-
-  function dogSVG(mood){
-    return '<svg viewBox="0 0 72 72" width="100%" height="100%">'
-      + '<ellipse class="chara-shadow" cx="36" cy="66.5" rx="18.5" ry="4.2" fill="url(#dogSh)"/>'
-      + '<g class="chara-body">'
-      // 体
-      + '<path d="M36 29 C47.4 29 54.6 39.4 54.6 50 C54.6 59.4 46.4 64.5 36 64.5 C25.6 64.5 17.4 59.4 17.4 50 C17.4 39.4 24.6 29 36 29 Z" fill="url(#dogB)"/>'
-      + '<path d="M36 39.5 C41.2 39.5 44.8 46.6 44.8 53 C44.8 59.8 40.8 64 36 64 C31.2 64 27.2 59.8 27.2 53 C27.2 46.6 30.8 39.5 36 39.5 Z" fill="url(#dogC)" opacity=".95"/>'
-      // 耳（角を丸めて、頭からなめらかに立ち上げる）
-      + '<path d="M19.8 17.4 C17.2 10.4 20.2 6.6 24.8 8.8 C28.6 10.6 31.2 14.2 32.6 17.8 C27.8 16.6 23.2 16.5 19.8 17.4 Z" fill="url(#dogB)"/>'
-      + '<path d="M52.2 17.4 C54.8 10.4 51.8 6.6 47.2 8.8 C43.4 10.6 40.8 14.2 39.4 17.8 C44.2 16.6 48.8 16.5 52.2 17.4 Z" fill="url(#dogB)"/>'
-      + '<path d="M22.4 15.6 C21.2 11.8 22.6 9.8 25 11 C27.2 12.1 28.8 14.2 29.8 16.4 C27.2 15.8 24.6 15.4 22.4 15.6 Z" fill="#e7a37c" opacity=".8"/>'
-      + '<path d="M49.6 15.6 C50.8 11.8 49.4 9.8 47 11 C44.8 12.1 43.2 14.2 42.2 16.4 C44.8 15.8 47.4 15.4 49.6 15.6 Z" fill="#e7a37c" opacity=".8"/>'
-      // 頭
-      + '<path d="M36 7.5 C47.6 7.5 55.4 16 55.4 26 C55.4 36 47.4 42.6 36 42.6 C24.6 42.6 16.6 36 16.6 26 C16.6 16 24.4 7.5 36 7.5 Z" fill="url(#dogB)"/>'
-      // 顔まわりの白
-      + '<path d="M36 21.4 C44.6 21.4 50 27 50 32.8 C50 38.8 43.6 43 36 43 C28.4 43 22 38.8 22 32.8 C22 27 27.4 21.4 36 21.4 Z" fill="url(#dogC)"/>'
-      + '<ellipse cx="24.4" cy="19.6" rx="4.4" ry="3.4" fill="url(#dogC)" opacity=".9"/>'
-      + '<ellipse cx="47.6" cy="19.6" rx="4.4" ry="3.4" fill="url(#dogC)" opacity=".9"/>'
-      + dogEyes(mood)
-      // 鼻と口
-      + '<path d="M36 31.4 C38.3 31.4 39.1 33.1 37.9 34.4 C37 35.3 35 35.3 34.1 34.4 C32.9 33.1 33.7 31.4 36 31.4 Z" fill="#3a332d"/>'
-      + '<path d="M36 34.8 L36 36.8" stroke="#3a332d" stroke-width="1.3" stroke-linecap="round"/>'
-      + '<path d="M36 36.8 C34.4 39 31.2 38.7 30.2 36.5" stroke="#3a332d" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
-      + '<path d="M36 36.8 C37.6 39 40.8 38.7 41.8 36.5" stroke="#3a332d" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
-      + '<ellipse cx="24.6" cy="31.4" rx="3.6" ry="2.3" fill="#ff9db4" opacity=".38"/>'
-      + '<ellipse cx="47.4" cy="31.4" rx="3.6" ry="2.3" fill="#ff9db4" opacity=".38"/>'
-      + '</g></svg>';
-  }
-
-  let dogMoodNow = null;
-  function setDogMood(mood){
-    if(dogMoodNow === mood) return;   // 同じ顔なら描き直さない（動きが途切れるので）
-    dogMoodNow = mood;
-    const el = document.getElementById('facts-ico');
-    if(el) el.innerHTML = dogSVG(mood);
-  }
-
-  function updateFactsCard(){
-    const stallEl = document.getElementById('fact-stall');
-    if(!stallEl) return;
-
-    const st = stalledBigs();
-    setDogMood(st.length ? 'worry' : (state.dayWasAchieved ? 'happy' : 'calm'));
-    stallEl.innerHTML = '<span class="fs-ico"></span><span class="fs-txt"></span><span class="fs-more"></span>';
-    const icoEl  = stallEl.querySelector('.fs-ico');
-    const txtEl  = stallEl.querySelector('.fs-txt');
-    const moreEl = stallEl.querySelector('.fs-more');
-
-    if(st.length){
-      const top = st[0];
-      stallEl.className = 'fact-stall';
-      icoEl.textContent = '⚠';
-      // 仕事の名前は本人が書いた文字なので、組み立てて入れる（HTMLとして扱わない）
-      txtEl.appendChild(document.createTextNode('「' + shortTitle(top.big.title) + '」は '));
-      const b = document.createElement('b');
-      b.textContent = top.days + '日';
-      txtEl.appendChild(b);
-      txtEl.appendChild(document.createTextNode(' 進んでいません'));
-      moreEl.textContent = st.length > 1 ? 'ほか' + (st.length - 1) + '件' : '';
-      stallEl.onclick = ()=> scrollToBig(top.big.id);
-    } else {
-      stallEl.className = 'fact-stall calm';
-      icoEl.textContent = '✓';
-      txtEl.textContent = state.bigs.some(b=> b.title && b.title.trim())
-        ? '止まっているものは、ありません'
-        : '大きな仕事を書くと、止まっているものがここに出ます';
-      moreEl.textContent = '';
-      stallEl.onclick = null;
-    }
-
-    const thisWeek = countInRange(weekStart(0), weekStart(-1));
-    const lastWeek = countInRange(weekStart(1), weekStart(0));
-    const weekEl = document.getElementById('fact-week');
-    weekEl.innerHTML = '';
-    weekEl.appendChild(document.createTextNode('今週 ' + thisWeek + '個'));
-    const last = document.createElement('span');
-    last.className = 'fw-last';
-    last.textContent = '　／　先週 ' + lastWeek + '個';
-    weekEl.appendChild(last);
-
-    const streak = currentStreak();
-    const streakEl = document.getElementById('fact-streak');
-    streakEl.innerHTML = '';
-    if(streak > 0){
-      streakEl.textContent = '🔥 連続 ' + streak + '日';
-    } else {
-      const off = document.createElement('span');
-      off.className = 'fs-off';
-      off.textContent = '連続 0日';
-      streakEl.appendChild(off);
-    }
-  }
-
-  // 「進んでいません」を押したら、その仕事まで画面を送って光らせる
-  function scrollToBig(id){
-    const el = document.querySelector('#blocks [data-block-key="big:' + id + '"]');
-    if(!el) return;
-    el.scrollIntoView({ behavior:'smooth', block:'center' });
-    const card = el.querySelector('.big-card') || el;
-    card.classList.add('big-flash');
-    setTimeout(()=> card.classList.remove('big-flash'), 1600);
-  }
 
   // ---- これまでの記録から、足りないものを1回だけ埋める ----
   //  ① 大きな仕事の「最後に進んだ日」
@@ -3703,7 +3456,6 @@
     try{ localStorage.setItem(CAL_OPEN_KEY, open ? '1' : '0'); }catch(e){}
     if(open){ calNeedsRefresh = true; refreshCalendarIfStale(!!interactive); }
   }
-  updateFactsCard();
 
   document.getElementById('cal-head').addEventListener('click', ()=>{
     setCalOpen(!calCardEl.classList.contains('open'), true);
@@ -3852,7 +3604,6 @@
 
       if(typeof pd.totalBlocks === 'number') totalBlocks = pd.totalBlocks;
       if(pd.dayLog && typeof pd.dayLog === 'object') dayLog = pd.dayLog;
-      updateFactsCard();   // 受け取った記録で、帯も書き直す
 
       const board = pd.board;
       if(!board || !Array.isArray(board.bigs)) return;   // まだボードが無い（移行前）
@@ -3894,7 +3645,6 @@
 
     // 見えているものを今日のものへ書き直す
     renderYearProgress();
-    updateFactsCard();       // 止まっている日数・今週／先週・連続日数
 
     // 昨日読んだ予定が残らないように、カレンダーも読み直す
     calNeedsRefresh = true;
@@ -3999,7 +3749,6 @@
           totalBlocks = typeof pd.totalBlocks === 'number' ? pd.totalBlocks : 0;
           dayLog = (pd.dayLog && typeof pd.dayLog === 'object') ? pd.dayLog : {};
           historyBackfilled = pd.historyBackfilled === true;
-          updateFactsCard();
 
           const tk = todayKey();
           if(pd.board && Array.isArray(pd.board.bigs)){
@@ -4012,7 +3761,7 @@
             }
             // 古いデータには「最後に進んだ日」が入っていないので、記録から割り出す
             return backfillLastActive(user.uid)
-              .then(touched=>{ if(touched){ updateFactsCard(); return saveBoard(); } })
+              .then(touched=>{ if(touched){ return saveBoard(); } })
               .catch(()=>{});   // 読めなければ何も書かない。次に開いたときにやり直す
           }
           // ボードがまだ無い＝旧バージョンからの引っ越し。過去の記録から復元する。
@@ -4026,7 +3775,7 @@
             }
             return backfillLastActive(user.uid)
               .catch(()=>false)
-              .then(()=>{ updateFactsCard(); return saveBoard(); });
+              .then(()=>{ return saveBoard(); });
           }).catch(()=>{
             // 読み出しに失敗したときは、何も保存しない。
             // ここで保存すると、中身が入る前の状態でボードを上書きしてしまう。
