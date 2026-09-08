@@ -356,6 +356,19 @@
     transition:background .15s ease, color .15s ease;
   }
   .move-btn:active{background:var(--mid-bg); color:var(--mid);}
+  .move-btn:hover{background:var(--mid-bg); color:var(--mid);}
+  .move-btns.tiny{gap:1px; margin-right:2px;}
+  .move-btns.tiny .move-btn{ width:20px; height:14px; font-size:7px; border-radius:5px; opacity:.5; }
+  .move-btns.tiny .move-btn:hover{ opacity:1; }
+
+  .sort-row{ display:flex; justify-content:flex-end; margin:0 0 8px; }
+  .sort-btn{
+    border:1px solid var(--line); background:#fff; color:var(--sub);
+    font-family:inherit; font-size:11px; padding:5px 10px;
+    border-radius:999px; cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .sort-btn:hover{ background:var(--mid-bg); color:var(--mid); }
 
   .repeat-btn{
     flex:none;
@@ -1387,6 +1400,10 @@
     </div>
   </div>
 
+  <div class="sort-row" id="sort-row">
+    <button class="sort-btn" id="sort-stall-btn" type="button">放っている日数の長い順に並べる</button>
+  </div>
+
   <div class="blocks" id="blocks"></div>
 
   <div class="add-big-row" id="add-big-row">
@@ -1761,6 +1778,10 @@
         <div class="big-sub"></div>
       </div>
       <span class="big-age" title="最後に何かが終わってから"></span>
+      <div class="move-btns">
+        <button class="move-btn" data-dir="-1" title="上に動かす">▲</button>
+        <button class="move-btn" data-dir="1" title="下に動かす">▼</button>
+      </div>
       <button class="repeat-btn${big.repeatDaily ? ' on' : ''}" title="毎日くりかえす">🔁</button>
       <button class="trash-btn" title="この大きな仕事を削除"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       ${TOGGLE_ARROW_SVG}
@@ -1784,6 +1805,13 @@
       scheduleSave();
     });
     // ▲▼で並べ替え。ドラッグが分かりにくい端末でも確実に動かせる。
+    head.querySelectorAll('.move-btns > .move-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        moveBigCard(big, Number(btn.dataset.dir));
+      });
+    });
+
     const trashBtn = head.querySelector('.trash-btn');
     trashBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -1858,12 +1886,23 @@
             <input class="mid-title-input" placeholder="中くらいの仕事の名前" value="${escapeAttr(medium.name)}">
             <div class="mid-count">${countText}</div>
           </div>
+          <div class="move-btns">
+            <button class="move-btn" data-dir="-1" title="上に動かす">▲</button>
+            <button class="move-btn" data-dir="1" title="下に動かす">▼</button>
+          </div>
           <button class="mid-trash" title="この中くらいの仕事を削除"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
         <ul class="small-tasks"></ul>
         <div class="add-row"></div>
         <div class="full-msg" style="display:none;">小さい仕事は${MAX_SMALL_PER_MEDIUM}つまでです。先に1つ終わらせるか削除してください。</div>
       `;
+
+      mCard.querySelectorAll('.mid-head > .move-btns > .move-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          moveMediumCard(big, mIdx, Number(btn.dataset.dir));
+        });
+      });
 
       mCard.querySelector('.mid-title-input').addEventListener('input', (e)=>{
         medium.name = e.target.value;
@@ -1897,8 +1936,18 @@
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <div class="task-text" contenteditable="true" spellcheck="false"></div>
+          <div class="move-btns tiny">
+            <button class="move-btn" data-dir="-1" title="上に動かす">▲</button>
+            <button class="move-btn" data-dir="1" title="下に動かす">▼</button>
+          </div>
           <button class="del" title="削除">×</button>
         `;
+        li.querySelectorAll('.move-btns .move-btn').forEach(btn=>{
+          btn.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            moveSmallItem(medium, iIdx, Number(btn.dataset.dir));
+          });
+        });
         const textEl = li.querySelector('.task-text');
         textEl.textContent = item.text;
         // 追加したあとでも書き直せるようにする
@@ -2059,6 +2108,73 @@
   // 10個の枠だけは使ったままになっていた。そのため何日か使うと
   // 「大きな仕事を追加」の欄が消え、画面には消せるものが1つも見えない、という
   // 行き止まりになっていた。枠は「いま画面に出ているもの」だけで数える。
+  // 覚えてある並び順（blockOrder）のとおりに大きな仕事を並べる。
+  // blockOrder に無いものは、うしろに足す。
+  function orderedBigs(){
+    syncBlockOrder();
+    const byKey = new Map(state.bigs.map(b=> ['big:'+b.id, b]));
+    const out = [];
+    state.blockOrder.forEach(k=>{
+      const b = byKey.get(k);
+      if(b){ out.push(b); byKey.delete(k); }
+    });
+    byKey.forEach(b=> out.push(b));
+    return out;
+  }
+
+  // ▲▼：画面に出ている大きな仕事の中で、ひとつ上／下と入れかわる。
+  function moveBigCard(big, dir){
+    syncBlockOrder();
+    const visible = orderedBigs().filter(b=> !bigIsFinished(b));
+    const pos = visible.indexOf(big);
+    const to = pos + dir;
+    if(pos === -1) return;
+    if(to < 0 || to >= visible.length){
+      showToast(dir < 0 ? 'いちばん上です。' : 'いちばん下です。');
+      return;
+    }
+    const ia = state.blockOrder.indexOf('big:' + big.id);
+    const ib = state.blockOrder.indexOf('big:' + visible[to].id);
+    if(ia === -1 || ib === -1) return;
+    state.blockOrder[ia] = 'big:' + visible[to].id;
+    state.blockOrder[ib] = 'big:' + big.id;
+    render();
+  }
+
+  // 中くらいの仕事が「達成」かどうか（並べ替えのとき、同じかたまりの中だけで動かす）
+  function midIsAchieved(m){
+    const items = Array.isArray(m.items) ? m.items : [];
+    const total = items.length;
+    const doneItems = items.filter(i=> i.done).length;
+    return m.done === true || (total > 0 && doneItems === total);
+  }
+
+  // 配列の中で、同じかたまりに属するもの同士を入れかえる
+  function swapWithinGroup(list, idx, dir, sameGroup){
+    const cur = list[idx];
+    if(!cur) return false;
+    const group = [];
+    list.forEach((x, i)=>{ if(sameGroup(x, cur)) group.push(i); });
+    const pos = group.indexOf(idx);
+    const to = pos + dir;
+    if(pos === -1) return false;
+    if(to < 0 || to >= group.length){
+      showToast(dir < 0 ? 'いちばん上です。' : 'いちばん下です。');
+      return false;
+    }
+    const a = group[pos], b = group[to];
+    const tmp = list[a]; list[a] = list[b]; list[b] = tmp;
+    return true;
+  }
+
+  function moveMediumCard(big, idx, dir){
+    if(swapWithinGroup(big.mediums, idx, dir, (x, cur)=> midIsAchieved(x) === midIsAchieved(cur))) render();
+  }
+
+  function moveSmallItem(medium, idx, dir){
+    if(swapWithinGroup(medium.items, idx, dir, (x, cur)=> !!x.done === !!cur.done)) render();
+  }
+
   function bigIsFinished(big){
     const p = bigProgress(big);
     return p.planned > 0 && (big.done === true || p.done === p.planned);
@@ -2076,13 +2192,12 @@
     let allAchieved = true;
     let bigWithItemsCount = 0;
 
-    // 並びは、放っている日数の長い順。自動で決まるので、組み替える作業はいらない。
+    // 並びは自分で決める（大カードの▲▼で動かす）。順番は blockOrder に覚えておく。
+    // 【2026-09-08の修正】ここで「放っている日数の長い順」に毎回並べ替えていたので、
+    // ▲▼で動かしても描き直すたびに元へ戻り、並べ替えができなくなっていた。
+    // 放置の長い順に並べたいときは、上のボタンで、そのときだけ並べ直す。
     // 終わった大きな仕事は、この画面に出さない（何をやったかは「これまでやったこと」で読む）。
-    const ordered = state.bigs.slice().sort((a,b)=>{
-      const da = (typeof a.lastActiveAt === 'number') ? a.lastActiveAt : Date.now();
-      const db = (typeof b.lastActiveAt === 'number') ? b.lastActiveAt : Date.now();
-      return da - db;   // 古いものが上
-    });
+    const ordered = orderedBigs();
     ordered.forEach(big=>{
       const result = renderBigBlock(big);
       if(result.achieved && result.hasItems){
@@ -2115,6 +2230,19 @@
     updateFactsCard();
     scheduleSave();
   }
+
+  // 放置の長い順に、そのときだけ並べ直す（毎回の自動並べ替えはしない）
+  document.getElementById('sort-stall-btn').addEventListener('click', ()=>{
+    syncBlockOrder();
+    const sorted = state.bigs.slice().sort((a,b)=>{
+      const da = (typeof a.lastActiveAt === 'number') ? a.lastActiveAt : Date.now();
+      const db = (typeof b.lastActiveAt === 'number') ? b.lastActiveAt : Date.now();
+      return da - db;   // 古いものが上
+    });
+    state.blockOrder = sorted.map(b=> 'big:'+b.id).concat(['memo']);
+    render();
+    showToast('放っている日数の長い順に並べました。');
+  });
 
   document.getElementById('big-add-btn').addEventListener('click', addBig);
   document.getElementById('big-input').addEventListener('keydown', e=>{
