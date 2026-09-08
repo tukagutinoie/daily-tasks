@@ -69,17 +69,11 @@
     margin-top:5px; letter-spacing:.03em;
   }
   .header-art{
-    flex:1 1 auto; min-width:0; max-width:224px;
+    flex:1 1 auto; min-width:0; max-width:200px;
     display:flex; justify-content:center; align-items:flex-start;
     cursor:pointer;
   }
-  .header-art svg{ display:block; width:100%; max-width:224px; height:auto; }
-  /* 窓が狭いときは、日付の下に1段落として大きく出す（横に並べると小さくて読めない） */
-  @media (max-width:700px){
-    .header-row{ flex-wrap:wrap; }
-    .header-art{ order:3; flex:0 0 100%; max-width:none; margin-top:10px; }
-    .header-art svg{ width:auto; max-width:100%; height:88px; }
-  }
+  .header-art svg{ display:block; width:100%; max-width:200px; height:auto; }
   /* スマホぐらいの幅では出さない */
   @media (max-width:430px){ .header-art{ display:none; } }
 
@@ -4263,34 +4257,38 @@
     const scene = scenes[pick % scenes.length]();
 
     const stars = night
-      ? '<circle cx="24" cy="14" r="1.1" fill="#fff" opacity=".8"/><circle cx="46" cy="9" r="0.9" fill="#fff" opacity=".6"/>'
-        + '<circle cx="66" cy="17" r="1" fill="#fff" opacity=".55"/><circle cx="118" cy="11" r="0.9" fill="#fff" opacity=".5"/>'
+      ? '<circle cx="18" cy="14" r="1.1" fill="#fff" opacity=".8"/><circle cx="34" cy="8" r="0.9" fill="#fff" opacity=".6"/>'
+        + '<circle cx="88" cy="12" r="1" fill="#fff" opacity=".55"/><circle cx="104" cy="46" r="0.9" fill="#fff" opacity=".45"/>'
+        + '<circle cx="14" cy="40" r="0.9" fill="#fff" opacity=".4"/>'
       : '';
 
     // 「のち」…数時間先が変わるときだけ、小さく出す
     let later = '';
     if(typeof o.next === 'number'){
-      later = '<path d="M112 20 h8" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>'
-            + '<path d="M118 17.5 l3 2.5 l-3 2.5" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>'
-            + weatherArt(o.next, 130, 20, .55);
+      later = '<path d="M82 26 h8" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>'
+            + '<path d="M88 23.2 l3.2 2.8 l-3.2 2.8" stroke="#ffffff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>'
+            + weatherArt(o.next, 103, 26, .6);
     }
 
     const temp = (o.temp === null || o.temp === undefined) ? '--' : Math.round(o.temp);
     const hum  = (o.hum  === null || o.hum  === undefined) ? '--' : Math.round(o.hum);
 
-    return '<svg viewBox="0 0 224 64" width="224" height="64" aria-hidden="true">'
+    // 風景は 224x64 のつもりで描いてあるので、下の帯へ縮めて置く
+    const sceneG = '<g transform="translate(0,27) scale(0.893)">' + scene + '</g>';
+
+    return '<svg viewBox="0 0 200 84" width="200" height="84" aria-hidden="true">'
       + '<defs><linearGradient id="'+uid+'Sky" x1="0" y1="0" x2="0" y2="1">'
       + '<stop offset="0%" stop-color="'+sky1+'"/><stop offset="100%" stop-color="'+sky2+'"/></linearGradient>'
-      + '<clipPath id="'+uid+'Clip"><rect x="0" y="0" width="224" height="64" rx="15"/></clipPath></defs>'
+      + '<clipPath id="'+uid+'Clip"><rect x="0" y="0" width="200" height="84" rx="16"/></clipPath></defs>'
       + '<g clip-path="url(#'+uid+'Clip)">'
-      + '<rect width="224" height="64" fill="url(#'+uid+'Sky)"/>'
+      + '<rect width="200" height="84" fill="url(#'+uid+'Sky)"/>'
       + stars
-      + weatherArt(code, 88, 22, 1)
+      + weatherArt(code, 52, 28, 1.15)
       + later
-      + scene
-      + '<rect x="140" y="9" width="76" height="46" rx="13" fill="#ffffff" opacity="'+(night?'.9':'.86')+'"/>'
-      + '<text x="178" y="32" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="20" font-weight="800" fill="#3b3548">'+temp+'°</text>'
-      + '<text x="178" y="46" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="10.5" font-weight="700" fill="#8b849c">湿度 '+hum+'%</text>'
+      + sceneG
+      + '<rect x="118" y="12" width="74" height="60" rx="15" fill="#ffffff" opacity="'+(night?'.9':'.86')+'"/>'
+      + '<text x="155" y="44" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="24" font-weight="800" fill="#3b3548">'+temp+'°</text>'
+      + '<text x="155" y="61" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif" font-size="11.5" font-weight="700" fill="#8b849c">湿度 '+hum+'%</text>'
       + '</g></svg>';
   }
 
