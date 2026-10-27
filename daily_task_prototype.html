@@ -3489,10 +3489,26 @@
   let pendingRemote = null;     // 入力中に届いた分は、入力が終わってから反映する
   let boardDateKey = null;      // 直前に見た「今日」の日付。変わったら日付またぎの処理をする
 
+  // 【2026-10-27の修正】スマホの変更が Mac に出てこなかった件
+  // 以前は「入力欄にカーソルがあるか」だけで入力中と見ていた。Mac のアプリを
+  // 出しっぱなしにすると、最後に触った欄にカーソルが残ったままになり、
+  // 何時間でも「入力中」扱いで受信を待たせつづけていた（新しい版の自動読み直しも止まっていた）。
+  // いまは「実際に打っている」ときだけ待たせる：変換中か、最後に打ってから4秒以内。
+  // アプリが裏に回っているときは打てないので、入力中とは見ない。
+  let lastTypedAt = 0;
+  let composingNow = false;
+  document.addEventListener('input', ()=>{ lastTypedAt = Date.now(); }, true);
+  document.addEventListener('keydown', ()=>{ lastTypedAt = Date.now(); }, true);
+  document.addEventListener('compositionstart', ()=>{ composingNow = true; lastTypedAt = Date.now(); }, true);
+  document.addEventListener('compositionend', ()=>{ composingNow = false; lastTypedAt = Date.now(); }, true);
+
   function isEditingNow(){
     const el = document.activeElement;
     if(!el) return false;
-    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true;
+    const inField = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true;
+    if(!inField) return false;
+    if(!document.hasFocus()) return false;
+    return composingNow || (Date.now() - lastTypedAt < 4000);
   }
 
   function applyBoardData(board){
@@ -3600,15 +3616,18 @@
   }
 
   // 入力が終わったタイミングで、待たせていた受信ぶんを反映する
-  document.addEventListener('focusout', ()=>{
-    setTimeout(()=>{
-      if(pendingRemote && !isEditingNow()){
-        const d = pendingRemote; pendingRemote = null;
-        applyBoardData(d);
-        setSyncStatus('同期ずみ ✓');
-      }
-    }, 200);
-  });
+  function flushPendingRemote(){
+    if(pendingRemote && !isEditingNow()){
+      const d = pendingRemote; pendingRemote = null;
+      applyBoardData(d);
+      setSyncStatus('同期ずみ ✓');
+    }
+  }
+  document.addEventListener('focusout', ()=>{ setTimeout(flushPendingRemote, 200); });
+  // カーソルを欄に置いたまま手を止めた場合も、少し待てば反映する
+  setInterval(flushPendingRemote, 1500);
+  window.addEventListener('blur', flushPendingRemote);
+  document.addEventListener('visibilitychange', flushPendingRemote);
 
   // ---- 日付が変わったら、見えているものを今日ぶんに入れかえる ----
   // 【2026-08-28の修正】以前は30秒ごとのタイマーだけで見張っていて、しかも
