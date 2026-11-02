@@ -1427,7 +1427,7 @@
     // このアプリの住所(tukagutinoie.github.io)と、Firebaseの受付窓口
     // (daily-tasks-802ee.firebaseapp.com)が別の住所のため、最近のブラウザでは
     // 帰り道で「鍵」を持ち帰れず、必ず失敗していた。
-    // カレンダーの許可だけ、Google公式の別方式に変更した(loadCalendarNow を参照)。
+    // カレンダーは、Apps Script の中継から読む方式に変えた(CAL_RELAY_URL を参照)。
   }
 
   const state = {
@@ -3026,83 +3026,24 @@
   }
 
   // ---- Googleカレンダーの予定を「見る」だけ（つみあげ側からは何も書き込まない） ----
-  let calendarAccessToken = null;
   // カレンダーの一覧を、いつの日付で読み込んだか。開きっぱなしで日付が変わったときの読み直しに使う。
   let calLoadedDateKey = null;
   // 日付が変わったのに、まだ今日のぶんを読み直せていない
   let calNeedsRefresh = false;
-  // 日付が変わったせいで読み直しが要るとき（起動直後の未読み込みとは区別する）
-  let calAutoRetry = false;
 
-  // カレンダーを見る許可は、Firebaseを通さずGoogle公式の仕組み
-  // (Google Identity Services)から直接もらう。こうするとやり取りが
-  // このアプリの住所の中だけで完結するので、ブラウザのプライバシー設定に邪魔されない。
+  // ログインに使うGoogle公式の仕組み(GIS)の窓口番号。
   const GOOGLE_OAUTH_CLIENT_ID = '579478191235-s2f00417mneo9hv7g9vhf20lj2hqbhjm.apps.googleusercontent.com';
   // 【2026-11-03】アカウントは2つに分かれている。どちらで入るかをこちらで先に選んでおく。
   // 積み上げの中身は seiko.aura、Googleカレンダーの予定は tukagutinoie に入っている。
   const BOARD_ACCOUNT = 'seiko.aura@gmail.com';
-  const CALENDAR_ACCOUNT = 'tukagutinoie@gmail.com';
-  let calTokenClient = null;
 
-  // 一度もらった鍵(アクセストークン)は、有効期限まで端末に覚えておく。
-  // こうすると画面を更新しても、期限内は許可画面が出ない。
-  const CAL_TOKEN_KEY = 'tsumiage_cal_token';
-  function saveCalToken(token, expiresInSec){
-    try{
-      localStorage.setItem(CAL_TOKEN_KEY, JSON.stringify({
-        token: token,
-        expiresAt: Date.now() + (Number(expiresInSec || 3600) * 1000) - 60000
-      }));
-    }catch(e){}
-  }
-  function loadCalToken(){
-    try{
-      const raw = localStorage.getItem(CAL_TOKEN_KEY);
-      if(!raw) return null;
-      const o = JSON.parse(raw);
-      if(!o || !o.token || !o.expiresAt) return null;
-      if(Date.now() >= o.expiresAt){ localStorage.removeItem(CAL_TOKEN_KEY); return null; }
-      return o.token;
-    }catch(e){ return null; }
-  }
-  function clearCalToken(){
-    try{ localStorage.removeItem(CAL_TOKEN_KEY); }catch(e){}
-    calendarAccessToken = null;
-  }
-
-  function ensureCalTokenClient(){
-    if(calTokenClient) return calTokenClient;
-    if(!(window.google && window.google.accounts && window.google.accounts.oauth2)) return null;
-    calTokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_OAUTH_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/calendar.readonly',
-      login_hint: CALENDAR_ACCOUNT,
-      // 空にしておくと、一度許可したあとは確認画面を出さずに鍵を出し直してくれる
-      prompt: '',
-      callback: (resp)=>{
-        if(resp && resp.access_token){
-          calendarAccessToken = resp.access_token;
-          saveCalToken(resp.access_token, resp.expires_in);
-          fetchTodayCalendarEvents(calendarAccessToken);
-        } else {
-          console.error('[calendar] no access_token in response', resp);
-          showToast('カレンダーへのアクセスが許可されませんでした。');
-        }
-      },
-      error_callback: (err)=>{
-        const type = err && err.type;
-        console.error('[calendar] GIS error', type, err);
-        if(type === 'popup_closed'){
-          showToast('カレンダーの許可が途中で閉じられました。');
-        } else if(type === 'popup_failed_to_open'){
-          showToast('ポップアップがブロックされました。ブラウザの設定で許可してください。');
-        } else {
-          showToast('カレンダーへのアクセスが許可されませんでした。');
-        }
-      }
-    });
-    return calTokenClient;
-  }
+  // 【2026-11-03の作り直し】カレンダーのために毎回ログインが要っていた件
+  // 以前はGoogleから「1時間だけ使える鍵」をもらってカレンダーを読んでいた。
+  // 鍵は押さないと取り直せないので、出しっぱなしのMacでは毎回のようにログインが要った。
+  // いまは seiko.aura の Google Apps Script「つみあげカレンダー中継」が代わりに読む。
+  // （tukagutinoie のカレンダーは seiko.aura に共有してある。中継の控えは calendar-relay.gs.js）
+  // 中継には、つみあげのログインの証明（IDトークン）を送る。seiko.aura 以外には予定を返さない。
+  const CAL_RELAY_URL = 'https://script.google.com/macros/s/AKfycbzhnKq8qcohYjO0iY4T0IWxFicOMc03Ssq6QnScC5QFXGJIsug6ZKXqr91ggEXlEHmV/exec';
 
   const CAL_DAYS = ['日','月','火','水','木','金','土'];
 
@@ -3127,10 +3068,7 @@
   }
 
   // 【2026-09-01の修正】日付が変わっても、昨日読んだ予定が出したままだった。
-  // Googleの鍵は1時間で切れるので、夜のうちに切れていて、日付が変わったときの
-  // 自動の読み直しが黙って失敗し、画面だけ昨日のまま残っていた（自分で開き直す
-  // しかなかった）。ここでは まず昨日ぶんを消し、鍵があればすぐ読み直す。
-  // 鍵が切れているときは、次にどこかを押した瞬間に取り直す。
+  // ここでは まず昨日ぶんを消してから読み直す。
   function refreshCalendarIfStale(interactive){
     if(!calCardEl || !calCardEl.classList.contains('open')) return;
     // ログインしていないときは、こちらから勝手に案内を書きかえない
@@ -3140,30 +3078,17 @@
       clearCalendarEvents();   // 昨日の予定を今日のぶんとして出したままにしない
       calLoadedDateKey = null;
       calNeedsRefresh = true;
-      calAutoRetry = true;
     }
     if(!calNeedsRefresh) return;
-    if(!calendarAccessToken) calendarAccessToken = loadCalToken();
-    if(calendarAccessToken || interactive){ loadCalendarNow(interactive); return; }
-    // 鍵の取り直しは「自分で触った直後」でないとブラウザに止められる。
-    // だから、次のひと押しに乗せる。
-    setCalStatus('タップして読み込み');
-    // 起動直後は、こちらから勝手に許可を取りに行かない（Googleの窓が急に開くため）。
-    // 日付が変わって読み直しが要るときだけ、次のひと押しに乗せる。
-    if(calAutoRetry) armCalRefreshOnTouch();
+    loadCalendarNow();
   }
 
-  let calTouchArmed = false;
-  function armCalRefreshOnTouch(){
-    if(calTouchArmed) return;
-    calTouchArmed = true;
-    const once = ()=>{
-      document.removeEventListener('pointerdown', once, true);
-      calTouchArmed = false;
-      refreshCalendarIfStale(true);
-    };
-    document.addEventListener('pointerdown', once, true);
-  }
+  // 画面に戻ってきたときは、そのあいだに増えた予定も出す
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    calNeedsRefresh = true;
+    refreshCalendarIfStale(false);
+  });
 
   function renderCalendarEvents(events){
     const box = document.getElementById('cal-events');
@@ -3184,37 +3109,34 @@
     });
   }
 
-  function fetchTodayCalendarEvents(token){
+  function fetchTodayCalendarEvents(){
     setCalStatus('読み込み中…');
     const d = new Date();
     const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0,0,0).toISOString();
     const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate()+2, 23,59,59).toISOString();
-    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
-      + '?timeMin=' + encodeURIComponent(dayStart)
-      + '&timeMax=' + encodeURIComponent(dayEnd)
-      + '&singleEvents=true&orderBy=startTime';
 
-    fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+    currentUser.getIdToken()
+      .then(idToken=> fetch(CAL_RELAY_URL, {
+        method: 'POST',
+        // text/plain にしておくと、ブラウザの事前確認(preflight)が要らず、Apps Script でもそのまま届く
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ idToken: idToken, timeMin: dayStart, timeMax: dayEnd })
+      }))
       .then(res=>{
-        if(!res.ok){
-          if(res.status === 401 || res.status === 403){
-            clearCalToken();
-            calNeedsRefresh = true;
-            calAutoRetry = true;
-            setCalStatus('もう一度タップしてください');
-          } else {
-            setCalStatus('読み込めませんでした');
-          }
-          return null;
-        }
+        if(!res.ok){ setCalStatus('読み込めませんでした'); return null; }
         return res.json();
       })
       .then(data=>{
         if(!data) return;
-        renderCalendarEvents(data.items || []);
+        if(data.error){ setCalStatus('読み込めませんでした'); return; }
+        const items = (data.items || []).slice().sort((x,y)=>{
+          const a = (x.start && (x.start.dateTime || x.start.date)) || '';
+          const b = (y.start && (y.start.dateTime || y.start.date)) || '';
+          return new Date(a) - new Date(b);
+        });
+        renderCalendarEvents(items);
         calLoadedDateKey = todayKey();
         calNeedsRefresh = false;
-        calAutoRetry = false;
         setCalStatus('');
       })
       .catch(()=>{
@@ -3227,29 +3149,12 @@
     if(el) el.textContent = t || '';
   }
 
-  // interactive = 自分でタップしたときだけ true。
-  // 開いた直後の自動読み込みでは、勝手にポップアップを出さない。
-  function loadCalendarNow(interactive){
+  function loadCalendarNow(){
     if(!FIREBASE_READY || !currentUser){
       setCalStatus('ログインが必要です');
       return;
     }
-    if(!calendarAccessToken) calendarAccessToken = loadCalToken();
-    if(calendarAccessToken){
-      fetchTodayCalendarEvents(calendarAccessToken);
-      return;
-    }
-    if(!interactive){
-      setCalStatus('タップして読み込み');
-      return;
-    }
-    const client = ensureCalTokenClient();
-    if(!client){
-      showToast('カレンダーの準備中です。少し待ってから、もう一度押してください。');
-      return;
-    }
-    // タップ直後に間を空けずそのまま呼ぶこと（待つとポップアップが止められる）
-    client.requestAccessToken();
+    fetchTodayCalendarEvents();
   }
 
 
@@ -3656,7 +3561,6 @@
 
     // 昨日読んだ予定が残らないように、カレンダーも読み直す
     calNeedsRefresh = true;
-    calAutoRetry = true;
     refreshCalendarIfStale(false);
 
     if(!FIREBASE_READY || !currentUser) return;
