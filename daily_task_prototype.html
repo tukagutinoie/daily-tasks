@@ -3038,6 +3038,10 @@
   // (Google Identity Services)から直接もらう。こうするとやり取りが
   // このアプリの住所の中だけで完結するので、ブラウザのプライバシー設定に邪魔されない。
   const GOOGLE_OAUTH_CLIENT_ID = '579478191235-s2f00417mneo9hv7g9vhf20lj2hqbhjm.apps.googleusercontent.com';
+  // 【2026-11-03】アカウントは2つに分かれている。どちらで入るかをこちらで先に選んでおく。
+  // 積み上げの中身は seiko.aura、Googleカレンダーの予定は tukagutinoie に入っている。
+  const BOARD_ACCOUNT = 'seiko.aura@gmail.com';
+  const CALENDAR_ACCOUNT = 'tukagutinoie@gmail.com';
   let calTokenClient = null;
 
   // 一度もらった鍵(アクセストークン)は、有効期限まで端末に覚えておく。
@@ -3072,6 +3076,7 @@
     calTokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_OAUTH_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      login_hint: CALENDAR_ACCOUNT,
       // 空にしておくと、一度許可したあとは確認画面を出さずに鍵を出し直してくれる
       prompt: '',
       callback: (resp)=>{
@@ -3727,9 +3732,10 @@
     // signInWithPopup は、Firebaseの受付窓口(daily-tasks-802ee.firebaseapp.com)という
     // 別の住所を通る。ホーム画面から開いたアプリではこの往復が通らない。
     // カレンダーと同じGoogle公式の仕組み(GIS)で鍵をもらい、それでFirebaseに入る。
-    // アカウントは毎回選ばせる（黙って別のアカウントで入ると、空の積み上げが出るため）。
+    // 入るアカウントは BOARD_ACCOUNT に決め打ち（別のアカウントで入ると、空の積み上げが出るため）。
     // GISが読めていないときだけ、前の方式を使う。
     const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ login_hint: BOARD_ACCOUNT });
     function loginWithPopup(){
       fbAuth.signInWithPopup(provider).catch(()=>{
         showToast('ログインできませんでした。もう一度お試しください。');
@@ -3745,7 +3751,8 @@
         loginTokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: GOOGLE_OAUTH_CLIENT_ID,
           scope: 'openid email profile',
-          prompt: 'select_account',
+          login_hint: BOARD_ACCOUNT,
+          prompt: '',
           callback: (resp)=>{
             if(!resp || !resp.access_token){
               showToast('ログインできませんでした。もう一度お試しください。');
