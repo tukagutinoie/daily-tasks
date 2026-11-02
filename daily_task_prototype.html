@@ -3723,11 +3723,49 @@
     loginBtn.style.display = 'inline-block';
     saveNoteEl.innerHTML = 'ログインすると、この端末とほかの端末(Mac・スマホなど)で内容が共有されます。';
 
+    // 【2026-11-03の修正】Androidのホーム画面のアプリでログインできず、見本のまま止まっていた件
+    // signInWithPopup は、Firebaseの受付窓口(daily-tasks-802ee.firebaseapp.com)という
+    // 別の住所を通る。ホーム画面から開いたアプリではこの往復が通らない。
+    // カレンダーと同じGoogle公式の仕組み(GIS)で鍵をもらい、それでFirebaseに入る。
+    // アカウントは毎回選ばせる（黙って別のアカウントで入ると、空の積み上げが出るため）。
+    // GISが読めていないときだけ、前の方式を使う。
     const provider = new firebase.auth.GoogleAuthProvider();
-    loginBtn.addEventListener('click', ()=>{
+    function loginWithPopup(){
       fbAuth.signInWithPopup(provider).catch(()=>{
         showToast('ログインできませんでした。もう一度お試しください。');
       });
+    }
+    let loginTokenClient = null;
+    loginBtn.addEventListener('click', ()=>{
+      if(!(window.google && window.google.accounts && window.google.accounts.oauth2)){
+        loginWithPopup();
+        return;
+      }
+      if(!loginTokenClient){
+        loginTokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_OAUTH_CLIENT_ID,
+          scope: 'openid email profile',
+          prompt: 'select_account',
+          callback: (resp)=>{
+            if(!resp || !resp.access_token){
+              showToast('ログインできませんでした。もう一度お試しください。');
+              return;
+            }
+            const cred = firebase.auth.GoogleAuthProvider.credential(null, resp.access_token);
+            fbAuth.signInWithCredential(cred).catch(()=>{
+              showToast('ログインできませんでした。もう一度お試しください。');
+            });
+          },
+          error_callback: (err)=>{
+            if(err && err.type === 'popup_failed_to_open'){
+              loginWithPopup();
+            } else {
+              showToast('ログインが途中で閉じられました。もう一度お試しください。');
+            }
+          }
+        });
+      }
+      loginTokenClient.requestAccessToken();
     });
     logoutBtn.addEventListener('click', ()=>{
       fbAuth.signOut();
